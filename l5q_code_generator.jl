@@ -169,7 +169,7 @@ gen_xb_codes()
 Generates the output of the XB registers for all PRNs
 in "XB_intial_conditions."
 """
-function gen_xb_codes(XB_intial_conditions)
+function gen_xb_codes()
 	xb_codes = typeof(XB_intial_conditions)()
 	for prn in keys(XB_intial_conditions)
 		xb_codes[prn] = xbregister(prn)
@@ -194,7 +194,7 @@ gen_l5q_codes()
 Generates the L5Q codes for each PRN listed in
 "XB_intial_conditions."
 """
-function gen_l5q_codes(XB_intial_conditions)
+function gen_l5q_codes()
 	l5q_codes = typeof(XB_intial_conditions)()
 	for prn in keys(XB_intial_conditions)
 		l5q_codes[prn] = xor.(xa_code, xbregister(prn))
@@ -203,9 +203,9 @@ function gen_l5q_codes(XB_intial_conditions)
 end
 
 
-# """
-# l5q_codes
+"""
+l5q_codes
 
-# Dictionary containing the L5Q codes for all PRNs.
-# """
-# const l5q_codes = gen_l5q_codes(XB_intial_conditions)
+Dictionary containing the L5Q codes for all PRNs.
+"""
+const l5q_codes = gen_l5q_codes()

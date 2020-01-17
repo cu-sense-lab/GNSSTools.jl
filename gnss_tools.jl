@@ -19,6 +19,6 @@ Data()
 
 Structure for holding signal data.
 """
-struct Data{T}
+struct Data{A1}
 	
 end
