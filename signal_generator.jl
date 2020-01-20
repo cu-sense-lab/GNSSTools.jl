@@ -1,9 +1,10 @@
+using Random
 include("constants.jl")
 include("l5q_code_generator.jl")
 
 
 """
-L5QSignal()
+    L5QSignal()
 
 Struct for holding L5Q GNSS signal properties for
 signal generation.
@@ -41,8 +42,8 @@ end
 
 
 """
-calcinitcodephase(code_length, f_d, fd_rate, f_s,
-                  code_start_idx)
+    calcinitcodephase(code_length, f_d, fd_rate, f_s,
+                      code_start_idx)
 
 Calculates the initial code phase of a given code
 where f_d and fd_rate are the Doppler affected
@@ -61,12 +62,12 @@ end
 
 
 """
-definesignal(type, prn, f_s, t_length;
-             f_if, f_d, fd_rate, Tsys,
-             CN0, ϕ, nADC, B, include_carrier,
-             include_adc, include_noise,
-             include_neuman_code, code_start_idx,
-             fds)
+    definesignal(type, prn, f_s, t_length;
+                 f_if, f_d, fd_rate, Tsys,
+                 CN0, ϕ, nADC, B, include_carrier,
+                 include_adc, include_noise,
+                 include_neuman_code, code_start_idx,
+                 fds)
 
 Define properties of locally generated L5Q signal
 based off its type, PRN, etc.
@@ -107,10 +108,10 @@ end
 
 
 """
-definesignal!(l5qsignal; prn, f_if, f_d, fd_rate,
-              Tsys, CN0, ϕ, nADC, B, include_carrier,
-              include_adc, include_noise,
-              include_neuman_code, code_start_idx, fds)
+    definesignal!(l5qsignal; prn, f_if, f_d, fd_rate,
+                  Tsys, CN0, ϕ, nADC, B, include_carrier,
+                  include_adc, include_noise,
+                  include_neuman_code, code_start_idx, fds)
 
 Redefine properties of locally generated L5Q signal
 based off its type, PRN, etc. 
@@ -119,17 +120,17 @@ Sampling rate (f_s) and signal length (t_length)
 are the only parameters that cannot be redefined.
 
 """
-function definesignal!(l5qsignal::L5QSignal;
-                       prn=l5qsignal.prn, f_d=l5qsignal.f_d,
-                       f_if=l5qsignal.f_if, fd_rate=l5qsignal.fd_rate,
-                       Tsys=l5qsignal.Tsys, CN0=l5qsignal.CN0,
-                       ϕ=l5qsignal.ϕ, nADC=l5qsignal.nADC,
-                       B=l5qsignal.B,
-                       include_carrier=l5qsignal.include_carrier,
-                       include_adc=l5qsignal.include_adc,
-                       include_noise=l5qsignal.include_noise,
-                       include_neuman_code=l5qsignal.include_neuman_code,
-                       code_start_idx=l5qsignal.code_start_idx)
+function definesignal!(signal::L5QSignal;
+                       prn=signal.prn, f_d=signal.f_d,
+                       f_if=signal.f_if, fd_rate=signal.fd_rate,
+                       Tsys=signal.Tsys, CN0=signal.CN0,
+                       ϕ=signal.ϕ, nADC=signal.nADC,
+                       B=signal.B,
+                       include_carrier=signal.include_carrier,
+                       include_adc=signal.include_adc,
+                       include_noise=signal.include_noise,
+                       include_neuman_code=signal.include_neuman_code,
+                       code_start_idx=signal.code_start_idx)
 	## Calculate code chipping rates with Doppler applied
 	# L5Q
 	f_l5q_d = L5_chipping_rate*(1. + f_d/L5_freq)
@@ -140,38 +141,38 @@ function definesignal!(l5qsignal::L5QSignal;
 	# Calculate the L5Q and nh code phase offsets
 	l5q_init_code_phase = calcinitcodephase(L5_code_length,
                                             f_l5q_d, f_l5q_dd,
-                                            l5qsignal.f_s,
+                                            signal.f_s,
                                             code_start_idx)
 	nh_init_code_phase = calcinitcodephase(nh_code_length,
                                            f_nh_d, f_nh_dd,
-                                           l5qsignal.f_s,
+                                           signal.f_s,
                                            code_start_idx)
-	# Store udated variables to "l5qsignal" struct
-	l5qsignal.prn = prn
-	l5qsignal.f_d = f_d
-	l5qsignal.f_if = f_if
-	l5qsignal.fd_rate = fd_rate
-	l5qsignal.Tsys = Tsys
-	l5qsignal.CN0 = CN0
-	l5qsignal.ϕ = ϕ
-	l5qsignal.nADC = nADC
-	l5qsignal.B = B
-	l5qsignal.include_carrier = include_carrier
-	l5qsignal.include_adc = include_adc
-	l5qsignal.include_noise = include_noise
-	l5qsignal.include_neuman_code = l5qsignal.include_neuman_code
-	l5qsignal.f_l5q_d = f_l5q_d
-	l5qsignal.f_l5q_dd = f_l5q_dd
-	l5qsignal.f_nh_d = f_nh_d
-	l5qsignal.f_nh_dd = f_nh_dd
-	l5qsignal.l5q_init_code_phase = l5q_init_code_phase
-	l5qsignal.nh_init_code_phase = nh_init_code_phase
-	return l5qsignal
+	# Store udated variables to "L5QSignal" struct
+	signal.prn = prn
+	signal.f_d = f_d
+	signal.f_if = f_if
+	signal.fd_rate = fd_rate
+	signal.Tsys = Tsys
+	signal.CN0 = CN0
+	signal.ϕ = ϕ
+	signal.nADC = nADC
+	signal.B = B
+	signal.include_carrier = include_carrier
+	signal.include_adc = include_adc
+	signal.include_noise = include_noise
+	signal.include_neuman_code = signal.include_neuman_code
+	signal.f_l5q_d = f_l5q_d
+	signal.f_l5q_dd = f_l5q_dd
+	signal.f_nh_d = f_nh_d
+	signal.f_nh_dd = f_nh_dd
+	signal.l5q_init_code_phase = l5q_init_code_phase
+	signal.nh_init_code_phase = nh_init_code_phase
+	return signal
 end
 
 
 """
-calccodeidx(init_chip, f_code_d, f_code_d, t, code_length)
+    calccodeidx(init_chip, f_code_d, f_code_d, t, code_length)
 
 Calculates the index in the codes for a given t.
 """
@@ -182,7 +183,7 @@ end
 
 
 """
-generatesignal!(l5qsignal)
+    generatesignal!(signal::L5QSignal)
 
 Generates local GNSS signal using paramters defined in a
 L5QSignal struct.
@@ -190,61 +191,57 @@ L5QSignal struct.
 Generates a signal with carrier, ADC quantization, noise,
 and Neuman sequence.
 """
-function generatesignal!(l5qsignal::L5QSignal)#,
-                         # include_carrier::Val{true}=Val(l5qsignal.include_carrier),
-                         # include_noise::Val{true}=Val(l5qsignal.include_noise),
-                         # include_neuman_code::Val{true}=Val(l5qsignal.include_neuman_code))
-	# Parmeters used for entire signal
-	prn = l5qsignal.prn
-	Tsys = l5qsignal.Tsys
-	CN0 = l5qsignal.CN0
-	f_d = l5qsignal.f_d
-	f_if = l5qsignal.f_if
-	fd_rate = l5qsignal.fd_rate
-	ϕ = l5qsignal.ϕ
-	B = l5qsignal.B
-	nADC = l5qsignal.nADC
-	include_carrier = l5qsignal.include_carrier
-	include_noise = l5qsignal.include_noise
-	include_neuman_code = l5qsignal.include_neuman_code
-	sigtype = eltype(l5qsignal.signal)
-	for i in 1:l5qsignal.sample_num
-		t = l5qsignal.t[i]
+function generatesignal!(signal::L5QSignal)
+	# Common parmeters used for entire signal
+	prn = signal.prn
+	Tsys = signal.Tsys
+	CN0 = signal.CN0
+	f_d = signal.f_d
+	f_if = signal.f_if
+	fd_rate = signal.fd_rate
+	ϕ = signal.ϕ
+	B = signal.B
+	nADC = signal.nADC
+	include_carrier = signal.include_carrier
+	include_noise = signal.include_noise
+	include_neuman_code = signal.include_neuman_code
+	sigtype = eltype(signal.signal)
+	for i in 1:signal.sample_num
+		t = signal.t[i]
 		# Get L5Q code value at t
-		l5q = l5q_codes[prn][calccodeidx(l5qsignal.l5q_init_code_phase,
-                                         l5qsignal.f_l5q_d, l5qsignal.f_l5q_dd,
+		l5q = l5q_codes[prn][calccodeidx(signal.l5q_init_code_phase,
+                                         signal.f_l5q_d, signal.f_l5q_dd,
                                          t, L5_code_length)]
 		# Get Neuman code sequence value at t
 		if include_neuman_code
-			nh = nh20[calccodeidx(l5qsignal.nh_init_code_phase,
-                                  l5qsignal.f_nh_d, l5qsignal.f_nh_dd,
+			nh = nh20[calccodeidx(signal.nh_init_code_phase,
+                                  signal.f_nh_d, signal.f_nh_dd,
                                   t, nh_code_length)]
 		else
 			nh = 0
 		end
 		if include_carrier & include_noise
 			# Calculate code value with carrier and noise
-			sig = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
-			       exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
-			       sqrt(k*B*Tsys)*randn(sigtype))
+			signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
+			                    exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
+			                    sqrt(k*B*Tsys)*randn(sigtype))
 		elseif include_carrier & ~include_noise
 			# Calculate code value with carrier
-			sig = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
-			       exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+			signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
+			                    exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
 		elseif ~include_carrier & include_noise
 			# Calculate code value with carrier
-			sig = ((xor(l5q, nh)*2-1) +
-			       sqrt(k*B*Tsys)*randn(sigtype))
+			signal.signal[i] = ((xor(l5q, nh)*2-1) +
+			                    sqrt(k*B*Tsys)*randn(sigtype))
 		else
 			# Calculate code value only
-			sig = complex(float((xor(l5q, nh)*2-1)))
+			signal.signal[i] = complex(float((xor(l5q, nh)*2-1)))
 		end
-		l5qsignal.signal[i] = sig
 	end
 	# Quantize signal
-	if l5qsignal.include_adc
-		l5qsignal.signal = round.(l5qsignal.signal.*(2^(nADC-1)-1) ./
-                                  maximum(abs.(l5qsignal.signal)))
+	if signal.include_adc
+		signal.signal = round.(signal.signal.*(2^(nADC-1)-1) ./
+                                  maximum(abs.(signal.signal)))
 	end
-	return l5qsignal
+	return signal
 end

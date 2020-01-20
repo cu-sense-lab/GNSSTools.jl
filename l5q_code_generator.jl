@@ -1,12 +1,12 @@
 ## L5Q constants
 """
-L5 Frequency (Hz)
+    L5 Frequency (Hz)
 """
 const L5_freq = 1176.45e6  # Hz
 
 
 """
-L5_code_length
+    L5_code_length
 
 The number of bits in the L5 signal
 for a 1ms segment.
@@ -15,7 +15,7 @@ const L5_code_length = 10230  # chips
 
 
 """
-nh_code_length
+    nh_code_length
 
 The number of bits in the Neuman
 sequence in a 1s segment.
@@ -23,7 +23,7 @@ sequence in a 1s segment.
 const nh_code_length = 20  # chips
 
 """
-L5_chipping_rate
+    L5_chipping_rate
 
 The chipping rate of the L5 signal
 in Hz.
@@ -32,7 +32,7 @@ const L5_chipping_rate = 10.23e6  # Hz
 
 
 """
-nh_chipping_rate
+    nh_chipping_rate
 
 The chipping rate of the Neuman
 sequence in Hz
@@ -41,7 +41,7 @@ const nh_chipping_rate = 1000.  # Hz
 
 
 """
-XA_XB_code_length
+    XA_XB_code_length
 
 The length of the XA and XB codes used to
 construct the L5 signal.
@@ -50,7 +50,7 @@ const XA_XB_code_length = 8190  # chips
 
 
 """
-XA_taps
+    XA_taps
 
 The taps for the XA shift register.
 """
@@ -58,7 +58,7 @@ const XA_taps = [9, 10, 12, 13]
 
 
 """
-XB_taps
+    XB_taps
 
 The taps for the XB shift register.
 """
@@ -66,7 +66,7 @@ const XB_taps = [1, 3, 4, 6, 7, 8, 12, 13]
 
 
 """
-XB_intial_conditions
+    XB_intial_conditions
 
 The initial conditions of the XB shift register
 per PRN for Q5 only.
@@ -106,7 +106,7 @@ const XB_intial_conditions = Dict( 1 => [1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0],
 
 
 """
-nh20
+    nh20
 
 A 20-bit Neuman-Hofman code XORed to the L5 Q code.
 nh20 is 20ms in length, where every bit is XORed to
@@ -116,7 +116,7 @@ const nh20 = [0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0]
 
 
 """
-xaregister()
+    xaregister()
 
 Generates the XA register 8091 bit sequence.
 Restarts after the first 8090 bits, where it
@@ -137,7 +137,7 @@ function xaregister()
 end
 
 """
-xbregister(prn::Integer)
+    xbregister(prn::Integer)
 
 Generates the XB code sequence for 1ms for the
 specified PRN.
@@ -156,7 +156,7 @@ end
 
 
 """
-xa_code
+    xa_code
 
 The output of the XA register for the L5Q signal.
 """
@@ -169,7 +169,7 @@ gen_xb_codes()
 Generates the output of the XB registers for all PRNs
 in "XB_intial_conditions."
 """
-function gen_xb_codes()
+    function gen_xb_codes()
 	xb_codes = typeof(XB_intial_conditions)()
 	for prn in keys(XB_intial_conditions)
 		xb_codes[prn] = xbregister(prn)
@@ -179,7 +179,7 @@ end
 
 
 # """
-# xb_codes
+#     xb_codes
 
 # Dictionary containing the output of the XB register for
 # all PRNs.
@@ -188,7 +188,7 @@ end
 
 
 """
-gen_l5q_codes()
+    gen_l5q_codes()
 
 
 Generates the L5Q codes for each PRN listed in
@@ -204,7 +204,7 @@ end
 
 
 """
-l5q_codes
+    l5q_codes
 
 Dictionary containing the L5Q codes for all PRNs.
 """
