@@ -12,7 +12,7 @@ signal generation.
 mutable struct L5QSignal{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,
                          A11,A12,A13,A14,A15,A16,A17,A18,
                          A19,A20,A21,A22,A23,A24,A25,A26,
-                         A27}
+                         A27,A28}
 	type::A1
 	prn::A2
 	f_s::A3
@@ -40,6 +40,7 @@ mutable struct L5QSignal{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,
 	f_nh_dd::A25
 	sample_num::A26
 	include_carrier_amplitude::A27
+	isreplica::A28
 end
 
 
@@ -99,6 +100,7 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                                            f_s, code_start_idx)
 	# Allocate space for signal
 	signal = Array{Complex{Float64}}(undef, sample_num)
+	isreplica = false
 	return L5QSignal(type, prn, f_s, t_length, f_if, f_d, fd_rate,
                      Tsys, CN0, ϕ, nADC, B, code_start_idx,
                      l5q_init_code_phase, nh_init_code_phase, t,
@@ -106,7 +108,7 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                      include_noise, include_neuman_code,
                      f_l5q_d, f_l5q_dd,
                      f_nh_d, f_nh_dd, sample_num,
-                     include_carrier_amplitude)
+                     include_carrier_amplitude, isreplica)
 end
 
 
@@ -142,7 +144,8 @@ function definesignal!(signal::L5QSignal;
                        include_noise=signal.include_noise,
                        include_neuman_code=signal.include_neuman_code,
                        code_start_idx=signal.code_start_idx,
-                       include_carrier_amplitude=signal.include_carrier_amplitude)
+                       include_carrier_amplitude=signal.include_carrier_amplitude,
+                       isreplica=signal.isreplica)
 	## Calculate code chipping rates with Doppler applied
 	# L5Q
 	f_l5q_d = L5_chipping_rate*(1. + f_d/L5_freq)
@@ -180,6 +183,7 @@ function definesignal!(signal::L5QSignal;
 	signal.l5q_init_code_phase = l5q_init_code_phase
 	signal.nh_init_code_phase = nh_init_code_phase
 	signal.include_carrier_amplitude = include_carrier_amplitude
+	signal.isreplica = isreplica
 	return signal
 end
 
@@ -191,20 +195,25 @@ Calculates the index in the codes for a given t.
 """
 function calccodeidx(init_chip, f_code_d, f_code_dd,
                      t, code_length)
-	return Int(floor(init_chip+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
+	return Int(floor(init_chip-1+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
 end
 
 
 """
-    generatesignal!(signal::L5QSignal)
+    generatesignal!(signal::L5QSignal,
+                    isreplica::Val{false}=Val(signal.isreplica))
 
 Generates local GNSS signal using paramters defined in a
 L5QSignal struct.
 
 Generates a signal with carrier, ADC quantization, noise,
 and Neuman sequence.
+
+No need to specify `isreplica`. Set `isreplica` to `true` to
+use alternate method, which ignores all `Bool` flags in `signal`.
 """
-function generatesignal!(signal::L5QSignal)
+function generatesignal!(signal::L5QSignal,
+	                     isreplica::Val{false}=Val(signal.isreplica))
 	# Common parmeters used for entire signal
 	prn = signal.prn
 	Tsys = signal.Tsys
@@ -267,6 +276,51 @@ function generatesignal!(signal::L5QSignal)
 	if signal.include_adc
 		signal.signal = round.(signal.signal.*(2^(nADC-1)-1) ./
 		                       maximum(abs.(signal.signal)))
+	end
+	return signal
+end
+
+
+"""
+    generatesignal!(signal::L5QSignal,
+                    isreplica::Val{true}=Val(signal.isreplica))
+
+Generates local GNSS signal using paramters defined in a
+L5QSignal struct.
+
+Generates a signal with carrier, ADC quantization, noise,
+and Neuman sequence.
+
+This version is used only when `isreplica` is set to `true`
+in `signal` and ignores all the `include_*` flags in `signal`,
+except `include_neuman_code`. Exponential without the amplitude
+is included automatically.
+"""
+function generatesignal!(signal::L5QSignal,
+	                     isreplica::Val{true}=Val(signal.isreplica))
+	# Common parmeters used for entire signal
+	prn = signal.prn
+	f_d = signal.f_d
+	f_if = signal.f_if
+	fd_rate = signal.fd_rate
+	ϕ = signal.ϕ
+	include_neuman_code = signal.include_neuman_code
+	@inbounds for i in 1:signal.sample_num
+		t = signal.t[i]
+		# Get L5Q code value at t
+		l5q = l5q_codes[prn][calccodeidx(signal.l5q_init_code_phase,
+                                         signal.f_l5q_d, signal.f_l5q_dd,
+                                         t, L5_code_length)]
+		# Get Neuman code sequence value at t
+		if include_neuman_code
+			nh = nh20[calccodeidx(signal.nh_init_code_phase,
+                                  signal.f_nh_d, signal.f_nh_dd,
+                                  t, nh_code_length)]
+		else
+			nh = 0
+		end
+		signal.signal[i] = ((xor(l5q, nh)*2-1) *
+			                exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
 	end
 	return signal
 end

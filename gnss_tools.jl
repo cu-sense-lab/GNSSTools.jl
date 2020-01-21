@@ -222,7 +222,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             data::L5QSignal, replica::L5QSignal,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/data.t_length,
-                            threads=1)
+                            threads=1, message="Correlating...")
 	# Set number of threads to use for FFTW functions
 	FFTW.set_num_threads(threads)
 	# Pre-plan FFTs and IFFTs
@@ -234,7 +234,11 @@ function courseacquisition!(corr_result::Array{Float64,2},
 	nADC = data.nADC
 	# Number of data samples
 	dsize = data.sample_num
-	@inbounds for i in 1:Int(fd_range/Δfd*2+1)
+	# Number of Doppler bins
+	doppler_bin_num = Int(fd_range/Δfd*2+1)
+	# Loading bar
+	p = Progress(doppler_bin_num, 1, message)
+	@inbounds for i in 1:doppler_bin_num
 		# Calculate Doppler frequency for `i` Doppler bin
 		f_d = (fd_center-fd_range) + (i-1)*Δfd
 		# Set signal parameters
@@ -245,7 +249,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
                       include_carrier_amplitude=false,
                       include_noise=false,
                       include_adc=false,
-                      nADC=nADC)
+                      nADC=nADC, isreplica=true)
 		# Generate signal
 		generatesignal!(replica)
 		# Perform in place FFT on replica
@@ -255,7 +259,11 @@ function courseacquisition!(corr_result::Array{Float64,2},
 		conjAmultB1D!(replica.signal, datafft, dsize)
 		# Take IFFT in place and save into `corr_result`
 		corr_result[i,:] = abs.(pifft*replica.signal)
+		# Update progress bar
+		next!(p)
 	end
+	# Set `isreplica` flag to false in `replica`
+	definesignal!(replica, isreplica=false)
 	return corr_result
 end
 
@@ -276,7 +284,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             data::GNSSData, replica::L5QSignal,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/data.t_length,
-                            threads=1)
+                            threads=1, message="Correlating...")
 	# Set number of threads to use for FFTW functions
 	FFTW.set_num_threads(threads)
 	# Pre-plan FFTs and IFFTs
@@ -288,7 +296,12 @@ function courseacquisition!(corr_result::Array{Float64,2},
 	nADC = data.nADC
 	# Number of data samples
 	dsize = data.sample_num
-	@inbounds for i in 1:(fd_range/Δfd*2+1)
+	# Number of Doppler bins
+	doppler_bin_num = Int(fd_range/Δfd*2+1)
+	# Loading bar
+	p = Progress(doppler_bin_num, 1, message)
+	@inbounds for i in 1:doppler_bin_num
+		println(i)
 		# Calculate Doppler frequency for `i` Doppler bin
 		f_d = (fd_center-fd_range) + (i-1)*Δfd
 		# Set signal parameters
@@ -306,9 +319,11 @@ function courseacquisition!(corr_result::Array{Float64,2},
 		prfft*replica.signal
 		# Take conjugate of FFT(replica) and multiply with FFT of
 		# data. The result is stored in `replica.signal`
-		conjAmultB1D!(replica.signal, datafft, Asize=dsize)
+		conjAmultB1D!(replica.signal, datafft, dsize)
 		# Take IFFT in place and save into `corr_result`
-		corr_result[i,:] = abs.(p*ifft(replica.signal))
+		corr_result[i,:] = abs.(pifft*replica.signal)
+		# Update progress bar
+		next!(p)
 	end
 	return corr_result
 end
