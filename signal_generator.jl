@@ -11,7 +11,8 @@ signal generation.
 """
 mutable struct L5QSignal{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,
                          A11,A12,A13,A14,A15,A16,A17,A18,
-                         A19,A20,A21,A22,A23,A24,A25,A26}
+                         A19,A20,A21,A22,A23,A24,A25,A26,
+                         A27}
 	type::A1
 	prn::A2
 	f_s::A3
@@ -38,6 +39,7 @@ mutable struct L5QSignal{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,
 	f_nh_d::A24
 	f_nh_dd::A25
 	sample_num::A26
+	include_carrier_amplitude::A27
 end
 
 
@@ -62,12 +64,12 @@ end
 
 
 """
-    definesignal(type, prn, f_s, t_length;
-                 f_if, f_d, fd_rate, Tsys,
-                 CN0, ϕ, nADC, B, include_carrier,
-                 include_adc, include_noise,
-                 include_neuman_code, code_start_idx,
-                 fds)
+    definesignal(type::Val{:l5q}, prn, f_s, t_length;
+                 f_if=0., f_d=0., fd_rate=0., Tsys=535.,
+                 CN0=45., ϕ=0., nADC=4, B=2.046e7,
+                 include_carrier=true, include_adc=true,
+                 include_noise=true, include_neuman_code=true,
+                 code_start_idx=1, include_carrier_amplitude=true)
 
 Define properties of locally generated L5Q signal
 based off its type, PRN, etc.
@@ -77,7 +79,7 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                       CN0=45., ϕ=0., nADC=4, B=2.046e7,
                       include_carrier=true, include_adc=true,
                       include_noise=true, include_neuman_code=true,
-                      code_start_idx=1)
+                      code_start_idx=1, include_carrier_amplitude=true)
 	# Generate time vector
 	t = Array(0:1/f_s:t_length-1/f_s)  # s
 	sample_num = Int(f_s * t_length)
@@ -103,15 +105,24 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                      signal, include_carrier, include_adc,
                      include_noise, include_neuman_code,
                      f_l5q_d, f_l5q_dd,
-                     f_nh_d, f_nh_dd, sample_num)
+                     f_nh_d, f_nh_dd, sample_num,
+                     include_carrier_amplitude)
 end
 
 
 """
-    definesignal!(l5qsignal; prn, f_if, f_d, fd_rate,
-                  Tsys, CN0, ϕ, nADC, B, include_carrier,
-                  include_adc, include_noise,
-                  include_neuman_code, code_start_idx, fds)
+    definesignal!(signal::L5QSignal;
+                  prn=signal.prn, f_d=signal.f_d,
+                  f_if=signal.f_if, fd_rate=signal.fd_rate,
+                  Tsys=signal.Tsys, CN0=signal.CN0,
+                  ϕ=signal.ϕ, nADC=signal.nADC,
+                  B=signal.B,
+                  include_carrier=signal.include_carrier,
+                  include_adc=signal.include_adc,
+                  include_noise=signal.include_noise,
+                  include_neuman_code=signal.include_neuman_code,
+                  code_start_idx=signal.code_start_idx,
+                  include_carrier_amplitude=signal.include_carrier_amplitude)
 
 Redefine properties of locally generated L5Q signal
 based off its type, PRN, etc. 
@@ -130,7 +141,8 @@ function definesignal!(signal::L5QSignal;
                        include_adc=signal.include_adc,
                        include_noise=signal.include_noise,
                        include_neuman_code=signal.include_neuman_code,
-                       code_start_idx=signal.code_start_idx)
+                       code_start_idx=signal.code_start_idx,
+                       include_carrier_amplitude=signal.include_carrier_amplitude)
 	## Calculate code chipping rates with Doppler applied
 	# L5Q
 	f_l5q_d = L5_chipping_rate*(1. + f_d/L5_freq)
@@ -167,12 +179,13 @@ function definesignal!(signal::L5QSignal;
 	signal.f_nh_dd = f_nh_dd
 	signal.l5q_init_code_phase = l5q_init_code_phase
 	signal.nh_init_code_phase = nh_init_code_phase
+	signal.include_carrier_amplitude = include_carrier_amplitude
 	return signal
 end
 
 
 """
-    calccodeidx(init_chip, f_code_d, f_code_d, t, code_length)
+    calccodeidx(init_chip, f_code_d, f_code_dd, t, code_length)
 
 Calculates the index in the codes for a given t.
 """
@@ -205,8 +218,9 @@ function generatesignal!(signal::L5QSignal)
 	include_carrier = signal.include_carrier
 	include_noise = signal.include_noise
 	include_neuman_code = signal.include_neuman_code
+	include_carrier_amplitude = signal.include_carrier_amplitude
 	sigtype = eltype(signal.signal)
-	for i in 1:signal.sample_num
+	@inbounds for i in 1:signal.sample_num
 		t = signal.t[i]
 		# Get L5Q code value at t
 		l5q = l5q_codes[prn][calccodeidx(signal.l5q_init_code_phase,
@@ -222,13 +236,24 @@ function generatesignal!(signal::L5QSignal)
 		end
 		if include_carrier & include_noise
 			# Calculate code value with carrier and noise
-			signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
-			                    exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
-			                    sqrt(k*B*Tsys)*randn(sigtype))
+			if include_carrier_amplitude
+				signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
+			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
+			                        sqrt(k*B*Tsys)*randn(sigtype))
+			else
+				signal.signal[i] = ((xor(l5q, nh)*2-1) *
+			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
+			                        sqrt(k*B*Tsys)*randn(sigtype))
+			end
 		elseif include_carrier & ~include_noise
 			# Calculate code value with carrier
-			signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
-			                    exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+			if include_carrier_amplitude
+				signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
+			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+			else
+				signal.signal[i] = ((xor(l5q, nh)*2-1) *
+			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+			end
 		elseif ~include_carrier & include_noise
 			# Calculate code value with carrier
 			signal.signal[i] = ((xor(l5q, nh)*2-1) +
@@ -241,7 +266,7 @@ function generatesignal!(signal::L5QSignal)
 	# Quantize signal
 	if signal.include_adc
 		signal.signal = round.(signal.signal.*(2^(nADC-1)-1) ./
-                                  maximum(abs.(signal.signal)))
+		                       maximum(abs.(signal.signal)))
 	end
 	return signal
 end

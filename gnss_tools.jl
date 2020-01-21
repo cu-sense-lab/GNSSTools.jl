@@ -25,7 +25,7 @@ end
 Structure for holding signal data.
 """
 struct GNSSData{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,
-                A11,A12}
+                A11,A12,A13}
 	file_name::A1
 	f_s::A2
 	f_if::A3
@@ -38,11 +38,12 @@ struct GNSSData{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,
 	site_loc_lla::A10
 	sample_num::A11
 	total_data_length::A12
+	nADC::A13
 end
 
 
 """
-    loaddata(data_type::Val{:sc8}, file_name, f_s, f_if, t_length;
+    loaddata(data_type, file_name, f_s, f_if, t_length;
              start_data_idx=1, site_lla=missing, data_start_time=missing)
 
 Loads data from sc8 file and loads into GNSSData type struct.
@@ -55,6 +56,14 @@ seconds.
 function loaddata(data_type, file_name, f_s, f_if, t_length;
                   start_data_idx=1, site_loc_lla=missing,
                   data_start_time=missing)
+	# Determine nADC
+	if typeof(data_type) == Val{:sc8}
+		nADC = 8
+	elseif typeof(data_type) == Val{:sc4}
+		nADC = 4
+	else
+		error("Invalid data type: $(typeof(data_type))")
+	end
 	# Compute number of samples to extract
 	sample_num = Int(f_s * t_length)
 	# Read data
@@ -67,7 +76,7 @@ function loaddata(data_type, file_name, f_s, f_if, t_length;
 	t = Array(0:1/f_s:t_length-1/f_s)  # s
 	return GNSSData(file_name, f_s, f_if, t_length, start_data_idx,
                     t, float.(data), data_type, data_start_time, site_loc_lla,
-                    sample_num, total_data_length)
+                    sample_num, total_data_length, nADC)
 end
 
 
@@ -135,16 +144,173 @@ function bytetocomplex(byte::UInt8)
 end
 
 
-
 """
-    courseacquisition(data::GNSSData, replica::L5QSignal, prn::Int64)
+    AmultB2D!(A, B, Asize=size(A))
 
-Performs course acquisition on Data type struct
-using defined L5QSignal type struct. No need to
-use generatesignal! before calling this function.
+Multiply contents of A in place with contents of B.
+Both A and B should be 2D arrays and be the same size.
 """
-function courseacquisition(data::GNSSData, replica::L5QSignal, prn::Int64;
-                           f_d=0., fd_range=5000., fd_rate=0.,
-                           threads=1)
-	FFTW.set_num_threads(threads)
+function AmultB2D!(A, B, Asize=size(A))
+	@inbounds for i in Asize[1]
+		@inbounds for j in Asize[2]
+			A[i,j] = A[i,j] * B[i,j]
+		end
+	end
+	return A
 end
+
+
+"""
+    AmultB1D!(A, B, Asize=size(A))
+
+Multiply contents of A in place with contents of B.
+Both A and B should be 1D arrays and be the same size.
+"""
+function AmultB21D!(A, B, Asize=size(A)[1])
+	@inbounds for i in Asize
+		A[i] = A[i] * B[i]
+	end
+	return A
+end
+
+
+"""
+    conjAmultB1D!(A, B, Asize=size(A))
+
+Multiply contents of conj(A) in place with contents of B.
+Both A and B should be 1D arrays and be the same size.
+"""
+function conjAmultB1D!(A, B, Asize=size(A)[1])
+	@inbounds for i in 1:Asize
+		A[i] = conj(A[i]) * B[i]
+	end
+	return A
+end
+
+
+"""
+    gencorrresult(fd_range, Δfd, sample_num)
+
+Generates a 2D `Array{Float64,2}` to store the
+cross correlation results output from courseacquisition
+"""
+function gencorrresult(fd_range, Δfd, sample_num)
+	return Array{Float64}(undef, Int(2*fd_range/Δfd+1), sample_num)
+end
+
+
+"""
+    courseacquisition!(corr_result::Array{Float64,2},
+                       data::L5QSignal, replica::L5QSignal,
+                       prn; fd_center=0., fd_range=5000.,
+                       fd_rate=0., Δfd=1/data.t_length,
+                       threads=1)
+
+Performs course acquisition on `L5QSignal` type struct
+using defined `L5QSignal` type struct. No need to
+use `generatesignal!` before calling this function.
+Operates in place on `corr_result`.
+
+Use this version for operating on simulated signals
+instead of real data.
+
+`NOTE:` `data` and `signal` must be two different
+        `L5QSignal` type structs. Do not use the
+        same struct for both argmuents.
+"""
+function courseacquisition!(corr_result::Array{Float64,2},
+                            data::L5QSignal, replica::L5QSignal,
+                            prn; fd_center=0., fd_range=5000.,
+                            fd_rate=0., Δfd=1/data.t_length,
+                            threads=1)
+	# Set number of threads to use for FFTW functions
+	FFTW.set_num_threads(threads)
+	# Pre-plan FFTs and IFFTs
+	pfft = plan_fft!(replica.signal)  # In-place FFT plan
+	pifft = plan_ifft!(replica.signal) # In-place IFFT plan
+	# Carrier wipe data signal, make copy, and take FFT
+	datafft = fft(data.signal.*exp.(-2π.*data.f_if.*data.t.*1im))
+	# Number of bits representing `data`
+	nADC = data.nADC
+	# Number of data samples
+	dsize = data.sample_num
+	@inbounds for i in 1:Int(fd_range/Δfd*2+1)
+		# Calculate Doppler frequency for `i` Doppler bin
+		f_d = (fd_center-fd_range) + (i-1)*Δfd
+		# Set signal parameters
+		definesignal!(replica;
+                      prn=prn, f_d=f_d,
+                      fd_rate=fd_rate, ϕ=0., f_if=0.,
+                      include_carrier=true,
+                      include_carrier_amplitude=false,
+                      include_noise=false,
+                      include_adc=false,
+                      nADC=nADC)
+		# Generate signal
+		generatesignal!(replica)
+		# Perform in place FFT on replica
+		pfft*replica.signal
+		# Take conjugate of FFT(replica) and multiply with FFT of
+		# data. The result is stored in `replica.signal`
+		conjAmultB1D!(replica.signal, datafft, dsize)
+		# Take IFFT in place and save into `corr_result`
+		corr_result[i,:] = abs.(pifft*replica.signal)
+	end
+	return corr_result
+end
+
+
+"""
+    courseacquisition!(corr_result::Array{Float64,2},
+                       data::GNSSData, replica::L5QSignal,
+                       prn; fd_center=0., fd_range=5000.,
+                       fd_rate=0., Δfd=1/data.t_length,
+                       threads=1)
+
+Performs course acquisition on `Data` type struct
+using defined `L5QSignal` type struct. No need to
+use `generatesignal!` before calling this function.
+Operates in place on `corr_result`.
+"""
+function courseacquisition!(corr_result::Array{Float64,2},
+                            data::GNSSData, replica::L5QSignal,
+                            prn; fd_center=0., fd_range=5000.,
+                            fd_rate=0., Δfd=1/data.t_length,
+                            threads=1)
+	# Set number of threads to use for FFTW functions
+	FFTW.set_num_threads(threads)
+	# Pre-plan FFTs and IFFTs
+	prfft = fft_plan!(replica.signal)  # In-place FFT plan
+	pifft = ifft_plan!(replica.signal) # In-place IFFT plan
+	# Carrier wipe data signal, make copy, and take FFT
+	datafft = fft(data.data.*exp.(-2π.*data.f_if.*data.t.*1im))
+	# Number of bits representing `data`
+	nADC = data.nADC
+	# Number of data samples
+	dsize = data.sample_num
+	@inbounds for i in 1:(fd_range/Δfd*2+1)
+		# Calculate Doppler frequency for `i` Doppler bin
+		f_d = (fd_center-fd_range) + (i-1)*Δfd
+		# Set signal parameters
+		definesignal!(replica;
+                      prn=prn, f_d=f_d,
+                      fd_rate=fd_rate, ϕ=0., f_if=0.,
+                      include_carrier=true,
+                      include_carrier_amplitude=false,
+                      include_noise=false,
+                      include_adc=false,
+                      nADC=nADC)
+		# Generate signal
+		generatesignal!(replica)
+		# Perform in place FFT on replica
+		prfft*replica.signal
+		# Take conjugate of FFT(replica) and multiply with FFT of
+		# data. The result is stored in `replica.signal`
+		conjAmultB1D!(replica.signal, datafft, Asize=dsize)
+		# Take IFFT in place and save into `corr_result`
+		corr_result[i,:] = abs.(p*ifft(replica.signal))
+	end
+	return corr_result
+end
+
+
