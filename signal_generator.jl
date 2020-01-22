@@ -1,4 +1,5 @@
 using Random
+using Base.Threads
 include("constants.jl")
 include("l5q_code_generator.jl")
 
@@ -195,7 +196,12 @@ Calculates the index in the codes for a given t.
 """
 function calccodeidx(init_chip, f_code_d, f_code_dd,
                      t, code_length)
-	return Int(floor(init_chip-1+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
+	chip = Int(floor(init_chip-1+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
+	if chip == 0
+		return code_length
+	else
+		return chip
+	end
 end
 
 
@@ -228,9 +234,11 @@ function generatesignal!(signal::L5QSignal,
 	include_noise = signal.include_noise
 	include_neuman_code = signal.include_neuman_code
 	include_carrier_amplitude = signal.include_carrier_amplitude
+	include_adc = signal.include_adc
 	sigtype = eltype(signal.signal)
-	@inbounds for i in 1:signal.sample_num
-		t = signal.t[i]
+	adc_scale = 2^(nADC-1)-1
+	@threads for i in 1:signal.sample_num
+		@inbounds t = signal.t[i]
 		# Get L5Q code value at t
 		l5q = l5q_codes[prn][calccodeidx(signal.l5q_init_code_phase,
                                          signal.f_l5q_d, signal.f_l5q_dd,
@@ -246,36 +254,35 @@ function generatesignal!(signal::L5QSignal,
 		if include_carrier & include_noise
 			# Calculate code value with carrier and noise
 			if include_carrier_amplitude
-				signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
-			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
-			                        sqrt(k*B*Tsys)*randn(sigtype))
+				@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
+			                                  exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
+			                                  sqrt(k*B*Tsys)*randn(sigtype))
 			else
-				signal.signal[i] = ((xor(l5q, nh)*2-1) *
-			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
-			                        sqrt(k*B*Tsys)*randn(sigtype))
+				@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1) *
+			                                  exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
+			                                  sqrt(k*B*Tsys)*randn(sigtype))
 			end
 		elseif include_carrier & ~include_noise
 			# Calculate code value with carrier
 			if include_carrier_amplitude
-				signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
-			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+				@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1)*sqrt(2*k*Tsys)*10^(CN0/20) *
+			                                  exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
 			else
-				signal.signal[i] = ((xor(l5q, nh)*2-1) *
-			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+				@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1) *
+			                                  exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
 			end
 		elseif ~include_carrier & include_noise
 			# Calculate code value with carrier
-			signal.signal[i] = ((xor(l5q, nh)*2-1) +
-			                    sqrt(k*B*Tsys)*randn(sigtype))
+			@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1) +
+			                              sqrt(k*B*Tsys)*randn(sigtype))
 		else
 			# Calculate code value only
-			signal.signal[i] = complex(float((xor(l5q, nh)*2-1)))
+			@inbounds signal.signal[i] = complex(float((xor(l5q, nh)*2-1)))
 		end
 	end
 	# Quantize signal
-	if signal.include_adc
-		signal.signal = round.(signal.signal.*(2^(nADC-1)-1) ./
-		                       maximum(abs.(signal.signal)))
+	if include_adc
+		signal.signal = round.(signal.signal.*adc_scale./sqrt(maximum(abs2.(signal.signal))))
 	end
 	return signal
 end
@@ -305,8 +312,8 @@ function generatesignal!(signal::L5QSignal,
 	fd_rate = signal.fd_rate
 	ϕ = signal.ϕ
 	include_neuman_code = signal.include_neuman_code
-	@inbounds for i in 1:signal.sample_num
-		t = signal.t[i]
+	@threads for i in 1:signal.sample_num
+		@inbounds t = signal.t[i]
 		# Get L5Q code value at t
 		l5q = l5q_codes[prn][calccodeidx(signal.l5q_init_code_phase,
                                          signal.f_l5q_d, signal.f_l5q_dd,
@@ -319,8 +326,8 @@ function generatesignal!(signal::L5QSignal,
 		else
 			nh = 0
 		end
-		signal.signal[i] = ((xor(l5q, nh)*2-1) *
-			                exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+		@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1) *
+			                          exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
 	end
 	return signal
 end

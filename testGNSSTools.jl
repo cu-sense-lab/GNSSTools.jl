@@ -3,7 +3,19 @@ using PyPlot
 pygui(true)
 
 
-function testcourseacquisition(;prn=1, f_d=0., code_start_idx=1, t_length=1e-3, fd_range=5000., threads=1)
+"""
+    testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
+                           fd_range=5000., threads=nthreads(),
+                           showplot=false)
+
+Simulates a noisy signal with parameters specified above and
+performs course acquisition on it. Prints the course Doppler
+and code phase (in samples) estimates. Set `showplot` to `true`
+to plot along the time index for estimated Doppler bin.
+"""
+function testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
+                                fd_range=5000., threads=nthreads(),
+                                showplot=false)
 	# Simulate signal with noise
 	type = Val(:l5q)
 	f_s = 25e6  # Hz
@@ -26,10 +38,9 @@ function testcourseacquisition(;prn=1, f_d=0., code_start_idx=1, t_length=1e-3, 
 	                    include_adc=include_adc,
 	                    include_noise=include_noise,
 	                    include_neuman_code=include_neuman_code,
-	                    code_start_idx=code_start_idx,
+	                    code_start_idx=n0,
 	                    include_carrier_amplitude=include_carrier_amplitude)
 	generatesignal!(data)
-
 	# Generate replica signal for cross correlation
 	replica = definesignal(type::Val{:l5q}, prn, f_s, t_length;
 	                       f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
@@ -50,6 +61,14 @@ function testcourseacquisition(;prn=1, f_d=0., code_start_idx=1, t_length=1e-3, 
 	                   fd_center=fd_center, fd_range=fd_range,
 	                   fd_rate=fd_rate, Δfd=Δfd, threads=threads)
 	max_idx = argmax(corr_result)
-	fd_bins = Array(-fd_range+fd_center:1/t_length:fd_range+fd_center)
-	println("\nPRN $(prn):\nfd = $(fd_bins[max_idx[1]])Hz\nn₀ = $(max_idx[2]) samples")
+	fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
+	n0_est = max_idx[2]%Int(f_s*nh_code_length/nh_chipping_rate)
+	println("\nPRN $(prn):\nfd = $(fd_est)Hz\nn₀ = $(n0_est) samples")
+	if showplot
+		figure()
+		plot(corr_result[max_idx[1],:], "k-")
+		xlabel("n (Samples)")
+		ylabel("|replica⋆data|² at Peak Doppler Bin")
+		title("PRN $(prn)")
+	end
 end

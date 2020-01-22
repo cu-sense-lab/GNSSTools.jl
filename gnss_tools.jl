@@ -167,8 +167,8 @@ Multiply contents of A in place with contents of B.
 Both A and B should be 1D arrays and be the same size.
 """
 function AmultB21D!(A, B, Asize=size(A)[1])
-	@inbounds for i in Asize
-		A[i] = A[i] * B[i]
+	@threads for i in Asize
+		@inbounds A[i] = A[i] * B[i]
 	end
 	return A
 end
@@ -181,8 +181,8 @@ Multiply contents of conj(A) in place with contents of B.
 Both A and B should be 1D arrays and be the same size.
 """
 function conjAmultB1D!(A, B, Asize=size(A)[1])
-	@inbounds for i in 1:Asize
-		A[i] = conj(A[i]) * B[i]
+	@threads for i in 1:Asize
+		@inbounds A[i] = conj(A[i]) * B[i]
 	end
 	return A
 end
@@ -217,12 +217,15 @@ instead of real data.
 `NOTE:` `data` and `signal` must be two different
         `L5QSignal` type structs. Do not use the
         same struct for both argmuents.
+
+`corr_result` contains |conj(fft(replica)*fft(data)|² per
+Doppler bin.
 """
 function courseacquisition!(corr_result::Array{Float64,2},
                             data::L5QSignal, replica::L5QSignal,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/data.t_length,
-                            threads=1, message="Correlating...")
+                            threads=4, message="Correlating...")
 	# Set number of threads to use for FFTW functions
 	FFTW.set_num_threads(threads)
 	# Pre-plan FFTs and IFFTs
@@ -258,7 +261,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
 		# data. The result is stored in `replica.signal`
 		conjAmultB1D!(replica.signal, datafft, dsize)
 		# Take IFFT in place and save into `corr_result`
-		corr_result[i,:] = abs.(pifft*replica.signal)
+		corr_result[i,:] = abs2.(pifft*replica.signal)
 		# Update progress bar
 		next!(p)
 	end
@@ -278,7 +281,10 @@ end
 Performs course acquisition on `Data` type struct
 using defined `L5QSignal` type struct. No need to
 use `generatesignal!` before calling this function.
-Operates in place on `corr_result`.
+Operates in place on `corr_result`. 
+
+`corr_result` contains |conj(fft(replica)*fft(data)|² per
+Doppler bin.
 """
 function courseacquisition!(corr_result::Array{Float64,2},
                             data::GNSSData, replica::L5QSignal,
@@ -321,7 +327,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
 		# data. The result is stored in `replica.signal`
 		conjAmultB1D!(replica.signal, datafft, dsize)
 		# Take IFFT in place and save into `corr_result`
-		corr_result[i,:] = abs.(pifft*replica.signal)
+		corr_result[i,:] = abs2.(pifft*replica.signal)
 		# Update progress bar
 		next!(p)
 	end
