@@ -225,7 +225,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             data::L5QSignal, replica::L5QSignal,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/data.t_length,
-                            threads=4, message="Correlating...")
+                            threads=8, message="Correlating...")
 	# Set number of threads to use for FFTW functions
 	FFTW.set_num_threads(threads)
 	# Pre-plan FFTs and IFFTs
@@ -249,7 +249,6 @@ function courseacquisition!(corr_result::Array{Float64,2},
                       prn=prn, f_d=f_d,
                       fd_rate=fd_rate, ϕ=0., f_if=0.,
                       include_carrier=true,
-                      include_carrier_amplitude=false,
                       include_noise=false,
                       include_adc=false,
                       nADC=nADC, isreplica=true)
@@ -276,7 +275,7 @@ end
                        data::GNSSData, replica::L5QSignal,
                        prn; fd_center=0., fd_range=5000.,
                        fd_rate=0., Δfd=1/data.t_length,
-                       threads=1)
+                       threads=8)
 
 Performs course acquisition on `Data` type struct
 using defined `L5QSignal` type struct. No need to
@@ -290,14 +289,15 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             data::GNSSData, replica::L5QSignal,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/data.t_length,
-                            threads=1, message="Correlating...")
+                            threads=8, message="Correlating...")
 	# Set number of threads to use for FFTW functions
 	FFTW.set_num_threads(threads)
 	# Pre-plan FFTs and IFFTs
-	prfft = fft_plan!(replica.signal)  # In-place FFT plan
-	pifft = ifft_plan!(replica.signal) # In-place IFFT plan
+	pfft = plan_fft!(replica.signal)  # In-place FFT plan
+	pifft = plan_ifft!(replica.signal) # In-place IFFT plan
 	# Carrier wipe data signal, make copy, and take FFT
 	datafft = fft(data.data.*exp.(-2π.*data.f_if.*data.t.*1im))
+	# datafft = fft(data.data)
 	# Number of bits representing `data`
 	nADC = data.nADC
 	# Number of data samples
@@ -307,7 +307,6 @@ function courseacquisition!(corr_result::Array{Float64,2},
 	# Loading bar
 	p = Progress(doppler_bin_num, 1, message)
 	@inbounds for i in 1:doppler_bin_num
-		println(i)
 		# Calculate Doppler frequency for `i` Doppler bin
 		f_d = (fd_center-fd_range) + (i-1)*Δfd
 		# Set signal parameters
@@ -315,14 +314,13 @@ function courseacquisition!(corr_result::Array{Float64,2},
                       prn=prn, f_d=f_d,
                       fd_rate=fd_rate, ϕ=0., f_if=0.,
                       include_carrier=true,
-                      include_carrier_amplitude=false,
                       include_noise=false,
                       include_adc=false,
-                      nADC=nADC)
+                      nADC=nADC, isreplica=true)
 		# Generate signal
 		generatesignal!(replica)
 		# Perform in place FFT on replica
-		prfft*replica.signal
+		pfft*replica.signal
 		# Take conjugate of FFT(replica) and multiply with FFT of
 		# data. The result is stored in `replica.signal`
 		conjAmultB1D!(replica.signal, datafft, dsize)
@@ -331,7 +329,26 @@ function courseacquisition!(corr_result::Array{Float64,2},
 		# Update progress bar
 		next!(p)
 	end
+	# Set `isreplica` flag to false in `replica`
+	definesignal!(replica, isreplica=false)
 	return corr_result
 end
 
+
+"""
+    calcsnr(x)
+
+Calculates the SNR of the correlation peak in `x`.
+"""
+function calcsnr(x)
+	N = length(x)
+	amplitude = sqrt(maximum(abs2.(x)))
+	PS = 2*abs2(amplitude)
+	PN = 0.
+	@threads for i in 1:N
+		@inbounds PN += abs2(x[i])
+	end
+	PN -= PS/(N-2)
+	return 10*log10(PS/PN)
+end
 
