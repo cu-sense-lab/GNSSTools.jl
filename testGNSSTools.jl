@@ -123,7 +123,7 @@ function testcourseacquisitiondata(;prns=26, t_length=1e-3,
 		                   fd_rate=fd_rate, Δfd=Δfd, threads=threads)
 		max_idx = argmax(corr_result)
 		fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
-		n0_est = max_idx[2]%Int(f_s*nh_code_length/nh_chipping_rate)
+		n0_est = max_idx[2]#%Int(f_s*nh_code_length/nh_chipping_rate)
 		snr_est = calcsnr(corr_result[max_idx[1],:])
 		println("\nPRN $(prn):")
 		println("fd = $(fd_est)Hz")
@@ -131,8 +131,8 @@ function testcourseacquisitiondata(;prns=26, t_length=1e-3,
 		println("SNR = $(snr_est)dB")
 		if showplot
 			figure()
-			plot(corr_result[max_idx[1],:], "k-")
-			xlabel("n (Samples)")
+			plot(data.t.*1000, corr_result[max_idx[1],:], "k-")
+			xlabel("Time (ms)")
 			ylabel("|replica⋆data|² at Peak Doppler Bin")
 			title("PRN $(prn)")
 		end
