@@ -1,6 +1,7 @@
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+PkgDev = "149e707d-584d-56d3-88ec-740c18e106ff"
 ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 SatelliteToolbox = "6ac157d9-b43d-51bb-8fab-48bf53814f4a"

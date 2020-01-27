@@ -29,7 +29,7 @@ mutable struct L5QSignal{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,
 	l5q_init_code_phase::A14
 	nh_init_code_phase::A15
 	t::A16
-	signal::A17
+	data::A17
 	include_carrier::A18
 	include_adc::A19
 	include_noise::A20
@@ -95,12 +95,12 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                                            f_nh_d, f_nh_dd,
                                            f_s, code_start_idx)
 	# Allocate space for signal
-	signal = Array{Complex{Float64}}(undef, sample_num)
+	data = Array{Complex{Float64}}(undef, sample_num)
 	isreplica = false
 	return L5QSignal(type, prn, f_s, t_length, f_if, f_d, fd_rate,
                      Tsys, CN0, ϕ, nADC, B, code_start_idx,
                      l5q_init_code_phase, nh_init_code_phase, t,
-                     signal, include_carrier, include_adc,
+                     data, include_carrier, include_adc,
                      include_noise,
                      f_l5q_d, f_l5q_dd,
                      f_nh_d, f_nh_dd, sample_num,
@@ -223,7 +223,7 @@ function generatesignal!(signal::L5QSignal,
 	include_carrier = signal.include_carrier
 	include_noise = signal.include_noise
 	include_adc = signal.include_adc
-	sigtype = eltype(signal.signal)
+	sigtype = eltype(signal.data)
 	adc_scale = 2^(nADC-1)-1
 	carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
 	noise_amp = sqrt(k*B*Tsys)
@@ -239,27 +239,27 @@ function generatesignal!(signal::L5QSignal,
                               t, nh_code_length)]
 		if include_carrier & include_noise
 			# Calculate code value with carrier and noise
-			@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1) * carrier_amp *
-			                              exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
-			                              noise_amp * randn(sigtype))
+			@inbounds signal.data[i] = ((xor(l5q, nh)*2-1) * carrier_amp *
+			                            exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
+			                            noise_amp * randn(sigtype))
 		elseif include_carrier & ~include_noise
 			# Calculate code value with carrier and no noise
-			@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1) * carrier_amp *
-			                              exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+			@inbounds signal.data[i] = ((xor(l5q, nh)*2-1) * carrier_amp *
+			                            exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
 		elseif ~include_carrier & include_noise
 			# Calculate code value with noise and no carrier
-			@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1) +
-			                               noise_amp * randn(sigtype))
+			@inbounds signal.data[i] = ((xor(l5q, nh)*2-1) +
+			                            noise_amp * randn(sigtype))
 		else
 			# Calculate code value only
-			@inbounds signal.signal[i] = complex(float((xor(l5q, nh)*2-1)))
+			@inbounds signal.data[i] = complex(float((xor(l5q, nh)*2-1)))
 		end
 	end
 	# Quantize signal
 	if include_adc
-		sigmax = sqrt(maximum(abs2.(signal.signal)))
+		sigmax = sqrt(maximum(abs2.(signal.data)))
 		@threads for i in 1:signal.sample_num
-			@inbounds signal.signal[i] = round(signal.signal[i]*adc_scale/sigmax)
+			@inbounds signal.data[i] = round(signal.data[i]*adc_scale/sigmax)
 		end
 	end
 	return signal
@@ -300,8 +300,8 @@ function generatesignal!(signal::L5QSignal,
                               signal.f_nh_d, signal.f_nh_dd,
                               t, nh_code_length)]
 		# XOR l51 and nh20 and modulated with complex exponential
-		@inbounds signal.signal[i] = ((xor(l5q, nh)*2-1) *
-			                          exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+		@inbounds signal.data[i] = ((xor(l5q, nh)*2-1) *
+			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
 	end
 	return signal
 end
