@@ -209,7 +209,7 @@ function testnoncoherentintegration(;prns=26, t_length=1e-3,
 			courseacquisition!(corr_result, data, replica, prn;
 		                   	   fd_center=fd_center, fd_range=fd_range,
 		                       fd_rate=fd_rate, Δfd=Δfd, threads=threads,
-		                       operation="sum",
+		                       operation="add",
 		                       start_idx=(n-1)*sample_num+1)
 		end
 		max_idx = argmax(corr_result)

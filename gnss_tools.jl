@@ -275,9 +275,9 @@ function courseacquisition!(corr_result::Array{Float64,2},
 		@threads for j in 1:dsize
 			if operation == "replace"
 				@inbounds corr_result[i,j] = abs2(replica.data[j])
-			elseif operation == "sum"
+			elseif operation == "add"
 				@inbounds corr_result[i,j] += abs2(replica.data[j])
-			elseif operation == "product"
+			elseif operation == "multiply"
 				@inbounds corr_result[i,j] *= abs2(replica.data[j])
 			end
 		end
