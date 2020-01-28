@@ -205,12 +205,15 @@ function testnoncoherentintegration(;prns=26, t_length=1e-3,
 	end
 	# Begin course acquisition
 	for prn in prns
+		p = Progress(N, 1, "Correlating PRN $(prn)...")
 		for n in 1:N
 			courseacquisition!(corr_result, data, replica, prn;
 		                   	   fd_center=fd_center, fd_range=fd_range,
 		                       fd_rate=fd_rate, Δfd=Δfd, threads=threads,
 		                       operation="add",
-		                       start_idx=(n-1)*sample_num+1)
+		                       start_idx=(n-1)*sample_num+1,
+		                       showprogressbar=false)
+			next!(p)
 		end
 		max_idx = argmax(corr_result)
 		fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd

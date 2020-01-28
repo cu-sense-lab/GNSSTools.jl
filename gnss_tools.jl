@@ -231,7 +231,8 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/data.t_length,
                             threads=8, message="Correlating...",
-                            operation="replace", start_idx=1)
+                            operation="replace", start_idx=1,
+                            showprogressbar=true)
 	# Set number of threads to use for FFTW functions
 	FFTW.set_num_threads(threads)
 	# Number of data samples
@@ -248,7 +249,9 @@ function courseacquisition!(corr_result::Array{Float64,2},
 	# Number of Doppler bins
 	doppler_bin_num = Int(fd_range/Δfd*2+1)
 	# Loading bar
-	p = Progress(doppler_bin_num, 1, message)
+    if showprogressbar
+	   p = Progress(doppler_bin_num, 1, message)
+    end
 	@inbounds for i in 1:doppler_bin_num
 		# Calculate Doppler frequency for `i` Doppler bin
 		f_d = (fd_center-fd_range) + (i-1)*Δfd
@@ -282,7 +285,9 @@ function courseacquisition!(corr_result::Array{Float64,2},
 			end
 		end
 		# Update progress bar
-		next!(p)
+        if showprogressbar
+		  next!(p)
+        end
 	end
 	# Set `isreplica` flag to false in `replica`
 	definesignal!(replica, isreplica=false)
