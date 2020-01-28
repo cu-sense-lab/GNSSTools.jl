@@ -205,7 +205,7 @@ end
                        prn; fd_center=0., fd_range=5000.,
                        fd_rate=0., Δfd=1/data.t_length,
                        threads=8, message="Correlating...",
-                       operation="replace")
+                       operation="replace", start_idx=1)
 
 Performs course acquisition on either `GNSSData` or `L5QSignal`
 type struct using defined `L5QSignal` type struct. No need
@@ -227,19 +227,20 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/data.t_length,
                             threads=8, message="Correlating...",
-                            operation="replace")
+                            operation="replace", start_idx=1)
 	# Set number of threads to use for FFTW functions
 	FFTW.set_num_threads(threads)
+	# Number of data samples
+	dsize = replica.sample_num
 	# Pre-plan FFTs and IFFTs
 	pfft = plan_fft!(replica.data)  # In-place FFT plan
 	pifft = plan_ifft!(replica.data) # In-place IFFT plan
 	# Carrier wipe data signal, make copy, and take FFT
-	datafft = fft(data.data.*exp.(-2π.*data.f_if.*data.t.*1im))
+	datafft = fft(data.data[start_idx:start_idx+dsize-1] .*
+                  exp.(-2π.*data.f_if.*data.t[1:dsize].*1im))
 	# datafft = fft(data.data)
 	# Number of bits representing `data`
 	nADC = data.nADC
-	# Number of data samples
-	dsize = data.sample_num
 	# Number of Doppler bins
 	doppler_bin_num = Int(fd_range/Δfd*2+1)
 	# Loading bar

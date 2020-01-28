@@ -68,14 +68,20 @@ end
 
 
 """
-    testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
-                           fd_range=5000., threads=nthreads(),
-                           showplot=false)
+testcourseacquisitiondata(;prns=26, t_length=1e-3,
+                           threads=nthreads(),
+                           showplot=false,
+                           fd_center=0.,
+                           fd_range=5000.,
+                           file="test",
+                           start_t=0.)
 
-Simulates a noisy signal with parameters specified above and
-performs course acquisition on it. Prints the course Doppler
-and code phase (in samples) estimates. Set `showplot` to `true`
-to plot along the time index for estimated Doppler bin.
+Performs course acquisition on real data. Set `file` to "test"
+for 4-bit complex direct L5 data. Set `file` to "iss" for 8-bit
+ISS data. Note that direct signals from PRNs 12, 24, and 27
+exist in ISS data. Prints the course Doppler and code phase
+(in samples) estimates. Set `showplot` to `true` to plot along
+the time index for estimated Doppler bin.
 """
 function testcourseacquisitiondata(;prns=26, t_length=1e-3,
                                     threads=nthreads(),
