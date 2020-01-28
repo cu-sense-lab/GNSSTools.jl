@@ -194,8 +194,12 @@ end
 Generates a 2D `Array{Float64,2}` to store the
 cross correlation results output from courseacquisition
 """
-function gencorrresult(fd_range, Δfd, sample_num)
-	return Array{Float64}(undef, Int(2*fd_range/Δfd+1), sample_num)
+function gencorrresult(fd_range, Δfd, sample_num; iszeros=false)
+    if iszeros
+        return zeros(Float64, Int(2*fd_range/Δfd+1), sample_num)
+    else
+	   return Array{Float64}(undef, Int(2*fd_range/Δfd+1), sample_num)
+    end
 end
 
 
