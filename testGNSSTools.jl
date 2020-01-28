@@ -184,14 +184,14 @@ function testnoncoherentintegration(;prns=26, t_length=1e-3,
 		file_name = "20191023_195000_n200_cu-dish_1176.45_25.sc8"
 	end
 	file_path = string(file_dir, file_name)
-	data = loaddata(data_type, file_path, f_s, f_if, t_length;
+	data = loaddata(data_type, file_path, f_s, f_if, N*t_length;
                     start_data_idx=Int(f_s * start_t)+1)
 	# Generate replica signal for cross correlation
 	replica = definesignal(Val(:l5q), 1, f_s, t_length)
 	# Perform cross correlation using function
 	fd_rate = 0.  # Hz
 	Δfd = 1/t_length  # Hz
-	sample_num = data.sample_num
+	sample_num = replica.sample_num
 	corr_result = gencorrresult(fd_range, Δfd, sample_num; iszeros=true)
 	# Set PRNs to course acquire
 	if prns == "all"
@@ -205,11 +205,11 @@ function testnoncoherentintegration(;prns=26, t_length=1e-3,
 	end
 	# Begin course acquisition
 	for prn in prns
-		for n in N
+		for n in 1:N
 			courseacquisition!(corr_result, data, replica, prn;
 		                   	   fd_center=fd_center, fd_range=fd_range,
 		                       fd_rate=fd_rate, Δfd=Δfd, threads=threads,
-		                       operation="add",
+		                       operation="sum",
 		                       start_idx=(n-1)*sample_num+1)
 		end
 		max_idx = argmax(corr_result)
@@ -222,7 +222,7 @@ function testnoncoherentintegration(;prns=26, t_length=1e-3,
 		println("SNR = $(snr_est)dB")
 		if showplot
 			figure()
-			plot(data.t.*1000, corr_result[max_idx[1],:], "k-")
+			plot(replica.t.*1000, corr_result[max_idx[1],:], "k-")
 			xlabel("Time (ms)")
 			ylabel("|replica⋆data|² at Peak Doppler Bin")
 			title("PRN $(prn)")
