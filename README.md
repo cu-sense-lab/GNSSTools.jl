@@ -22,7 +22,7 @@ The above ensures that Julia's package manager can access SeNSe's internal GitLa
 
 ## Installing GNSSTools
 
-From terminal type `Julia` and the type `]` to enter the package manager. Then copy/paste the following:
+From terminal type `julia` and the type `]` to enter the package manager. Then copy/paste the following:
 
 ```julia
 add git@192.168.3.66:bilardis/GNSSTools.jl.git
