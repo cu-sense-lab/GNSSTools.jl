@@ -2,7 +2,7 @@
 
 A general Julia package for working with GNSS data. Support course acquisition for L5Q signals. New will signals will be added on an as needed basis. Local signal generation and course acquisition methods support multithreading. See instructions for installing this package.
 
-*NOTE:* This is a private repo, but you should still have access to it if logged in. Contact me if you don't.
+**NOTE:** This is a private repo, but you should still have access to it if logged in. Contact me if you don't.
 
 # Installation
 
@@ -18,7 +18,7 @@ ssh-add ~/.ssh/id_rsa  # This could also be the path to your RSA key if named di
 
 The above ensures that Julia's package manager can access SeNSe's internal GitLab using the same ssh key you use to make commits. Once you've done this, restart your terminal session by logging out and back in. You will now be able to install internal packages directly through Julia's package manager.
 
-*NOTE:* If your ssh key for GitLab changes, make sure to update the above to point to it.
+**NOTE:** If your ssh key for GitLab changes, make sure to update the above to point to it.
 
 ## Installing GNSSTools
 
