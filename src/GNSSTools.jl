@@ -13,6 +13,7 @@ module GNSSTools
     include("signal_generator.jl")
     include("l5q_code_generator.jl")
     include("gnss_tools.jl")
+    include("testGNSSTools.jl")
 
     export c
     export k

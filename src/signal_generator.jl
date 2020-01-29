@@ -21,7 +21,7 @@ mutable struct L5QSignal
 	l5q_init_code_phase::Float64
 	nh_init_code_phase::Float64
 	t::Array{Float64,1}
-	data::Array{Float64,1}
+	data::Array{Complex{Float64},1}
 	include_carrier::Bool
 	include_adc::Bool
 	include_noise::Bool

@@ -164,7 +164,7 @@ const xa_code = xaregister()
 
 
 """
-gen_xb_codes()
+    gen_xb_codes()
 
 Generates the output of the XB registers for all PRNs
 in "XB_intial_conditions."
