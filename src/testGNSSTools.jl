@@ -1,8 +1,3 @@
-include("gnss_tools.jl")
-using PyPlot
-pygui(true)
-
-
 """
     testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
                            fd_range=5000., threads=nthreads(),

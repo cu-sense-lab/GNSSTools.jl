@@ -1,44 +1,36 @@
-using Random
-using Base.Threads
-include("constants.jl")
-include("l5q_code_generator.jl")
-
-
 """
     L5QSignal()
 
 Struct for holding L5Q GNSS signal properties for
 signal generation.
 """
-mutable struct L5QSignal{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,
-                         A11,A12,A13,A14,A15,A16,A17,A18,
-                         A19,A20,A21,A22,A23,A24,A25,A26}
-	type::A1
-	prn::A2
-	f_s::A3
-	t_length::A4
-	f_if::A5
-	f_d::A6
-	fd_rate::A7
-	Tsys::A8
-	CN0::A9
-	ϕ::A10
-	nADC::A11
-	B::A12
-	code_start_idx::A13
-	l5q_init_code_phase::A14
-	nh_init_code_phase::A15
-	t::A16
-	data::A17
-	include_carrier::A18
-	include_adc::A19
-	include_noise::A20
-	f_l5q_d::A21
-	f_l5q_dd::A22
-	f_nh_d::A23
-	f_nh_dd::A24
-	sample_num::A25
-	isreplica::A26
+mutable struct L5QSignal
+	type::Val{:l5q}
+	prn::Int64
+	f_s::Float64
+	t_length::Float64
+	f_if::Float64
+	f_d::Float64
+	fd_rate::Float64
+	Tsys::Float64
+	CN0::Float64
+	ϕ::Float64
+	nADC::Float64
+	B::Float64
+	code_start_idx::Float64
+	l5q_init_code_phase::Float64
+	nh_init_code_phase::Float64
+	t::Array{Float64,1}
+	data::Array{Complex{Float64},1}
+	include_carrier::Bool
+	include_adc::Bool
+	include_noise::Bool
+	f_l5q_d::Float64
+	f_l5q_dd::Float64
+	f_nh_d::Float64
+	f_nh_dd::Float64
+	sample_num::Int64
+	isreplica::Bool
 end
 
 

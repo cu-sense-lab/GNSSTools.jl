@@ -1,8 +1,3 @@
-using ProgressMeter
-using FFTW
-include("signal_generator.jl")
-
-
 """
     fft_correlate(data, reference)
 
@@ -24,21 +19,20 @@ end
 
 Structure for holding signal data.
 """
-struct GNSSData{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,
-                A11,A12,A13}
-	file_name::A1
-	f_s::A2
-	f_if::A3
-	t_length::A4
-	start_data_idx::A5
-	t::A6
-	data::A7
-	data_type::A8
-	data_start_time::A9
-	site_loc_lla::A10
-	sample_num::A11
-	total_data_length::A12
-	nADC::A13
+struct GNSSData{A1,A2,A3}
+	file_name::String
+	f_s::Float64
+	f_if::Float64
+	t_length::Float64
+	start_data_idx::Int64
+	t::Array{Float64,1}
+	data::Array{Complex{Float64},1}
+	data_type::A1
+	data_start_time::A2
+	site_loc_lla::A3
+	sample_num::Int64
+	total_data_length::Float64
+	nADC::Int64
 end
 
 
