@@ -12,3 +12,13 @@ const c = 299792458  # m/s
 k = 1.38×10⁻²³ J/K
 """
 const k = 1.380649e-23  # J/K
+
+
+"""
+    Rₑ (Volumetric Mean Radius of the Earth)
+
+Rₑ = 6371.000e3  # meters
+
+From [NASA Earth Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html)
+"""
+const Rₑ = 6371.000e3  # meters

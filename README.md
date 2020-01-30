@@ -28,4 +28,4 @@ From terminal type `julia` and the type `]` to enter the package manager. Then c
 add git@192.168.3.66:bilardis/GNSSTools.jl.git
 ```
  
-Julia will automatically install the neccessary dependencies and GNSSTools. Once complete, you can return the Julia REPL by hitting the `backspace` key. To update GNSSTools if newer versions are released, enter the package manager again by typing `]` and use `update GNSSTools`. 
+Julia will automatically install the neccessary dependencies and GNSSTools. Once complete, you can return the Julia REPL by hitting the `backspace` key. To update GNSSTools if newer versions are released, enter the package manager again by typing `]` and use `update GNSSTools`.
