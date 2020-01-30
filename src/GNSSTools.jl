@@ -17,6 +17,7 @@ module GNSSTools
 
     export c
     export k
+    export Rₑ
     export L5_freq
     export L5_code_length
     export nh_code_length
