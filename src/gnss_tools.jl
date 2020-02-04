@@ -331,7 +331,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             prn, N; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/data.t_length,
                             threads=8, message="Correlating...",
-                            operation="replace", start_idx=1,
+                            operation="add", start_idx=1,
                             showprogressbar=true)
     # Set number of threads to use for FFTW functions
     FFTW.set_num_threads(threads)
@@ -341,7 +341,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
     pfft = plan_fft!(replica.data)  # In-place FFT plan
     pifft = plan_ifft!(replica.data) # In-place IFFT plan
     # Carrier wipe data signal, make copy, and take FFT
-    datafft = fft(data.data .* exp.(-2π.*data.f_if.*data.t.*1im))
+    # datafft = fft(data.data .* exp.(-2π.*data.f_if.*data.t.*1im))
     # datafft = fft(data.data)
     # Number of bits representing `data`
     nADC = data.nADC
@@ -379,8 +379,10 @@ function courseacquisition!(corr_result::Array{Float64,2},
         end
     end
     @inbounds for n in 1:N
-        start_idx = (n-1)*replica.sample_num + 1
-        datasegment = datafft[start_idx:start_idx+replica.sample_num-1]
+        start_idx = (n-1)*dsize + 1
+        # datasegment = datafft[start_idx:start_idx+dsize-1]
+        datasegment = fft(data.data[start_idx:start_idx+dsize-1] .*
+                          exp.(-2π.*data.f_if.*data.t[start_idx:start_idx+dsize-1].*1im))
         @inbounds for i in 1:doppler_bin_num
             repl = deepcopy(replicas[i,:])
             # Take product of replica and data
