@@ -145,8 +145,8 @@ Multiply contents of A in place with contents of B.
 Both A and B should be 2D arrays and be the same size.
 """
 function AmultB2D!(A, B, Asize=size(A))
-	@inbounds for i in Asize[1]
-		@inbounds for j in Asize[2]
+	@inbounds for i in 1:Asize[1]
+		@inbounds for j in 1:Asize[2]
 			A[i,j] = A[i,j] * B[i,j]
 		end
 	end
@@ -160,8 +160,8 @@ end
 Multiply contents of A in place with contents of B.
 Both A and B should be 1D arrays and be the same size.
 """
-function AmultB21D!(A, B, Asize=size(A)[1])
-	@threads for i in Asize
+function AmultB1D!(A, B, Asize=size(A)[1])
+	@threads for i in 1:Asize
 		@inbounds A[i] = A[i] * B[i]
 	end
 	return A
@@ -179,6 +179,20 @@ function conjAmultB1D!(A, B, Asize=size(A)[1])
 		@inbounds A[i] = conj(A[i]) * B[i]
 	end
 	return A
+end
+
+
+"""
+    conjA!(A, Asize=size(A))
+
+Takes the conjugate of A in place.
+A should be a 1D array.
+"""
+function conjA!(A, Asize=size(A)[1])
+    @threads for i in 1:Asize
+        @inbounds A[i] = conj(A[i])
+    end
+    return A
 end
 
 
@@ -286,6 +300,115 @@ function courseacquisition!(corr_result::Array{Float64,2},
 	# Set `isreplica` flag to false in `replica`
 	definesignal!(replica, isreplica=false)
 	return corr_result
+end
+
+
+"""
+    courseacquisition!(corr_result::Array{Float64,2},
+                       data, replica::L5QSignal,
+                       prn, N=1; fd_center=0., fd_range=5000.,
+                       fd_rate=0., Δfd=1/data.t_length,
+                       threads=8, message="Correlating...",
+                       operation="replace", start_idx=1)
+
+Performs non-coherent course acquisition on either `GNSSData` or
+`L5QSignal` type struct using defined `L5QSignal` type struct.
+No need to use `generatesignal!` before calling this function.
+Operates in place on `corr_result`. 
+
+*NOTE:* If `data` is a replica signal structure type,
+        it's structure type must be the same as the type
+        of `replica`. They must also be separately defined
+        or one must be a deep copy of the other. Do not
+        pass the same structure to the `data` and `replica`
+        arguments. 
+
+`corr_result` contains |conj(fft(replica)*fft(data)|² per
+Doppler bin.
+"""
+function courseacquisition!(corr_result::Array{Float64,2},
+                            data, replica::L5QSignal,
+                            prn, N; fd_center=0., fd_range=5000.,
+                            fd_rate=0., Δfd=1/data.t_length,
+                            threads=8, message="Correlating...",
+                            operation="replace", start_idx=1,
+                            showprogressbar=true)
+    # Set number of threads to use for FFTW functions
+    FFTW.set_num_threads(threads)
+    # Number of data samples
+    dsize = replica.sample_num
+    # Pre-plan FFTs and IFFTs
+    pfft = plan_fft!(replica.data)  # In-place FFT plan
+    pifft = plan_ifft!(replica.data) # In-place IFFT plan
+    # Carrier wipe data signal, make copy, and take FFT
+    datafft = fft(data.data .* exp.(-2π.*data.f_if.*data.t.*1im))
+    # datafft = fft(data.data)
+    # Number of bits representing `data`
+    nADC = data.nADC
+    # Number of Doppler bins
+    doppler_bin_num = Int(fd_range/Δfd*2+1)
+    # Create array to hold signal replicas for each Doppler bin
+    replicas = Array{Complex{Float64}}(undef, doppler_bin_num, replica.sample_num)
+    # Loading bar
+    if showprogressbar
+       p = Progress(doppler_bin_num*(N+1), 1, message)
+    end
+    # Generate all replicas and store in `replicas`
+    @inbounds for i in 1:doppler_bin_num
+        # Calculate Doppler frequency for `i` Doppler bin
+        f_d = (fd_center-fd_range) + (i-1)*Δfd
+        # Set signal parameters
+        definesignal!(replica;
+                      prn=prn, f_d=f_d,
+                      fd_rate=fd_rate, ϕ=0., f_if=0.,
+                      include_carrier=true,
+                      include_noise=false,
+                      include_adc=false,
+                      nADC=nADC, isreplica=true)
+        # Generate signal
+        generatesignal!(replica)
+        # Perform in place FFT on replica
+        pfft*replica.data
+        # Take conjugate of replica
+        conjA!(replica.data, dsize)
+        # Save replica to current Doppler bin
+        replicas[i,:] = deepcopy(replica.data)
+        # Update progress bar
+        if showprogressbar
+            next!(p)
+        end
+    end
+    @inbounds for n in 1:N
+        start_idx = (n-1)*replica.sample_num + 1
+        datasegment = datafft[start_idx:start_idx+replica.sample_num-1]
+        @inbounds for i in 1:doppler_bin_num
+            repl = deepcopy(replicas[i,:])
+            # Take product of replica and data
+            # Store result in `repl`
+            AmultB1D!(repl, datasegment, dsize)
+            # Take IFFT in place
+            pifft*repl
+            # Take `abs2` in place and save result
+            # Either replace, add to, or multiply by pre-existing value
+            # in `corr_result`
+            @threads for j in 1:dsize
+                if operation == "replace"
+                    @inbounds corr_result[i,j] = abs2(repl[j])
+                elseif operation == "add"
+                    @inbounds corr_result[i,j] += abs2(repl[j])
+                elseif operation == "multiply"
+                    @inbounds corr_result[i,j] *= abs2(repl[j])
+                end
+            end
+            # Update progress bar
+            if showprogressbar
+              next!(p)
+            end
+        end
+    end
+    # Set `isreplica` flag to false in `replica`
+    definesignal!(replica, isreplica=false)
+    return corr_result
 end
 
 

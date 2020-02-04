@@ -35,5 +35,6 @@ module GNSSTools
     export testcourseacquisition
     export testcourseacquisitiondata
     export testnoncoherentintegration
+    export testnoncoherentintegration2
 
 end # module
