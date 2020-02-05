@@ -237,7 +237,7 @@ Doppler bin.
 function courseacquisition!(corr_result::Array{Float64,2},
                             data, replica::L5QSignal,
                             prn; fd_center=0., fd_range=5000.,
-                            fd_rate=0., Δfd=1/data.t_length,
+                            fd_rate=0., Δfd=1/replica.t_length,
                             threads=8, message="Correlating...",
                             operation="replace", start_idx=1,
                             showprogressbar=true)
@@ -329,7 +329,7 @@ Doppler bin.
 function courseacquisition!(corr_result::Array{Float64,2},
                             data, replica::L5QSignal,
                             prn, N; fd_center=0., fd_range=5000.,
-                            fd_rate=0., Δfd=1/data.t_length,
+                            fd_rate=0., Δfd=1/replica.t_length,
                             threads=8, message="Correlating...",
                             operation="add", start_idx=1,
                             showprogressbar=true)
@@ -341,8 +341,16 @@ function courseacquisition!(corr_result::Array{Float64,2},
     pfft = plan_fft!(replica.data)  # In-place FFT plan
     pifft = plan_ifft!(replica.data) # In-place IFFT plan
     # Carrier wipe data signal, make copy, and take FFT
-    # datafft = fft(data.data .* exp.(-2π.*data.f_if.*data.t.*1im))
-    # datafft = fft(data.data)
+    datafft = Array{Complex{Float64}}(undef, data.sample_num)
+    @threads for i in 1:data.sample_num
+        @inbounds datafft[i] = data.data[i]*exp(-2π*data.f_if*(data.t[i])*1im)
+    end
+    # Take in place FFT of each data segment of `replica.t_length` in `datafft`
+    @inbounds for n in 1:N
+        start_idx = (n-1)*dsize + 1
+        pfft*view(datafft, start_idx:start_idx+dsize-1)
+        # fft!(view(datafft, start_idx:start_idx+dsize-1))
+    end
     # Number of bits representing `data`
     nADC = data.nADC
     # Number of Doppler bins
@@ -380,9 +388,9 @@ function courseacquisition!(corr_result::Array{Float64,2},
     end
     @inbounds for n in 1:N
         start_idx = (n-1)*dsize + 1
-        # datasegment = datafft[start_idx:start_idx+dsize-1]
-        datasegment = fft(data.data[start_idx:start_idx+dsize-1] .*
-                          exp.(-2π.*data.f_if.*data.t[start_idx:start_idx+dsize-1].*1im))
+        datasegment = view(datafft, start_idx:start_idx+dsize-1)
+        # datasegment = fft(data.data[start_idx:start_idx+dsize-1] .*
+        #                   exp.(-2π.*data.f_if.*data.t[start_idx:start_idx+dsize-1].*1im))
         @inbounds for i in 1:doppler_bin_num
             repl = deepcopy(replicas[i,:])
             # Take product of replica and data
