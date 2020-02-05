@@ -314,7 +314,7 @@ end
 Performs non-coherent course acquisition on either `GNSSData` or
 `L5QSignal` type struct using defined `L5QSignal` type struct.
 No need to use `generatesignal!` before calling this function.
-Operates in place on `corr_result`. 
+Operates in place on `corr_result`.
 
 *NOTE:* If `data` is a replica signal structure type,
         it's structure type must be the same as the type
@@ -340,8 +340,13 @@ function courseacquisition!(corr_result::Array{Float64,2},
     # Pre-plan FFTs and IFFTs
     pfft = plan_fft!(replica.data)  # In-place FFT plan
     pifft = plan_ifft!(replica.data) # In-place IFFT plan
+    # Number of bits representing `data`
+    nADC = data.nADC
+    # Number of Doppler bins
+    doppler_bin_num = Int(fd_range/Δfd*2+1)
     # Carrier wipe data signal, make copy, and take FFT
     datafft = Array{Complex{Float64}}(undef, data.sample_num)
+    # Generate all replicas and store in `replicas`
     @threads for i in 1:data.sample_num
         @inbounds datafft[i] = data.data[i]*exp(-2π*data.f_if*(data.t[i])*1im)
     end
@@ -349,19 +354,13 @@ function courseacquisition!(corr_result::Array{Float64,2},
     @inbounds for n in 1:N
         start_idx = (n-1)*dsize + 1
         pfft*view(datafft, start_idx:start_idx+dsize-1)
-        # fft!(view(datafft, start_idx:start_idx+dsize-1))
     end
-    # Number of bits representing `data`
-    nADC = data.nADC
-    # Number of Doppler bins
-    doppler_bin_num = Int(fd_range/Δfd*2+1)
     # Create array to hold signal replicas for each Doppler bin
     replicas = Array{Complex{Float64}}(undef, doppler_bin_num, replica.sample_num)
     # Loading bar
     if showprogressbar
        p = Progress(doppler_bin_num*(N+1), 1, message)
     end
-    # Generate all replicas and store in `replicas`
     @inbounds for i in 1:doppler_bin_num
         # Calculate Doppler frequency for `i` Doppler bin
         f_d = (fd_center-fd_range) + (i-1)*Δfd
@@ -386,13 +385,12 @@ function courseacquisition!(corr_result::Array{Float64,2},
             next!(p)
         end
     end
+    repl = Array{Complex{Float64}}(undef, replica.sample_num)
     @inbounds for n in 1:N
         start_idx = (n-1)*dsize + 1
         datasegment = view(datafft, start_idx:start_idx+dsize-1)
-        # datasegment = fft(data.data[start_idx:start_idx+dsize-1] .*
-        #                   exp.(-2π.*data.f_if.*data.t[start_idx:start_idx+dsize-1].*1im))
         @inbounds for i in 1:doppler_bin_num
-            repl = deepcopy(replicas[i,:])
+            repl[:] = deepcopy(replicas[i,:])
             # Take product of replica and data
             # Store result in `repl`
             AmultB1D!(repl, datasegment, dsize)
@@ -430,7 +428,7 @@ Calculates the SNR of the correlation peak in `x`.
 function calcsnr(x)
 	N = length(x)
 	amplitude = sqrt(maximum(abs2.(x)))
-	PS = 2*abs2(amplitude)
+	PS = 2*amplitude^2
 	PN = 0.
 	@threads for i in 1:N
 		@inbounds PN += abs2(x[i])
