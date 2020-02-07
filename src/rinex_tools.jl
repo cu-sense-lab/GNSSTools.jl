@@ -34,9 +34,9 @@ end
 
 
 """
-    BRDC(prn, iono_parms, epoch, Af₀, Af₁, Af₂, IODE, Crs,
-         Crc, Cus, Cuc, Cis, Cic, ṅ, M₀, e, a, Toe,
-         Toc, Ω, i, di, dα, ω, gps_week, health)
+    BRDC(prn, iono_parms, epoch, Af₀, Af₁, Af₂, IODE,
+         Crs, Crc, Cus, Cuc, Cis, Cic, ṅ, M₀, e, a,
+         Toe, Toc, Ω, i, di, dα, ω, gps_week, health)
 
 Struct holding GPS Broadcast Ephemeris parameters and
 ionospheric correction terms.
@@ -212,11 +212,11 @@ function loadrinex(file)
         """
         fline = readline(f)                           # Read line
         Toc = Toe                                     # Time of clock
+        fline = readline(f)                           # Read line
         # Save to `BRDC` struct and place into dictionary, `BRDCs`
         BRDCs[prn][timestamp] = BRDC(prn, iono_parms, epoch, Af₀, Af₁, Af₂, IODE, Crs, Crc,
                                      Cus, Cuc, Cis, Cic, ṅ, M₀, e, a, Toe, Toc, Ω, i,
                                      di, dα, ω, week, health)
-        fline = readline(f)                           # Read line
     end
     return BRDCs
 end
