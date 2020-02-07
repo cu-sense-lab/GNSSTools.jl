@@ -52,14 +52,13 @@ end
 
 
 """
-    removeDE(str)
+    replaceD(str)
 
-Removes a `D` or `E` from values in RINEX files
+Replaces a `D` with an `E` from values in RINEX files
 so they can be parsed using `parse`.
 """
-function removeDE(str)
+function replaceD(str)
     str = replace(str, "D" => "E")
-    # str = replace(str, "E" => "")
     return str
 end
 
@@ -90,18 +89,18 @@ function loadrinex(file)
         # Check if this is the line with the ionospheric correction terms, αᵢ
         if occursin("ION ALPHA", fline)
             alphas = split(fline)
-            alphas = [parse(Float64, removeDE(alphas[1])),
-                      parse(Float64, removeDE(alphas[2])),
-                      parse(Float64, removeDE(alphas[3])),
-                      parse(Float64, removeDE(alphas[4]))]
+            alphas = [parse(Float64, replaceD(alphas[1])),
+                      parse(Float64, replaceD(alphas[2])),
+                      parse(Float64, replaceD(alphas[3])),
+                      parse(Float64, replaceD(alphas[4]))]
         end
         # Check if this is the line with the ionospheric correction terms, βᵢ
         if occursin("ION BETA", fline)
             betas = split(fline)
-            betas = [parse(Float64, removeDE(betas[1])),
-                     parse(Float64, removeDE(betas[2])),
-                     parse(Float64, removeDE(betas[3])),
-                     parse(Float64, removeDE(betas[4]))]
+            betas = [parse(Float64, replaceD(betas[1])),
+                     parse(Float64, replaceD(betas[2])),
+                     parse(Float64, replaceD(betas[3])),
+                     parse(Float64, replaceD(betas[4]))]
         end
     end
     iono_parms = Klobuchar(alphas[1], alphas[2], alphas[3], alphas[4],
@@ -112,62 +111,56 @@ function loadrinex(file)
         """
             First Line of PRN Navigation Data
         """
-        println(fline)
         prn = parse(Int64, fline[1:2], base=10)       # PRN
         # Read clock information
-        Af₀ = parse(Float64, removeDE(fline[23:41]))  # clock bias (s)
-        Af₁ = parse(Float64, removeDE(fline[42:60]))  # clock drift (s/s)
-        Af₂ = parse(Float64, removeDE(fline[61:79]))  # clock drift rate (s/s²)
+        Af₀ = parse(Float64, replaceD(fline[23:41]))  # clock bias (s)
+        Af₁ = parse(Float64, replaceD(fline[42:60]))  # clock drift (s/s)
+        Af₂ = parse(Float64, replaceD(fline[61:79]))  # clock drift rate (s/s²)
         """
             Second Line of PRN Navigation Data
         """
         fline = readline(f)                           # Read line
-        println(fline)
-        IODE = parse(Float64, removeDE(fline[4:22]))  # Issue of data (ephemeris)
-        Crs = parse(Float64, removeDE(fline[23:41]))  # Amplitude of the Sine Harmonic Correction
+        IODE = parse(Float64, replaceD(fline[4:22]))  # Issue of data (ephemeris)
+        Crs = parse(Float64, replaceD(fline[23:41]))  # Amplitude of the Sine Harmonic Correction
                                                       # Apply to orbital radius
-        ṅ = parse(Float64, removeDE(fline[42:60]))    # Mean motion difference from computed value (rad/s)
-        M₀ = parse(Float64, removeDE(fline[42:60]))   # Mean anomaly at reference time (rad)
+        ṅ = parse(Float64, replaceD(fline[42:60]))    # Mean motion difference from computed value (rad/s)
+        M₀ = parse(Float64, replaceD(fline[42:60]))   # Mean anomaly at reference time (rad)
         """
             Third Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
-        println(fline)
-        Cuc = parse(Float64, removeDE(fline[4:22]))  # Amplitude of the Cosine Harmonic Correction
+        Cuc = parse(Float64, replaceD(fline[4:22]))  # Amplitude of the Cosine Harmonic Correction
                                                      # Apply to Argument of Latitude
-        e = parse(Float64, removeDE(fline[23:41]))   # Eccentricity
-        Cus = parse(Float64, removeDE(fline[42:60])) # Amplitude of the Sine Harmonic Correction
+        e = parse(Float64, replaceD(fline[23:41]))   # Eccentricity
+        Cus = parse(Float64, replaceD(fline[42:60])) # Amplitude of the Sine Harmonic Correction
                                                      # Apply to Argument of Latitude
-        a = parse(Float64, removeDE(fline[61:79]))^2 # Semi-major axis (meters)
+        a = parse(Float64, replaceD(fline[61:79]))^2 # Semi-major axis (meters)
         """
             Fourth Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
-        println(fline)
-        Toe = parse(Float64, removeDE(fline[4:22]))  # Referemce time of ephemeris (seconds into GPS week)
-        Cic = parse(Float64, removeDE(fline[23:41])) # Amplitude of Cosine Harmonic Correction
+        Toe = parse(Float64, replaceD(fline[4:22]))  # Referemce time of ephemeris (seconds into GPS week)
+        Cic = parse(Float64, replaceD(fline[23:41])) # Amplitude of Cosine Harmonic Correction
                                                      # Apply to th Angle of Inclination (i)
-        Ω = parse(Float64, removeDE(fline[42:60]))   # Longitude of Ascending Node of orbit plane
+        Ω = parse(Float64, replaceD(fline[42:60]))   # Longitude of Ascending Node of orbit plane
                                                      # at weekly epoch (rad)
-        Cis = parse(Float64, removeDE(fline[61:79])) # Amplitude of Sine Harmonic Correction
+        Cis = parse(Float64, replaceD(fline[61:79])) # Amplitude of Sine Harmonic Correction
                                                      # Apply to th Angle of Inclination (i)
         """
             Fifth Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
-        println(fline)
-        i = parse(Float64, removeDE(fline[4:22]))    # Inclination angle at reference time (rad)
-        Crc = parse(Float64, removeDE(fline[23:41])) # Amplitude of the Cosine Harmonic Correction
+        i = parse(Float64, replaceD(fline[4:22]))    # Inclination angle at reference time (rad)
+        Crc = parse(Float64, replaceD(fline[23:41])) # Amplitude of the Cosine Harmonic Correction
                                                      # Use with orbt radius
-        ω = parse(Float64, removeDE(fline[42:60]))   # Argument of perigee (rad)
-        dα = parse(Float64, removeDE(fline[61:79]))  # Rate of change of Right Ascension (rad/s)
+        ω = parse(Float64, replaceD(fline[42:60]))   # Argument of perigee (rad)
+        dα = parse(Float64, replaceD(fline[61:79]))  # Rate of change of Right Ascension (rad/s)
         """
             Sixth Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
-        println(fline)
-        di = parse(Float64, removeDE(fline[4:22]))   # Rate of change inclination angle (rad/s)
-        week = parse(Float64, removeDE(fline[42:60]))# GPS week number (use with Toe)
+        di = parse(Float64, replaceD(fline[4:22]))   # Rate of change inclination angle (rad/s)
+        week = parse(Float64, replaceD(fline[42:60]))# GPS week number (use with Toe)
         if week < 1024
             week += 1024
         end
@@ -175,13 +168,11 @@ function loadrinex(file)
             Seventh Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
-        println(fline)
-        health = parse(Float64, removeDE(fline[23:41])) # Satellite health (0.00 = usable)
+        health = parse(Float64, replaceD(fline[23:41])) # Satellite health (0.00 = usable)
         """
             Eigtht Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
-        println(fline)
         Toc = Toe                                    # Time of clock
         # Save to `BRDC` struct and place into dictionary, `BRDCs`
         BRDCs[prn] = BRDC(prn, iono_parms, Af₀, Af₁, Af₂, IODE, Crs, Crc,
