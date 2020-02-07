@@ -55,11 +55,11 @@ end
     removeDE(str)
 
 Removes a `D` or `E` from values in RINEX files
-so they can be parsed.
+so they can be parsed using `parse`.
 """
 function removeDE(str)
-    str = replace(str, "D" => "")
-    str = replace(str, "E" => "")
+    str = replace(str, "D" => "E")
+    # str = replace(str, "E" => "")
     return str
 end
 
@@ -104,14 +104,15 @@ function loadrinex(file)
                      parse(Float64, removeDE(betas[4]))]
         end
     end
-    iono_parms = Ionosphere(alphas[1], alphas[2], alphas[3], alphas[4],
-                            betas[1], betas[2], betas[3], betas[4])
+    iono_parms = Klobuchar(alphas[1], alphas[2], alphas[3], alphas[4],
+                           betas[1], betas[2], betas[3], betas[4])
     BRDCs = Dict()
+    fline = readline(f)  # Read line
     while fline != ""
         """
             First Line of PRN Navigation Data
         """
-        fline = readline(f)                           # Read line
+        println(fline)
         prn = parse(Int64, fline[1:2], base=10)       # PRN
         # Read clock information
         Af₀ = parse(Float64, removeDE(fline[23:41]))  # clock bias (s)
@@ -121,6 +122,7 @@ function loadrinex(file)
             Second Line of PRN Navigation Data
         """
         fline = readline(f)                           # Read line
+        println(fline)
         IODE = parse(Float64, removeDE(fline[4:22]))  # Issue of data (ephemeris)
         Crs = parse(Float64, removeDE(fline[23:41]))  # Amplitude of the Sine Harmonic Correction
                                                       # Apply to orbital radius
@@ -130,6 +132,7 @@ function loadrinex(file)
             Third Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
+        println(fline)
         Cuc = parse(Float64, removeDE(fline[4:22]))  # Amplitude of the Cosine Harmonic Correction
                                                      # Apply to Argument of Latitude
         e = parse(Float64, removeDE(fline[23:41]))   # Eccentricity
@@ -140,6 +143,7 @@ function loadrinex(file)
             Fourth Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
+        println(fline)
         Toe = parse(Float64, removeDE(fline[4:22]))  # Referemce time of ephemeris (seconds into GPS week)
         Cic = parse(Float64, removeDE(fline[23:41])) # Amplitude of Cosine Harmonic Correction
                                                      # Apply to th Angle of Inclination (i)
@@ -151,6 +155,7 @@ function loadrinex(file)
             Fifth Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
+        println(fline)
         i = parse(Float64, removeDE(fline[4:22]))    # Inclination angle at reference time (rad)
         Crc = parse(Float64, removeDE(fline[23:41])) # Amplitude of the Cosine Harmonic Correction
                                                      # Use with orbt radius
@@ -160,6 +165,7 @@ function loadrinex(file)
             Sixth Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
+        println(fline)
         di = parse(Float64, removeDE(fline[4:22]))   # Rate of change inclination angle (rad/s)
         week = parse(Float64, removeDE(fline[42:60]))# GPS week number (use with Toe)
         if week < 1024
@@ -169,16 +175,19 @@ function loadrinex(file)
             Seventh Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
+        println(fline)
         health = parse(Float64, removeDE(fline[23:41])) # Satellite health (0.00 = usable)
         """
             Eigtht Line of PRN Navigation Data
         """
         fline = readline(f)                          # Read line
+        println(fline)
         Toc = Toe                                    # Time of clock
         # Save to `BRDC` struct and place into dictionary, `BRDCs`
         BRDCs[prn] = BRDC(prn, iono_parms, Af₀, Af₁, Af₂, IODE, Crs, Crc,
                           Cus, Cuc, Cis, Cic, ṅ, M₀, e, a, Toe, Toc, Ω, i,
                           di, dα, ω, week, health)
+        fline = readline(f)                           # Read line
     end
     return BRDCs
 end
