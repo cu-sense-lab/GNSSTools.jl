@@ -162,7 +162,7 @@ function loadrinex(file)
         Crs = parse(Float64, replaceD(fline[23:41]))  # Amplitude of the Sine Harmonic Correction
                                                       # Apply to orbital radius
         ṅ = parse(Float64, replaceD(fline[42:60]))    # Mean motion difference from computed value (rad/s)
-        M₀ = parse(Float64, replaceD(fline[42:60]))   # Mean anomaly at reference time (rad)
+        M₀ = parse(Float64, replaceD(fline[61:79]))   # Mean anomaly at reference time (rad)
         """
             Third Line of PRN Navigation Data
         """

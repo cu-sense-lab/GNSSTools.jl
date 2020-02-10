@@ -35,6 +35,43 @@ end
 
 
 """
+    L5ISignal()
+
+Struct for holding L5Q GNSS signal properties for
+signal generation.
+"""
+mutable struct L5ISignal
+    type::Val{:l5q}
+    prn::Int64
+    f_s::Float64
+    t_length::Float64
+    f_if::Float64
+    f_d::Float64
+    fd_rate::Float64
+    Tsys::Float64
+    CN0::Float64
+    ϕ::Float64
+    nADC::Float64
+    B::Float64
+    code_start_idx::Float64
+    l5q_init_code_phase::Float64
+    databit_init_code_phase::Float64
+    t::Array{Float64,1}
+    data::Array{Complex{Float64},1}
+    include_carrier::Bool
+    include_adc::Bool
+    include_noise::Bool
+    include_databits::Bool
+    f_l5q_d::Float64
+    f_l5q_dd::Float64
+    f_db_d::Float64  # databit Doppler
+    f_db_dd::Float64
+    sample_num::Int64
+    isreplica::Bool
+end
+
+
+"""
     calcinitcodephase(code_length, f_d, fd_rate, f_s,
                       code_start_idx)
 
