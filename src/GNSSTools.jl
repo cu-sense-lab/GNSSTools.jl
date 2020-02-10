@@ -14,6 +14,7 @@ module GNSSTools
     include("l5q_code_generator.jl")
     include("gnss_tools.jl")
     include("rinex_tools.jl")
+    include("tracking_tools.jl")
     include("testGNSSTools.jl")
 
     export c
@@ -34,6 +35,7 @@ module GNSSTools
     export courseacquisition!
     export calcsnr
     export loadrinex
+    export trackprn
     export testcourseacquisition
     export testcourseacquisitiondata
     export testnoncoherentintegration
