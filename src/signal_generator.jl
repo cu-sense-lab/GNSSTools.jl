@@ -1,4 +1,22 @@
 """
+    l5q
+
+Array of symbols specifying that a signal
+is a an L5 dataless signal.
+"""
+const l5q = [:l5, :q]
+
+
+"""
+    l5i
+
+Array of symbols specifying that a signal
+is a an L5 signal with data bits.
+"""
+const l5i = [:l5, :i]
+
+
+"""
     L5QSignal()
 
 Struct for holding L5Q GNSS signal properties for
@@ -306,9 +324,8 @@ Generates a signal with carrier, ADC quantization, noise,
 and Neuman sequence.
 
 This version is used only when `isreplica` is set to `true`
-in `signal` and ignores all the `include_*` flags in `signal`,
-except `include_neuman_code`. Exponential without the amplitude
-is included automatically.
+in `signal` and ignores all the `include_*` flags in `signal`.
+Exponential without the amplitude is included automatically.
 """
 function generatesignal!(signal::L5QSignal,
 	                     isreplica::Val{true}=Val(signal.isreplica))
