@@ -1,4 +1,35 @@
 """
+    PLLParms
+
+Struct for storing coefficients for the PLL filter. 
+"""
+struct PLLParms
+    T::Float64
+    damping::Float64
+    B::Float64
+    wn::Float64
+    a0::Float64
+    a1::Float64
+    a2::Float64
+    b0::Float64
+    b1::Float64
+    b2::Float64
+end
+
+
+"""
+    DLLParms
+
+Struct for storing DLL parameters.
+"""
+struct DLLParms
+    T::Float64
+    B::Float64
+    d::Int64
+end
+
+
+"""
     TrackResults
 
 A struct containing the parameters for tracking and its results
@@ -39,37 +70,6 @@ struct TrackResults{T1,T2,T3,T4,T5,T6}
     data_bits::Array{Int64,1}
     DLL_descriminator::T5
     PLL_descriminator::T6
-end
-
-
-"""
-    PLLParms
-
-Struct for storing coefficients for the PLL filter. 
-"""
-struct PLLParms
-    T::Float64
-    damping::Float64
-    B::Float64
-    wn::Float64
-    a0::Float64
-    a1::Float64
-    a2::Float64
-    b0::Float64
-    b1::Float64
-    b2::Float64
-end
-
-
-"""
-    DLLParms
-
-Struct for storing DLL parameters.
-"""
-struct DLLParms
-    T::Float64
-    B::Float64
-    d::Int64
 end
 
 

@@ -11,7 +11,7 @@ module GNSSTools
 
     include("constants.jl")
     include("signal_generator.jl")
-    include("l5q_code_generator.jl")
+    include("l5_code_generator.jl")
     include("gnss_tools.jl")
     include("rinex_tools.jl")
     include("tracking_tools.jl")
