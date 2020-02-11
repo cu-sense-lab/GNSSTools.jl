@@ -194,29 +194,31 @@ end
 
 Perform code and phase tracking on data in `data`.
 
-`replica` decides the signal type and `results` decides
-the tracking parameters. Can also pass optional arguments
-that are minumum amount to constuct `TrackResults` struct. 
+`replica` decides the signal type. Can pass optional arguments
+that are minumum amount to track a given PRN.
 """
-function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
+function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
                   DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
                   t_length=data.t_length)
     # Check signal type of replica
     if (sigtype == Val{:l5q}) | (sigtype == Val{:l5i})
         chipping_rate = L5_chipping_rate
         sig_freq = L5_freq
+        code_length = L5_code_length
     else
         error("ERROR: Signal type not specified. Aborting.")
     end
     # Initialize common variables and initial conditions
     f_s = data.f_s
     f_if = data.f_if
+    f_code_d = chipping_rate*(1. + f_d/sig_freq)
     N = Int64(T*data.f_s)
     f_d = fd_init
     ϕ = ϕ_init
-    n0 = n0_init
-    chip_init = missing
-    f_code_d = chipping_rate*(1. + f_d/sig_freq)
+    n0_init = calcinitcodephase(code_length,
+                                f_code_d, 0.,
+                                f_s, n0_idx_init)
+    n0 = chip_init
     N_num = Int64(floor(t_length/T))
     t = Array(0:T:N_num*T)
     # Define DLL and PLL parameter structs
@@ -328,7 +330,7 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
                         data.start_data_idx, data.t_length,
                         data.total_data_length, data.sample_num, f_s,
                         f_if, data.data_start_time, data.site_loc_lla,
-                        n0_init, chip_init, ϕ_init, fd_init, t,
+                        n0_idx_init, n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, phi_measured, phi_filtered,
                         delta_fd, ZP, SNR, data_bits)

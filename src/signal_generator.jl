@@ -185,6 +185,7 @@ function definesignal!(signal::L5QSignal;
                        include_adc=signal.include_adc,
                        include_noise=signal.include_noise,
                        code_start_idx=signal.code_start_idx,
+                       code_ship_start=missing,
                        isreplica=signal.isreplica)
 	## Calculate code chipping rates with Doppler applied
 	# L5Q
