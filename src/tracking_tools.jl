@@ -238,6 +238,9 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
     sigtype = typof(replica.type)
     # Initialize 1ˢᵗ order DLL and 2ⁿᵈ PLL filters
     for i in 1:2
+        # Calculate the current code start index
+        t₀ = (((N+1)-n0)%N)/f_code_d
+        code_start_idx = Int64((t₀*f_s))
         # Set signal parameters
         definesignal!(replica;
                       prn=prn, f_d=f_d,
@@ -245,7 +248,7 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
                       include_carrier=true,
                       include_noise=false,
                       include_adc=false,
-                      code_start_idx=n0,
+                      code_start_idx=code_start_idx,
                       nADC=nADC, isreplica=true)
         # Generate prompt correlator
         generatesignal!(replica)
@@ -283,6 +286,9 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
     end
     # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
     for i in 3:N
+        # Calculate the current code start index
+        t₀ = (((N+1)-n0)%N)/f_code_d
+        code_start_idx = Int64((t₀*f_s))
         # Set signal parameters
         definesignal!(replica;
                       prn=prn, f_d=f_d,
