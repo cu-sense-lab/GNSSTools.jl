@@ -3,7 +3,7 @@
 
 Struct for storing coefficients for the PLL filter. 
 """
-struct PLLParms
+struct PLLParms{T}
     T::Float64
     damping::Float64
     B::Float64
@@ -14,6 +14,7 @@ struct PLLParms
     b0::Float64
     b1::Float64
     b2::Float64
+    descriminator::T
 end
 
 
@@ -22,10 +23,11 @@ end
 
 Struct for storing DLL parameters.
 """
-struct DLLParms
+struct DLLParms{T}
     T::Float64
     B::Float64
     d::Int64
+    descriminator::T
 end
 
 
@@ -34,7 +36,7 @@ end
 
 A struct containing the parameters for tracking and its results
 """
-struct TrackResults{T1,T2,T3,T4,T5,T6}
+struct TrackResults{T1,T2,T3,T4}
     prn::Int64
     signaltype::T1
     dll_parms::DLLParms
@@ -50,7 +52,7 @@ struct TrackResults{T1,T2,T3,T4,T5,T6}
     data_total_t_length::Float64
     data_sample_num::Int64
     data_fs::Float64
-    data_if::Float64
+    data_fif::Float64
     data_start_t::T3
     data_site_lla::T4
     data_init_n0::Float64
@@ -61,15 +63,13 @@ struct TrackResults{T1,T2,T3,T4,T5,T6}
     code_err_meas::Array{Float64,1}
     code_err_filt::Array{Float64,1}
     code_phase_meas::Array{Float64,1}
-    code_phase_filtered::Array{Float64,1}
-    phi_meassured::Array{Float64,1}
+    code_phase_filt::Array{Float64,1}
+    phi_measured::Array{Float64,1}
     phi_filtered::Array{Float64,1}
     delta_fd::Array{Float64,1}
-    ZPs::Array{Float64,1}
+    ZP::Array{Float64,1}
     SNR::Array{Float64,1}
     data_bits::Array{Int64,1}
-    DLL_descriminator::T5
-    PLL_descriminator::T6
 end
 
 
@@ -86,7 +86,8 @@ function definepll(T, B, ξ)
     b₀ = ωₙ^2*T^2 + 4*ξ*T*ωₙ
     b₁ = 2*ωₙ^2*T^2
     b₂ = ωₙ^2*T^2 - 4*ξ*ωₙ*T
-    return PLLParms(T, ξ, B, ωₙ, a₀, a₁, a₂, b₀, b₁, b₂)
+    descriminator = "atan(Imag(ZP)/Real(ZP))"
+    return PLLParms(T, ξ, B, ωₙ, a₀, a₁, a₂, b₀, b₁, b₂, descriminator)
 end
 
 
@@ -96,16 +97,17 @@ end
 Define `DLLParms` struct.
 """
 function definedll(T, B, d)
-    return DLLParms(T, B, d)
+    descriminator = "1/d * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))"
+    return DLLParms(T, B, d, descriminator)
 end
 
 
 """
-    meassurephase(ZP)
+    measurephase(ZP)
 
-Calculate the raw phase meassurement.
+Calculate the raw phase measurement.
 """
-function meassurephase(ZP)
+function measurephase(ZP)
     return atan((imag(ZP)/real(ZP)))
 end
 
@@ -199,12 +201,21 @@ that are minumum amount to constuct `TrackResults` struct.
 function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
                   DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
                   t_length=data.t_length)
+    # Check signal type of replica
+    if (sigtype == Val{:l5q}) | (sigtype == Val{:l5i})
+        chipping_rate = L5_chipping_rate
+        sig_freq = L5_freq
+    else
+        error("ERROR: Signal type not specified. Aborting.")
+    end
+    # Initialize common variables and initial conditions
     f_s = data.f_s
     f_if = data.f_if
     N = Int64(T*data.f_s)
     f_d = fd_init
     ϕ = ϕ_init
     n0 = n0_init
+    chip_init = missing
     f_code_d = chipping_rate*(1. + f_d/sig_freq)
     N_num = Int64(floor(t_length/T))
     t = Array(0:T:N_num*T)
@@ -216,19 +227,14 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
     code_err_filt = Array{Float64}(undef, N_num)
     code_phase_meas = Array{Float64}(undef, N_num)
     code_phase_filt = Array{Float64}(undef, N_num)
-    phi_meassured = Array{Float64}(undef, N_num)
+    phi_measured = Array{Float64}(undef, N_num)
     phi_filtered = Array{Float64}(undef, N_num)
     delta_fd = Array{Float64}(undef, N_num)
-    ZP = Array{Float64(undef, N_num)
+    ZP = Array{Complex{Float64}}(undef, N_num)
     SNR = Array{Float64}(undef, N_num)
     data_bits = Array{Int64}(undef, N_num)
     sigtype = typof(replica.type)
-    if (sigtype == Val{:l5q}) | (sigtype == Val{:l5i})
-        chipping_rate = L5_chipping_rate
-        sig_freq = L5_freq
-    else
-        error("ERROR: Signal type not specified. Aborting.")
-    end
+    # Initialize 1ˢᵗ order DLL and 2ⁿᵈ PLL filters
     for i in 1:2
         # Set signal parameters
         definesignal!(replica;
@@ -246,15 +252,13 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)
         # Estimate carrier phase
-        ϕ_meas = meassurephase(zp)
-        # Update carrier phase estimate
-        ϕ += ϕ_meas
+        ϕ_meas = measurephase(zp)
         # Filter and update code phase
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
             # Calculate dfd
-            dfd = (ϕ_meas - phi_meassured[i-1])/(2π*T)
+            dfd = (ϕ_meas - phi_measured[i-1])/(2π*T)
         else
             n0_err_filtered = n0_err
             dfd = 0.
@@ -264,14 +268,68 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
         code_err_filt[i] = n0_err_filtered
         code_phase_meas[i] = n0 + n0_err
         code_phase_filt[i] = n0 + n0_err_filtered
-        phi_meassured[i] = ϕ
-        phi_filtered[i] = ϕ
+        phi_measured[i] = ϕ + ϕ_meas
+        phi_filtered[i] = ϕ + ϕ_meas
         delta_fd[i] = dfd
+        ZP[i] = zp
         # Update code phase with filtered code phase error and propagate to next `i`
         n0 += n0_err_filtered + f_code_d*T
-        # Propagate carrier phase to next `i`
-        ϕ += (f_if + f_d)*T
-        # Calculate main code chipping rate atnext `i`
+        # Updated and propagate carrier phase to next `i`
+        ϕ += ϕ_meas + (f_if + f_d)*T
+        # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
     end
+    # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
+    for i in 3:N
+        # Set signal parameters
+        definesignal!(replica;
+                      prn=prn, f_d=f_d,
+                      fd_rate=0., ϕ=ϕ, f_if=0.,
+                      include_carrier=true,
+                      include_noise=false,
+                      include_adc=false,
+                      code_start_idx=n0,
+                      nADC=nADC, isreplica=true)
+        # Generate prompt correlator
+        generatesignal!(replica)
+        # Calculate early, prompt, and late correlator outputs
+        ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
+        # Estimate code phase error
+        n0_err = Z4(dll_parms, ze, zp, zl)
+        # Estimate carrier phase
+        ϕ_meas = measurephase(zp)
+        # Filter carrier phase measurement
+        ϕ_filt = filtercarrierphase(pll_parms, ϕ_meas,
+                                    code_phase_meas[i-1], code_phase_meas[i-2],
+                                    code_phase_filt[i-1], code_phase_filt[i-2])
+        # Filter raw code phase error measurement
+        n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
+        # Calculate dfd
+        dfd = (ϕ_meas - phi_measured[i-1])/(2π*T)
+        # Save to allocated arrays
+        code_err_meas[i] = n0_err
+        code_err_filt[i] = n0_err_filtered
+        code_phase_meas[i] = n0 + n0_err
+        code_phase_filt[i] = n0 + n0_err_filtered
+        phi_measured[i] = ϕ + ϕ_meas
+        phi_filtered[i] = ϕ + ϕ_filt
+        delta_fd[i] = dfd
+        ZP[i] = zp
+        # Update code phase with filtered code phase error and propagate to next `i`
+        n0 += n0_err_filtered + f_code_d*T
+        # Update and propagate carrier phase to next `i`
+        ϕ += ϕ_filt + (f_if + f_d)*T
+        # Calculate main code chipping rate at next `i`
+        f_code_d = chipping_rate*(1. + f_d/sig_freq)
+    end
+    # Return `TrackResults` struct
+    return TrackResults(prn, sigtype, dll_parms, pll_parms, M, T, N,
+                        data.file_name, data.data_type, data.nADC,
+                        data.start_data_idx, data.t_length,
+                        data.total_data_length, data.sample_num, f_s,
+                        f_if, data.data_start_time, data.site_loc_lla,
+                        n0_init, chip_init, ϕ_init, fd_init, t,
+                        code_err_meas, code_err_filt, code_phase_meas,
+                        code_phase_filt, phi_measured, phi_filtered,
+                        delta_fd, ZP, SNR, data_bits)
 end
