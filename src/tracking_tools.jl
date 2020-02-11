@@ -149,6 +149,43 @@ end
 
 
 """
+    getcorrelatoroutput(data::GNSSData, replica, i, N, f_if, f_d, ϕ, d)
+
+Calculate the early, prompt, and late correlator ouputs. Note that
+replica already containts the prompt correlator. Be sure to set
+the parameters to `replica` and run `generatesignal!(replica)` before
+calling this method.
+"""
+function getcorrelatoroutput(data::GNSSData, replica, i, N, f_if, f_d, ϕ, d)
+    # Initialize correlator results
+    ze = 0. + 0im
+    zp = 0. + 0im
+    zl = 0. + 0im
+    datasegment = view(data.data, (i-1)*N+1:i*N)
+    ts = view(data.t, (i-1)*N+1:i*N))
+    # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
+    @threads for j in 1:N
+        @inbound wipeoff = datasegment[j]*exp(-(2π*(f_if+f_d)*ts[j] + ϕ)*1im)
+        @inbounds zp += conj(replica[j]) * wipeoff
+        zeidx = j + d
+        if zeidx > N
+            zeidx = zeidx - N
+        end
+        zlidx = j - d
+        if zlidx < 1
+            zlidx = zlidx + N
+        end
+        @inbounds ze += conj(replica[zeidx]) * wipeoff
+        @inbounds zl += conj(replica[zlidx]) * wipeoff
+    end
+    ze = ze/N
+    zp = zp/N
+    zl = zl/N
+    return (ze, zp, zl)
+end
+
+
+"""
     trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
              DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
              t_length=data.t_length)
@@ -168,6 +205,7 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
     f_d = fd_init
     ϕ = ϕ_init
     n0 = n0_init
+    f_code_d = chipping_rate*(1. + f_d/sig_freq)
     N_num = Int64(floor(t_length/T))
     t = Array(0:T:N_num*T)
     # Define DLL and PLL parameter structs
@@ -177,13 +215,20 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
     code_err_meas = Array{Float64}(undef, N_num)
     code_err_filt = Array{Float64}(undef, N_num)
     code_phase_meas = Array{Float64}(undef, N_num)
-    code_phase_filtered = Array{Float64}(undef, N_num)
+    code_phase_filt = Array{Float64}(undef, N_num)
     phi_meassured = Array{Float64}(undef, N_num)
     phi_filtered = Array{Float64}(undef, N_num)
     delta_fd = Array{Float64}(undef, N_num)
     ZP = Array{Float64(undef, N_num)
     SNR = Array{Float64}(undef, N_num)
     data_bits = Array{Int64}(undef, N_num)
+    sigtype = typof(replica.type)
+    if (sigtype == Val{:l5q}) | (sigtype == Val{:l5i})
+        chipping_rate = L5_chipping_rate
+        sig_freq = L5_freq
+    else
+        error("ERROR: Signal type not specified. Aborting.")
+    end
     for i in 1:2
         # Set signal parameters
         definesignal!(replica;
@@ -196,46 +241,37 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
                       nADC=nADC, isreplica=true)
         # Generate prompt correlator
         generatesignal!(replica)
-        # Initialize correlator results
-        ze = 0. + 0im
-        zp = 0. + 0im
-        zl = 0. + 0im
-        data = view(data.data, (i-1)*N+1:i*N)
-        ts = view(data.t, (i-1)*N+1:i*N))
-        ######### TODO: MAKE FOR LOOP BELOW A SEPARATE FUNCTION. #########
-        # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
-        @threads for j in 1:N
-            @inbound wipeoff = data[j]*exp(-(2π*(f_if+fd_init)*ts[j] + ϕ)*1im)
-            @inbounds zp += conj(replica[j]) * wipeoff
-            zeidx = j + d
-            if zeidx > N
-                zeidx = zeidx - N
-            end
-            zlidx = j - d
-            if zlidx < 1
-                zlidx = zlidx + N
-            end
-            @inbounds ze += conj(replica[zeidx]) * wipeoff
-            @inbounds zl += conj(replica[zlidx]) * wipeoff
-        end
-        ze = ze/N
-        zp = zp/N
-        zl = zl/N
+        # Calculate early, prompt, and late correlator outputs
+        ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)
-        if i > 1
-            # Filter raw code phase error measurement
-            n0_err_filtered = iltercodephase(dll_parms, n0_err, code_err_filt[i-1])
-            # Update current code phase measurement 
-            n0 += n0_err_filtered + f_l5q_d*T
-        else
-            n0_err_filtered = n0_err
-        end
         # Estimate carrier phase
         ϕ_meas = meassurephase(zp)
         # Update carrier phase estimate
         ϕ += ϕ_meas
+        # Filter and update code phase
+        if i > 1
+            # Filter raw code phase error measurement
+            n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
+            # Calculate dfd
+            dfd = (ϕ_meas - phi_meassured[i-1])/(2π*T)
+        else
+            n0_err_filtered = n0_err
+            dfd = 0.
+        end
         # Save to allocated arrays
-        
+        code_err_meas[i] = n0_err
+        code_err_filt[i] = n0_err_filtered
+        code_phase_meas[i] = n0 + n0_err
+        code_phase_filt[i] = n0 + n0_err_filtered
+        phi_meassured[i] = ϕ
+        phi_filtered[i] = ϕ
+        delta_fd[i] = dfd
+        # Update code phase with filtered code phase error and propagate to next `i`
+        n0 += n0_err_filtered + f_code_d*T
+        # Propagate carrier phase to next `i`
+        ϕ += (f_if + f_d)*T
+        # Calculate main code chipping rate atnext `i`
+        f_code_d = chipping_rate*(1. + f_d/sig_freq)
     end
 end
