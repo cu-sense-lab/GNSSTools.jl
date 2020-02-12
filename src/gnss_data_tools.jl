@@ -4,7 +4,7 @@
 
 Structure for holding signal data.
 """
-struct GNSSData{A1,A2,A3}
+struct GNSSData{T1,T2}
 	file_name::String
 	f_s::Float64
 	f_if::Float64
@@ -12,9 +12,9 @@ struct GNSSData{A1,A2,A3}
 	start_data_idx::Int64
 	t::Array{Float64,1}
 	data::Array{Complex{Float64},1}
-	data_type::A1
-	data_start_time::A2
-	site_loc_lla::A3
+	data_type::String
+	data_start_time::T1
+	site_loc_lla::T2
 	sample_num::Int64
 	total_data_length::Float64
 	nADC::Int64
@@ -54,8 +54,8 @@ function loaddata(data_type, file_name, f_s, f_if, t_length;
 	# Generate time vector
 	t = Array(0:1/f_s:t_length-1/f_s)  # s
 	return GNSSData(file_name, f_s, f_if, t_length, start_data_idx,
-                    t, float.(data), data_type, data_start_time, site_loc_lla,
-                    sample_num, total_data_length, nADC)
+                    t, float.(data), String(data_type), data_start_time,
+                    site_loc_lla, sample_num, total_data_length, nADC)
 end
 
 

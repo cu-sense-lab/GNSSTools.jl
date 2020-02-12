@@ -4,8 +4,8 @@
 A struct that stores the fine acquisition fine acquisition
 results for both the carrier and FFT based methods.
 """
-struct FineAcquisitionResults{T}
-    type::T
+struct FineAcquisitionResults
+    type::String
     fd_course::Float64
     fd_rate::Float64
     n0_idx_course::Float64
@@ -85,6 +85,19 @@ function fineacquisition(data::GNSSData, replica, fd_course,
     # Calculate initial phase
     ϕ_init = atan(imag(pk_val)/real(pk_val))
     # Return `FineAcquisitionResults` struct
-    return FineAcquisitionResults(type, fd_course, fd_rate, n0_idx_course,
+    return FineAcquisitionResults(String(type), fd_course, fd_rate, n0_idx_course,
                                   t_length, fd_fine, fd_est, ϕ_init)
+end
+
+
+"""
+    fineacquisition(data::GNSSData, replica, fd_course,
+                    n₀_course, type::Val{:carrier})
+
+Performs an carrier based fine acquisition on `data`.
+"""
+function fineacquisition(data::GNSSData, replica, fd_course,
+                         n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
+                         t_length=replica.t_length, freq_lim=50000.)
+    
 end

@@ -10,9 +10,10 @@ module GNSSTools
     pygui(true)
 
     include("constants.jl")
+    include("general_tools.jl")
     include("signal_generator.jl")
     include("l5_code_generator.jl")
-    include("gnss_tools.jl")
+    include("gnss_data_tools.jl")
     include("course_acquisition_tools.jl")
     include("fine_acquisition_tools.jl")
     include("rinex_tools.jl")
@@ -35,6 +36,7 @@ module GNSSTools
     export loaddata
     export gencorrresult
     export courseacquisition!
+    export fineacquisition
     export calcsnr
     export loadrinex
     export trackprn

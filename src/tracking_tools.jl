@@ -3,7 +3,7 @@
 
 Struct for storing coefficients for the PLL filter. 
 """
-struct PLLParms{T}
+struct PLLParms
     T::Float64
     damping::Float64
     B::Float64
@@ -14,7 +14,7 @@ struct PLLParms{T}
     b0::Float64
     b1::Float64
     b2::Float64
-    descriminator::T
+    descriminator::String
 end
 
 
@@ -23,11 +23,11 @@ end
 
 Struct for storing DLL parameters.
 """
-struct DLLParms{T}
+struct DLLParms
     T::Float64
     B::Float64
     d::Int64
-    descriminator::T
+    descriminator::String
 end
 
 
@@ -36,7 +36,7 @@ end
 
 A struct containing the parameters for tracking and its results
 """
-struct TrackResults{T1,T2,T3,T4}
+struct TrackResults{T1,T2,T3}
     prn::Int64
     signaltype::T1
     dll_parms::DLLParms
@@ -45,7 +45,7 @@ struct TrackResults{T1,T2,T3,T4}
     integration_len::Float64
     integration_N::Int64
     data_file::String
-    data_type::T2
+    data_type::String
     data_nADC::Int64
     data_start_idx::Int64
     data_t_length::Float64
@@ -53,8 +53,8 @@ struct TrackResults{T1,T2,T3,T4}
     data_sample_num::Int64
     data_fs::Float64
     data_fif::Float64
-    data_start_t::T3
-    data_site_lla::T4
+    data_start_t::T2
+    data_site_lla::T3
     data_init_n0::Float64
     data_init_code_chip::Float64
     data_init_phi::Float64
@@ -86,7 +86,7 @@ function definepll(T, B, ξ)
     b₀ = ωₙ^2*T^2 + 4*ξ*T*ωₙ
     b₁ = 2*ωₙ^2*T^2
     b₂ = ωₙ^2*T^2 - 4*ξ*ωₙ*T
-    descriminator = "atan(Imag(ZP)/Real(ZP))"
+    descriminator = "ϕ = atan(Imag(ZP)/Real(ZP))"
     return PLLParms(T, ξ, B, ωₙ, a₀, a₁, a₂, b₀, b₁, b₂, descriminator)
 end
 
@@ -97,7 +97,7 @@ end
 Define `DLLParms` struct.
 """
 function definedll(T, B, d)
-    descriminator = "1/d * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))"
+    descriminator = "Z4 = 1/d * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))"
     return DLLParms(T, B, d, descriminator)
 end
 
@@ -218,7 +218,7 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
     n0_init = calcinitcodephase(code_length,
                                 f_code_d, 0.,
                                 f_s, n0_idx_init)
-    n0 = chip_init
+    n0 = n0_init
     N_num = Int64(floor(t_length/T))
     t = Array(0:T:N_num*T)
     # Define DLL and PLL parameter structs
