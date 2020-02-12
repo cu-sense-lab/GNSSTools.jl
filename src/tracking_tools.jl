@@ -199,7 +199,7 @@ that are minumum amount to track a given PRN.
 """
 function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
                   DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
-                  t_length=data.t_length)
+                  t_length=data.t_length; fd_rate=0.)
     # Check signal type of replica
     if (sigtype == Val{:l5q}) | (sigtype == Val{:l5i})
         chipping_rate = L5_chipping_rate
@@ -244,7 +244,7 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Set signal parameters
         definesignal!(replica;
                       prn=prn, f_d=f_d,
-                      fd_rate=0., ϕ=ϕ, f_if=0.,
+                      fd_rate=fd_rate, ϕ=ϕ, f_if=0.,
                       include_carrier=true,
                       include_noise=false,
                       include_adc=false,
