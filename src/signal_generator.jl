@@ -245,7 +245,8 @@ end
 
 """
     generatesignal!(signal::L5QSignal,
-                    isreplica::Val{false}=Val(signal.isreplica))
+                    isreplica::Val{false}=Val(signal.isreplica);
+                    t_length=signal.t_length)
 
 Generates local GNSS signal using paramters defined in a
 L5QSignal struct.
@@ -255,13 +256,20 @@ and Neuman sequence.
 
 No need to specify `isreplica`. Set `isreplica` to `true` to
 use alternate method, which ignores all `Bool` flags in `signal`.
+
+Specify `t_length` to be <= to `replica.t_length` for different
+signal generation lengths. **NOTE:** The size of the `replica.data`
+array will still be the same size. You will need to keep track
+of the `t_length` you specified.
 """
 function generatesignal!(signal::L5QSignal,
-	                     isreplica::Val{false}=Val(signal.isreplica))
+	                     isreplica::Val{false}=Val(signal.isreplica);
+                         t_length=signal.t_length)
 	# Common parmeters used for entire signal
 	prn = signal.prn
 	Tsys = signal.Tsys
 	CN0 = signal.CN0
+    f_s = signal.f_s
 	f_d = signal.f_d
 	f_if = signal.f_if
 	fd_rate = signal.fd_rate
@@ -275,7 +283,7 @@ function generatesignal!(signal::L5QSignal,
 	adc_scale = 2^(nADC-1)-1
 	carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
 	noise_amp = sqrt(k*B*Tsys)
-	@threads for i in 1:signal.sample_num
+	@threads for i in 1:Int64(floot(t_length*f_s))
 		@inbounds t = signal.t[i]
 		# Get L5Q code value at t
 		l5q = l5q_codes[prn][calccodeidx(signal.l5q_init_code_phase,
