@@ -260,7 +260,7 @@ use alternate method, which ignores all `Bool` flags in `signal`.
 Specify `t_length` to be <= to `replica.t_length` for different
 signal generation lengths. **NOTE:** The size of the `replica.data`
 array will still be the same size. You will need to keep track
-of the `t_length` you specified.
+of the `t_length` you passed to `generatesignal!`.
 """
 function generatesignal!(signal::L5QSignal,
 	                     isreplica::Val{false}=Val(signal.isreplica);

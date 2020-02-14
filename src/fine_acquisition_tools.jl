@@ -87,7 +87,7 @@ function fineacquisition(data::GNSSData, replica, fd_course,
     ϕ_init = atan(imag(pk_val)/real(pk_val))
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(String(type), fd_course, fd_rate, n0_idx_course,
-                                  t_length, fd_fine, fd_est, ϕ_init)
+                                  t_length, fd_fine, fd_est, ϕ_init, "N/A")
 end
 
 
@@ -145,5 +145,33 @@ function fineacquisition(data::GNSSData, replica, fd_course,
             @inbounds ϕ_init = atan(imag(pk)/real(pk))
         end
     end
-    # 
+    # Take the difference between ϕs & check and correct phase values if greater or less than π
+    dϕ = diff(ϕ)
+    for i in 1:Mblocks-1
+        if dϕ[i] > π
+            dϕ[i] -= 2π
+        elseif dϕ[i] < π
+            dϕ[i] += 2π
+        else
+            # Do nothing. Within bounds.
+        end
+    end
+    # Compute variance from average phase change
+    dϕvar = var(dϕ)
+    # Find the maxumum variance and omit from fine Doppler fequency calculation
+    maxvaridx = argma(dϕvar)
+    # Take the mean while ommitting the largest phase change in `dϕ`
+    dϕavg = 0.
+    for i in 1:Mblocks-1
+        if i != maxvaridx
+            dϕavg += dϕ[i]
+        end
+    end
+    dϕavg /= (Mblocks-2)
+    # Calculate the fine Doppler frequency
+    fd_fine = dϕavg/(2π*N/f_s)
+    fd_est = fd_course + fd_fine
+    # Return `FineAcquisitionResults` struct
+    return FineAcquisitionResults(String(type), fd_course, fd_rate, n0_idx_course,
+                                  t_length, fd_fine, fd_est, ϕ_init, M)
 end

@@ -7,6 +7,7 @@ module GNSSTools
     @reexport using PyPlot
     @reexport using Base.Threads
     @reexport using ProgressMeter
+    @reexport using Statistics
     pygui(true)
 
     include("constants.jl")
