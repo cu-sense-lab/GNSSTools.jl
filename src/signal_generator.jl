@@ -283,7 +283,7 @@ function generatesignal!(signal::L5QSignal,
 	adc_scale = 2^(nADC-1)-1
 	carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
 	noise_amp = sqrt(k*B*Tsys)
-	@threads for i in 1:Int64(floot(t_length*f_s))
+	@threads for i in 1:Int64(float(t_length*f_s))
 		@inbounds t = signal.t[i]
 		# Get L5Q code value at t
 		l5q = l5q_codes[prn][calccodeidx(signal.l5q_init_code_phase,

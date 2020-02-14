@@ -164,10 +164,10 @@ function getcorrelatoroutput(data::GNSSData, replica, i, N, f_if, f_d, ϕ, d)
     zp = 0. + 0im
     zl = 0. + 0im
     datasegment = view(data.data, (i-1)*N+1:i*N)
-    ts = view(data.t, (i-1)*N+1:i*N))
+    ts = view(data.t, (i-1)*N+1:i*N)
     # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
     @threads for j in 1:N
-        @inbound wipeoff = datasegment[j]*exp(-(2π*(f_if+f_d)*ts[j] + ϕ)*1im)
+        @inbounds wipeoff = datasegment[j]*exp(-(2π*(f_if+f_d)*ts[j] + ϕ)*1im)
         @inbounds zp += conj(replica[j]) * wipeoff
         zeidx = j + d
         if zeidx > N
@@ -199,7 +199,7 @@ that are minumum amount to track a given PRN.
 """
 function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
                   DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
-                  t_length=data.t_length; fd_rate=0.)
+                  t_length=data.t_length, fd_rate=0.)
     # Check signal type of replica
     if (sigtype == Val{:l5q}) | (sigtype == Val{:l5i})
         chipping_rate = L5_chipping_rate

@@ -8,7 +8,7 @@ struct FineAcquisitionResults{T}
     type::String
     fd_course::Float64
     fd_rate::Float64
-    n0_idx_course::Float64
+    n0_idx_course::Int64
     t_length::Float64
     fd_fine::Float64
     fd_est::Float64
@@ -18,15 +18,16 @@ end
 
 
 """
-    fineacquisition(data::GNSSData, replica, fd_course,
+    fineacquisition(data, replica, fd_course,
                     n₀_course, type::Val{:fft})
 
 Performs an FFT based fine acquisition on `data`. Note that `t_length` must
-equal `replica.t_length`.
+equal `replica.t_length`. `data` can be either a `GNSSData` or `L5QSignal`
+struct, however, `data` and `replica` must be two seperate structs.
 """
-function fineacquisition(data::GNSSData, replica, fd_course,
+function fineacquisition(data, replica, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
-                         t_length=replica.t_length, freq_lim=50000.)
+                         t_length=replica.t_length, freq_lim=10000.)
     # Generate replica
     # Set signal parameters
     definesignal!(replica;
@@ -40,11 +41,13 @@ function fineacquisition(data::GNSSData, replica, fd_course,
     # Generate signal
     generatesignal!(replica)
     # Wipeoff IF and course Doppler from data and multiply by replica
-    @threads for i in 1:replica.sample_num
-        @inbounds data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
-    end
+    sig = data.data.*exp.(-2π.*(data.f_if+fd_course).*data.t.*1im).*replica.data
+    # @threads for i in 1:replica.sample_num
+    #     @inbounds replica.data[i] = data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
+    # end
     # Perform in place FFT of `replica.data`
-    fft!(replica.data)
+    # fft!(replica.data)
+    replica.data = fft(sig)
     # Find peak within ±[x]kHz, where `x` is defined by freq_lim
     # From index 1 to N/2: positive frequencies
     # From index N/2 to N: negative frequencies
@@ -55,7 +58,7 @@ function fineacquisition(data::GNSSData, replica, fd_course,
     pos_freq_interval = (1, N_lim)
     neg_freq_interval = (N-N_lim, N)
     pk_val = 0. + 0im
-    pk_valabs2 = max_val
+    pk_valabs2 = 0.
     pk_idx = 1
     #### TODO: Make the peak searching loops below functions and try to multi-thread them. ####
     # Check positive frequencies for peak
@@ -85,9 +88,10 @@ function fineacquisition(data::GNSSData, replica, fd_course,
     fd_est = fd_course + fd_fine
     # Calculate initial phase
     ϕ_init = atan(imag(pk_val)/real(pk_val))
+    replica.isreplica = false
     # Return `FineAcquisitionResults` struct
-    return FineAcquisitionResults(String(type), fd_course, fd_rate, n0_idx_course,
-                                  t_length, fd_fine, fd_est, ϕ_init, "N/A")
+    return (FineAcquisitionResults(String(:fft), fd_course, fd_rate, n₀_idx_course,
+                                  t_length, fd_fine, fd_est, ϕ_init, "N/A"), replica.data)
 end
 
 
@@ -100,7 +104,7 @@ Performs an carrier based fine acquisition on `data`.
 
 `M` is the multiple of the length of replica to be used for fine acquisition.
 """
-function fineacquisition(data::GNSSData, replica, fd_course,
+function fineacquisition(data, replica, prn, fd_course,
                          n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=50000., M=1)
     # Check that the data length is at least 2x greater than the size of `replica`
@@ -130,7 +134,7 @@ function fineacquisition(data::GNSSData, replica, fd_course,
         generatesignal!(replica)
         # Get a `view` of the current data segment and its corresponding time array
         datasegment = view(data.data, (i-1)*N+1:i*N)
-        ts = view(data.t, (i-1)*N+1:i*N))
+        ts = view(data.t, (i-1)*N+1:i*N)
         # Wipeoff IF and course Doppler from data
         @threads for i in 1:replica.sample_num
             @inbounds data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
@@ -172,6 +176,6 @@ function fineacquisition(data::GNSSData, replica, fd_course,
     fd_fine = dϕavg/(2π*N/f_s)
     fd_est = fd_course + fd_fine
     # Return `FineAcquisitionResults` struct
-    return FineAcquisitionResults(String(type), fd_course, fd_rate, n0_idx_course,
+    return FineAcquisitionResults(String(:carrier), fd_course, fd_rate, n0_idx_course,
                                   t_length, fd_fine, fd_est, ϕ_init, M)
 end
