@@ -28,6 +28,11 @@ struct, however, `data` and `replica` must be two seperate structs.
 function fineacquisition(data, replica, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=10000.)
+    ####################################################################################
+    ###### ADD MANUAL +2 SAMPLE OFFSET DUE TO UNKNOWN ERROR IN COURSE ACQUISITION ######
+    ###################### REFER TO ISSUE # 1 ON GITLAB REPO PAGE ######################
+    n₀_idx_course += 2
+    ####################################################################################
     # Generate replica
     # Set signal parameters
     definesignal!(replica;
