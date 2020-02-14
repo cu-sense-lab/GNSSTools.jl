@@ -145,7 +145,7 @@ function fineacquisition(data::GNSSData, replica, fd_course,
             @inbounds ϕ_init = atan(imag(pk)/real(pk))
         end
     end
-    # Take the difference between ϕs & check and correct phase values if greater or less than π
+    # Take the difference between ϕs & check and correct phase values if > than π
     dϕ = diff(ϕ)
     for i in 1:Mblocks-1
         if dϕ[i] > π
