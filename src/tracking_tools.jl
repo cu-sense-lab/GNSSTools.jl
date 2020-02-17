@@ -199,8 +199,7 @@ Perform code and phase tracking on data in `data`.
 that are minumum amount to track a given PRN.
 """
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
-                  DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=1,
-                  t_length=data.t_length, fd_rate=0.)
+                  DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0.)
     # Check signal type of replica
     if (typeof(replica.type) == Val{:l5q}) | (typeof(replica.type) == Val{:l5i})
         chipping_rate = L5_chipping_rate
@@ -209,7 +208,11 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     else
         error("Signal type specified not supported. Aborting.")
     end
+    # Compute the spacing between the ZE, ZP, and ZL correlators
+    d = Int64(floor(data.f_s/sig_freq/2))
     # Initialize common variables and initial conditions
+    T = replica.t_length
+    t_length = data.t_length
     f_s = data.f_s
     f_if = data.f_if
     N = Int64(T*data.f_s)
@@ -220,24 +223,24 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                                 f_code_d, 0.,
                                 f_s, n0_idx_init)
     n0 = n0_init
-    N_num = Int64(floor(t_length/T))
-    t = Array(0:T:N_num*T)
+    M = Int64(floor(t_length/T))
+    t = Array(0:T:M*T)
     # Define DLL and PLL parameter structs
     dll_parms = definedll(T, DLL_B, d)
     pll_parms = definepll(T, PLL_B, damping)
     # Allocate array space for tracking results
-    code_err_meas = Array{Float64}(undef, N_num)
-    code_err_filt = Array{Float64}(undef, N_num)
-    code_phase_meas = Array{Float64}(undef, N_num)
-    code_phase_filt = Array{Float64}(undef, N_num)
-    phi_measured = Array{Float64}(undef, N_num)
-    phi_filtered = Array{Float64}(undef, N_num)
-    delta_fd = Array{Float64}(undef, N_num)
-    ZP = Array{Complex{Float64}}(undef, N_num)
-    SNR = Array{Float64}(undef, N_num)
-    data_bits = Array{Int64}(undef, N_num)
+    code_err_meas = Array{Float64}(undef, M)
+    code_err_filt = Array{Float64}(undef, M)
+    code_phase_meas = Array{Float64}(undef, M)
+    code_phase_filt = Array{Float64}(undef, M)
+    phi_measured = Array{Float64}(undef, M)
+    phi_filtered = Array{Float64}(undef, M)
+    delta_fd = Array{Float64}(undef, M)
+    ZP = Array{Complex{Float64}}(undef, M)
+    SNR = Array{Float64}(undef, M)
+    data_bits = Array{Int64}(undef, M)
     # Initialize 1ˢᵗ order DLL and 2ⁿᵈ PLL filters
-    p = Progress(N_num, 1, "Tracking PRN $(prn)...")
+    p = Progress(M, 1, "Tracking PRN $(prn)...")
     for i in 1:2
         # Calculate the current code start index
         t₀ = ((code_length-n0)%code_length)/f_code_d
@@ -287,7 +290,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         next!(p)
     end
     # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
-    for i in 3:N_num
+    for i in 3:M
         # Calculate the current code start index
         t₀ = ((code_length-n0)%code_length)/f_code_d
         code_start_idx = t₀*f_s + 1
