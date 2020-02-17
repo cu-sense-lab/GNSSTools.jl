@@ -10,7 +10,9 @@ to plot along the time index for estimated Doppler bin.
 """
 function testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
                                 fd_range=5000., threads=nthreads(),
-                                showplot=false, fd_rate=0.)
+                                showplot=false, fd_rate=0.,
+                                fineacqtype=:fft,
+                                M=2)
 	# Simulate signal with noise
 	type = Val(:l5q)
 	f_s = 25e6  # Hz
@@ -30,7 +32,17 @@ function testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
 	                    include_adc=include_adc,
 	                    include_noise=include_noise,
 	                    code_start_idx=n0)
+	if t_length < 0.5  # seconds
+		datalong = definesignal(type::Val{:l5q}, prn, f_s, M*t_length;
+	                        	f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+	                        	CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
+	                        	include_carrier=include_carrier,
+	                        	include_adc=include_adc,
+	                        	include_noise=include_noise,
+	                        	code_start_idx=n0)
+	end
 	generatesignal!(data)
+	generatesignal!(datalong)
 	# Generate replica signal for cross correlation
 	replica = definesignal(type::Val{:l5q}, prn, f_s, t_length;
 	                       f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
@@ -39,7 +51,15 @@ function testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
 	                       include_adc=false,
 	                       include_noise=false,
 	                       code_start_idx=1)
-
+	if t_length < 0.5  # seconds
+		replicalong = definesignal(type::Val{:l5q}, prn, f_s, M*t_length;
+	                           	   f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+	                           	   CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
+	                           	   include_carrier=include_carrier,
+	                           	   include_adc=false,
+	                           	   include_noise=false,
+	                           	   code_start_idx=1)
+	end
 	# Perform cross correlation using function
 	fd_center = f_d  # Hz
 	Δfd = 1/data.t_length  # Hz
@@ -52,6 +72,15 @@ function testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
 	fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
 	n0_est = max_idx[2]%Int(f_s*nh_code_length/nh_chipping_rate)
 	println("\nPRN $(prn):\nfd = $(fd_est)Hz\nn₀ = $(n0_est) samples")
+	# Fine acquisition
+	if t_length < 0.5  # second
+		results = fineacquisition(datalong, replicalong, prn, fd_est,
+			                      n0_est, Val(fineacqtype))
+		println("Fine Acquisition Results")
+		println("fd = $(results.fd_est)Hz")
+		println("n₀ = $(results.n0_idx_course) samples")
+		println("ϕ₀ = $(results.ϕ_int) rad")
+	end 
 	if showplot
 		figure()
 		plot(corr_result[max_idx[1],:], "k-")

@@ -28,11 +28,6 @@ struct, however, `data` and `replica` must be two seperate structs.
 function fineacquisition(data, replica, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=10000.)
-    ####################################################################################
-    ###### ADD MANUAL +2 SAMPLE OFFSET DUE TO UNKNOWN ERROR IN COURSE ACQUISITION ######
-    ###################### REFER TO ISSUE # 1 ON GITLAB REPO PAGE ######################
-    # n₀_idx_course += 2 #################################################################
-    ####################################################################################
     # Generate replica
     # Set signal parameters
     definesignal!(replica;
@@ -95,8 +90,8 @@ function fineacquisition(data, replica, prn, fd_course,
     ϕ_init = atan(imag(pk_val)/real(pk_val))
     replica.isreplica = false
     # Return `FineAcquisitionResults` struct
-    return (FineAcquisitionResults(String(:fft), fd_course, fd_rate, n₀_idx_course,
-                                   t_length, fd_fine, fd_est, ϕ_init, "N/A"), replica.data)
+    return FineAcquisitionResults(String(:fft), fd_course, fd_rate, n₀_idx_course,
+                                  t_length, fd_fine, fd_est, ϕ_init, "N/A")
 end
 
 
@@ -112,11 +107,6 @@ Performs an carrier based fine acquisition on `data`.
 function fineacquisition(data, replica, prn, fd_course,
                          n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=50000., M=1)
-    ####################################################################################
-    ###### ADD MANUAL +2 SAMPLE OFFSET DUE TO UNKNOWN ERROR IN COURSE ACQUISITION ######
-    ###################### REFER TO ISSUE # 1 ON GITLAB REPO PAGE ######################
-    # n₀_idx_course += 2 #################################################################
-    ####################################################################################
     # Check that the data length is at least 2x greater than the size of `replica`
     Mblocks = Int64(floor(data.sample_num)/(M*replica.sample_num))
     if Mblocks < 2
@@ -125,7 +115,7 @@ function fineacquisition(data, replica, prn, fd_course,
         error(errmsg)
     end
     # Samples per `M` data segment
-    N = replica.smple_num
+    N = replica.sample_num
     # Set ϕ_init and ϕ
     ϕ_init = 0.
     ϕ = Array{Float64}(undef, Mblocks)
@@ -150,9 +140,11 @@ function fineacquisition(data, replica, prn, fd_course,
             @inbounds data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
         end
         # Perform in place fft operation
-        fft!(replca.data)
+        fft!(replica.data)
         # Get FFT peak value
-        pk = maximum(replica.data)
+        pk = maximum(abs2.(replica.data))
+        # Take square root of `pk`
+        pk = sqrt(pk)
         # Calculate ϕ for current processing block
         @inbounds ϕ[i] = atan(imag(pk), real(pk))
         if i == 1
@@ -173,7 +165,7 @@ function fineacquisition(data, replica, prn, fd_course,
     # Compute variance from average phase change
     dϕvar = var(dϕ)
     # Find the maxumum variance and omit from fine Doppler fequency calculation
-    maxvaridx = argma(dϕvar)
+    maxvaridx = argmax(dϕvar)
     # Take the mean while ommitting the largest phase change in `dϕ`
     dϕavg = 0.
     for i in 1:Mblocks-1
@@ -186,6 +178,6 @@ function fineacquisition(data, replica, prn, fd_course,
     fd_fine = dϕavg/(2π*N/f_s)
     fd_est = fd_course + fd_fine
     # Return `FineAcquisitionResults` struct
-    return FineAcquisitionResults(String(:carrier), fd_course, fd_rate, n0_idx_course,
+    return FineAcquisitionResults(String(:carrier), fd_course, fd_rate, n₀_idx_course,
                                   t_length, fd_fine, fd_est, ϕ_init, M)
 end
