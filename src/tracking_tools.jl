@@ -70,6 +70,7 @@ struct TrackResults{T1,T2}
     ZP::Array{Complex{Float64},1}
     SNR::Array{Float64,1}
     data_bits::Array{Int64,1}
+    code_length::Int64
 end
 
 
@@ -359,5 +360,15 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                         n0_idx_init, n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, phi_measured, phi_filtered,
-                        delta_fd, ZP, SNR, data_bits)
+                        delta_fd, ZP, SNR, data_bits, code_length)
+end
+
+
+"""
+    plot(results::TrackResults)
+   
+Plots the tracking results from the `trackprn` method. 
+"""
+function plot(results::TrackResults)
+
 end

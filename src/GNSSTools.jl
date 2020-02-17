@@ -9,6 +9,7 @@ module GNSSTools
     @reexport using ProgressMeter
     @reexport using Statistics
     pygui(true)
+    import PyPlot.plot
 
     include("constants.jl")
     include("general_tools.jl")
