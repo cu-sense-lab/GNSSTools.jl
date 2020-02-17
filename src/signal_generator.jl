@@ -120,9 +120,12 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                       CN0=45., ϕ=0., nADC=4, B=2.046e7,
                       include_carrier=true, include_adc=true,
                       include_noise=true, code_start_idx=1)
-	# Generate time vector
-	t = Array(0:1/f_s:t_length-1/f_s)  # s
 	sample_num = Int(f_s * t_length)
+    # Generate time vector
+    t = Array{Float64}(undef, sample_num)
+    @threads for i in 1:sample_num
+        @inbounds t[i] = (i-1)/f_s  # s
+    end
 	# Calculate code chipping rates with Doppler applied
 	# L5Q
 	f_l5q_d = L5_chipping_rate*(1. + f_d/L5_freq)

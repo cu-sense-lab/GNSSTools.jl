@@ -146,19 +146,19 @@ end
 Returns the filtered code phase measusurement.
 """
 function filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_err)
-    return last_filt_code_err+4*dll_parms.T*dll_parms*B*(current_code_err-last_filt_code_err)
+    return last_filt_code_err+4*dll_parms.T*dll_parms.B*(current_code_err-last_filt_code_err)
 end
 
 
 """
-    getcorrelatoroutput(data::GNSSData, replica, i, N, f_if, f_d, ϕ, d)
+    getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
 
 Calculate the early, prompt, and late correlator ouputs. Note that
 replica already containts the prompt correlator. Be sure to set
 the parameters to `replica` and run `generatesignal!(replica)` before
 calling this method.
 """
-function getcorrelatoroutput(data::GNSSData, replica, i, N, f_if, f_d, ϕ, d)
+function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
     # Initialize correlator results
     ze = 0. + 0im
     zp = 0. + 0im
@@ -168,7 +168,7 @@ function getcorrelatoroutput(data::GNSSData, replica, i, N, f_if, f_d, ϕ, d)
     # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
     @threads for j in 1:N
         @inbounds wipeoff = datasegment[j]*exp(-(2π*(f_if+f_d)*ts[j] + ϕ)*1im)
-        @inbounds zp += conj(replica[j]) * wipeoff
+        @inbounds zp += conj(replica.data[j]) * wipeoff
         zeidx = j + d
         if zeidx > N
             zeidx = zeidx - N
@@ -177,8 +177,8 @@ function getcorrelatoroutput(data::GNSSData, replica, i, N, f_if, f_d, ϕ, d)
         if zlidx < 1
             zlidx = zlidx + N
         end
-        @inbounds ze += conj(replica[zeidx]) * wipeoff
-        @inbounds zl += conj(replica[zlidx]) * wipeoff
+        @inbounds ze += conj(replica.data[zeidx]) * wipeoff
+        @inbounds zl += conj(replica.data[zlidx]) * wipeoff
     end
     ze = ze/N
     zp = zp/N
@@ -188,7 +188,7 @@ end
 
 
 """
-    trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_init;
+    trackprn(data, replica, prn, ϕ_init, fd_init, n0_init;
              DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
              t_length=data.t_length)
 
@@ -236,6 +236,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     SNR = Array{Float64}(undef, N_num)
     data_bits = Array{Int64}(undef, N_num)
     # Initialize 1ˢᵗ order DLL and 2ⁿᵈ PLL filters
+    p = Progress(N_num, 1, "Tracking PRN $(prn)...")
     for i in 1:2
         # Calculate the current code start index
         t₀ = ((N-n0)%N)/f_code_d
@@ -282,9 +283,10 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         ϕ += ϕ_meas + (f_if + f_d)*T
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
+        next!(p)
     end
     # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
-    for i in 3:N
+    for i in 3:N_num
         # Calculate the current code start index
         t₀ = ((N-n0)%N)/f_code_d
         code_start_idx = t₀*f_s + 1
@@ -328,6 +330,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         ϕ += ϕ_filt + (f_if + f_d)*T
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
+        next!(p)
     end
     # Return `TrackResults` struct
     return TrackResults(prn, replica.type, dll_parms, pll_parms, M, T, N,
