@@ -240,7 +240,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     p = Progress(N_num, 1, "Tracking PRN $(prn)...")
     for i in 1:2
         # Calculate the current code start index
-        t₀ = ((N-n0)%N)/f_code_d
+        t₀ = ((code_length-n0)%code_length)/f_code_d
         code_start_idx = t₀*f_s + 1
         # Set signal parameters
         definesignal!(replica;
@@ -279,7 +279,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         delta_fd[i] = dfd
         ZP[i] = zp
         # Update code phase with filtered code phase error and propagate to next `i`
-        n0 += n0_err_filtered + f_code_d*T
+        # n0 += n0_err_filtered + f_code_d*T
         # Updated and propagate carrier phase to next `i`
         ϕ += ϕ_meas + (f_if + f_d)*T
         # Calculate main code chipping rate at next `i`
@@ -289,7 +289,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
     for i in 3:N_num
         # Calculate the current code start index
-        t₀ = ((N-n0)%N)/f_code_d
+        t₀ = ((code_length-n0)%code_length)/f_code_d
         code_start_idx = t₀*f_s + 1
         # Set signal parameters
         definesignal!(replica;
@@ -326,7 +326,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         delta_fd[i] = dfd
         ZP[i] = zp
         # Update code phase with filtered code phase error and propagate to next `i`
-        n0 += n0_err_filtered + f_code_d*T
+        # n0 += n0_err_filtered + f_code_d*T
         # Update and propagate carrier phase to next `i`
         ϕ += ϕ_filt + (f_if + f_d)*T
         # Calculate main code chipping rate at next `i`
@@ -365,10 +365,53 @@ end
 
 
 """
-    plot(results::TrackResults)
+    plot(results::TrackResults, saveto=missing)
    
 Plots the tracking results from the `trackprn` method. 
 """
-function plot(results::TrackResults)
-
+function plotresults(results::TrackResults; saveto=missing)
+    figure(figsize=(14,8))
+    matplotlib.gridspec.GridSpec(3,2)
+    # Plot code phase errors
+    subplot2grid((3,2), (0,0), colspan=1, rowspan=1)
+    plot(results.code_phase_meas.%results.code_length, "k.", label="Measured code phase")
+    plot(results.code_phase_filt.%results.code_length, "b-", label="Filtered code phase")
+    xlabel("Time (ms)")
+    ylabel("Code Phase (chips)")
+    title("DLL Tracking")
+    legend()
+    # Plot filtered and measured phase errors
+    subplot2grid((3,2), (0,1), colspan=1, rowspan=1)
+    plot(results.phi_measured.*180 ./π, "k.", label="Measured ϕ")
+    plot(results.phi_filtered.*180 ./π, "b-", label="Filtered ϕ")
+    plot(results.phi_filtered.*180 ./π, "b.")
+    xlabel("Time (ms)")
+    ylabel("ϕ (degrees)")
+    ylim([-180, 180])
+    title("PLL Tracking")
+    legend()
+    subplot2grid((3,2), (1,0), colspan=2, rowspan=1)
+    plot(results.delta_fd.+results.data_init_fd, "k.")
+    xlabel("Time (ms)")
+    ylabel("Doppler (Hz)")
+    title("Doppler Frequency Estimate")
+    # subplot2grid((3,2), (1,1), colspan=1, rowspan=1)
+    # plot(SNRs, "k.")
+    # xlabel("Time (ms)")
+    # ylabel("SNR (dB)")
+    # title("Prompt Correlator SNR")
+    # Plot ZP real and imaginary parts
+    subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
+    plot(real(results.ZP), label="real(ZP)")
+    plot(imag(results.ZP), label="imag(ZP)")
+    xlabel("Time (ms)")
+    ylabel("ZP")
+    title("Prompt Correlator Output")
+    legend()
+    suptitle("PRN $(prn)\nfd = $(Int(round(results.data_init_fd))) Hz\nn₀ = $(results.data_init_n0) samples")
+    # subplots_adjust(hspace=0.4, wspace=0.4)
+    subplots_adjust(hspace=0.4, wspace=0.2)
+    if ~ismissing(saveto)
+        savefig(saveto)
+    end
 end
