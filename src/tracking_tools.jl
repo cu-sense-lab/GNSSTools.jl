@@ -67,7 +67,7 @@ struct TrackResults{T1,T2,T3}
     phi_measured::Array{Float64,1}
     phi_filtered::Array{Float64,1}
     delta_fd::Array{Float64,1}
-    ZP::Array{Float64,1}
+    ZP::Array{Complex{Float64},1}
     SNR::Array{Float64,1}
     data_bits::Array{Int64,1}
 end
@@ -333,11 +333,28 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         next!(p)
     end
     # Return `TrackResults` struct
+    # Specify what to store if `data` is a simulated signal struct
+    # or `GNSSData` struct
+    if typeof(data) == GNSSData
+        file_name = data.file_name
+        total_data_length = data.total_data_length
+        data_type = data.data_type
+        start_data_idx = data.start_data_idx
+        site_loc_lla = data.site_loc_lla
+        data_start_time = data.data_start_time
+    else
+        file_name = "N/A"
+        total_data_length = data.t_length
+        data_type = "N/A"
+        start_data_idx = 1
+        site_loc_lla = "N/A"
+        data_start_time = "N/A"
+    end
     return TrackResults(prn, replica.type, dll_parms, pll_parms, M, T, N,
-                        data.file_name, data.data_type, data.nADC,
-                        data.start_data_idx, data.t_length,
-                        data.total_data_length, data.sample_num, f_s,
-                        f_if, data.data_start_time, data.site_loc_lla,
+                        file_name, data_type, data.nADC,
+                        start_data_idx, data.t_length,
+                        total_data_length, data.sample_num, f_s,
+                        f_if, data_start_time, site_loc_lla,
                         n0_idx_init, n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, phi_measured, phi_filtered,

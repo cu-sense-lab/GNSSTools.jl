@@ -33,7 +33,7 @@ mutable struct L5QSignal
 	Tsys::Float64
 	CN0::Float64
 	ϕ::Float64
-	nADC::Float64
+	nADC::Int64
 	B::Float64
 	code_start_idx::Float64
 	l5q_init_code_phase::Float64
@@ -69,7 +69,7 @@ mutable struct L5ISignal
     Tsys::Float64
     CN0::Float64
     ϕ::Float64
-    nADC::Float64
+    nADC::Int64
     B::Float64
     code_start_idx::Float64
     l5q_init_code_phase::Float64
