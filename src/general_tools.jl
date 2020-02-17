@@ -87,3 +87,17 @@ Returns:
 function fft_correlate(data, reference)
     return ifft(conj!(fft(reference)).*fft(data))
 end
+
+
+"""
+    gnsstypes
+
+Dictionary containing the qyuivalent strings for each
+type used in `GNSSTools`.
+"""
+const gnsstypes = Dict(Val{:l5q}() => "l5q",
+                       Val{:l5i}() => "l5i",
+                       Val{:fft}() => "fft",
+                       Val{:carrier}() => "carrier",
+                       Val{:sc8}() => "sc8",
+                       Val{:sc4}() => "sc4")

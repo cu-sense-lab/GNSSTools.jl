@@ -36,9 +36,9 @@ end
 
 A struct containing the parameters for tracking and its results
 """
-struct TrackResults{T1,T2,T3}
+struct TrackResults{T1,T2}
     prn::Int64
-    signaltype::T1
+    signaltype::String
     dll_parms::DLLParms
     pll_parms::PLLParms
     M::Int64
@@ -53,8 +53,8 @@ struct TrackResults{T1,T2,T3}
     data_sample_num::Int64
     data_fs::Float64
     data_fif::Float64
-    data_start_t::T2
-    data_site_lla::T3
+    data_start_t::T1
+    data_site_lla::T2
     data_init_n0::Float64
     data_init_code_chip::Float64
     data_init_phi::Float64
@@ -350,7 +350,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         site_loc_lla = "N/A"
         data_start_time = "N/A"
     end
-    return TrackResults(prn, replica.type, dll_parms, pll_parms, M, T, N,
+    return TrackResults(prn, gnsstypes[replica.type],
+                        dll_parms, pll_parms, M, T, N,
                         file_name, data_type, data.nADC,
                         start_data_idx, data.t_length,
                         total_data_length, data.sample_num, f_s,
