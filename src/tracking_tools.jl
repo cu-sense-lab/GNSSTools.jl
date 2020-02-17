@@ -206,7 +206,7 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
         sig_freq = L5_freq
         code_length = L5_code_length
     else
-        error("ERROR: Signal type specified not supported. Aborting.")
+        error("Signal type specified not supported. Aborting.")
     end
     # Initialize common variables and initial conditions
     f_s = data.f_s

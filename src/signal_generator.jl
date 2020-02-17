@@ -90,22 +90,18 @@ end
 
 
 """
-    calcinitcodephase(code_length, f_d, fd_rate, f_s,
-                      code_start_idx)
+    calcinitcodephase(code_length, f_code_d, f_code_dd,
+                      f_s, code_start_idx)
 
 Calculates the initial code phase of a given code
 where f_d and fd_rate are the Doppler affected
 code frequency and code frequency rate, respectively. 
 """
-function calcinitcodephase(code_length, f_d, fd_rate, f_s,
-                           code_start_idx)
+function calcinitcodephase(code_length, f_code_d, f_code_dd,
+                           f_s, code_start_idx)
 	t₀ = (code_start_idx-1)/f_s
-	init_phase = 1 - f_d*t₀ - 0.5*fd_rate*t₀^2
-	if init_phase <= 0
-		return code_length + 1 - abs(init_phase)%code_length
-	else
-		return init_phase%code_length
-	end
+	init_phase = - f_code_d*t₀ - 0.5*f_code_dd*t₀^2
+    return (init_phase%code_length + code_length)%code_length
 end
 
 
@@ -234,12 +230,7 @@ Calculates the index in the codes for a given t.
 """
 function calccodeidx(init_chip, f_code_d, f_code_dd,
                      t, code_length)
-	chip = Int(floor(init_chip-1+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
-	if chip == 0
-		return code_length
-	else
-		return chip
-	end
+	return Int(floor(init_chip+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
 end
 
 

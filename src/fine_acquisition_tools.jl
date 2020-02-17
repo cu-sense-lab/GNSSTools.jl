@@ -31,7 +31,7 @@ function fineacquisition(data, replica, prn, fd_course,
     ####################################################################################
     ###### ADD MANUAL +2 SAMPLE OFFSET DUE TO UNKNOWN ERROR IN COURSE ACQUISITION ######
     ###################### REFER TO ISSUE # 1 ON GITLAB REPO PAGE ######################
-    n₀_idx_course += 2
+    # n₀_idx_course += 2 #################################################################
     ####################################################################################
     # Generate replica
     # Set signal parameters
@@ -46,13 +46,13 @@ function fineacquisition(data, replica, prn, fd_course,
     # Generate signal
     generatesignal!(replica)
     # Wipeoff IF and course Doppler from data and multiply by replica
-    sig = data.data.*exp.(-2π.*(data.f_if+fd_course).*data.t.*1im).*replica.data
-    # @threads for i in 1:replica.sample_num
-    #     @inbounds replica.data[i] = data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
-    # end
+    # sig = data.data.*exp.(-2π.*(data.f_if+fd_course).*data.t.*1im).*replica.data
+    @threads for i in 1:replica.sample_num
+        @inbounds replica.data[i] = data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
+    end
     # Perform in place FFT of `replica.data`
-    # fft!(replica.data)
-    replica.data = fft(sig)
+    fft!(replica.data)
+    # replica.data = fft(sig)
     # Find peak within ±[x]kHz, where `x` is defined by freq_lim
     # From index 1 to N/2: positive frequencies
     # From index N/2 to N: negative frequencies
@@ -96,7 +96,7 @@ function fineacquisition(data, replica, prn, fd_course,
     replica.isreplica = false
     # Return `FineAcquisitionResults` struct
     return (FineAcquisitionResults(String(:fft), fd_course, fd_rate, n₀_idx_course,
-                                  t_length, fd_fine, fd_est, ϕ_init, "N/A"), replica.data)
+                                   t_length, fd_fine, fd_est, ϕ_init, "N/A"), replica.data)
 end
 
 
@@ -112,10 +112,15 @@ Performs an carrier based fine acquisition on `data`.
 function fineacquisition(data, replica, prn, fd_course,
                          n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=50000., M=1)
+    ####################################################################################
+    ###### ADD MANUAL +2 SAMPLE OFFSET DUE TO UNKNOWN ERROR IN COURSE ACQUISITION ######
+    ###################### REFER TO ISSUE # 1 ON GITLAB REPO PAGE ######################
+    # n₀_idx_course += 2 #################################################################
+    ####################################################################################
     # Check that the data length is at least 2x greater than the size of `replica`
     Mblocks = Int64(floor(data.sample_num)/(M*replica.sample_num))
     if Mblocks < 2
-        errmsg = string("ERROR: Cannot perform carrier based fine acquisition on data",
+        errmsg = string("Cannot perform carrier based fine acquisition on data",
                         "\n`data.t_length` must be at least ≳ 2(`replica.t_length`).")
         error(errmsg)
     end
