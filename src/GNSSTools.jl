@@ -16,9 +16,9 @@ module GNSSTools
     include("l5_code_generator.jl")
     include("gnss_data_tools.jl")
     include("course_acquisition_tools.jl")
-    # include("fine_acquisition_tools.jl")
+    include("fine_acquisition_tools.jl")
     include("rinex_tools.jl")
-    include("tracking_tools.jl")
+    # include("tracking_tools.jl")
     include("testGNSSTools.jl")
 
     export c
@@ -37,10 +37,10 @@ module GNSSTools
     export loaddata
     export gencorrresult
     export courseacquisition!
-    # export fineacquisition
+    export fineacquisition
     export calcsnr
     export loadrinex
-    export trackprn
+    # export trackprn
     export testcourseacquisition
     export testcourseacquisitiondata
     export testnoncoherentintegration

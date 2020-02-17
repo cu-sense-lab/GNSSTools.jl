@@ -197,11 +197,11 @@ Perform code and phase tracking on data in `data`.
 `replica` decides the signal type. Can pass optional arguments
 that are minumum amount to track a given PRN.
 """
-function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
+function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                   DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
                   t_length=data.t_length, fd_rate=0.)
     # Check signal type of replica
-    if (sigtype == Val{:l5q}) | (sigtype == Val{:l5i})
+    if (typeof(replica.type) == Val{:l5q}) | (typeof(replica.type) == Val{:l5i})
         chipping_rate = L5_chipping_rate
         sig_freq = L5_freq
         code_length = L5_code_length
@@ -211,10 +211,10 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
     # Initialize common variables and initial conditions
     f_s = data.f_s
     f_if = data.f_if
-    f_code_d = chipping_rate*(1. + f_d/sig_freq)
     N = Int64(T*data.f_s)
     f_d = fd_init
     ϕ = ϕ_init
+    f_code_d = chipping_rate*(1. + f_d/sig_freq)
     n0_init = calcinitcodephase(code_length,
                                 f_code_d, 0.,
                                 f_s, n0_idx_init)
@@ -235,12 +235,11 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
     ZP = Array{Complex{Float64}}(undef, N_num)
     SNR = Array{Float64}(undef, N_num)
     data_bits = Array{Int64}(undef, N_num)
-    sigtype = typof(replica.type)
     # Initialize 1ˢᵗ order DLL and 2ⁿᵈ PLL filters
     for i in 1:2
         # Calculate the current code start index
-        t₀ = (((N+1)-n0)%N)/f_code_d
-        code_start_idx = Int64((t₀*f_s))
+        t₀ = ((N-n0)%N)/f_code_d
+        code_start_idx = t₀*f_s + 1
         # Set signal parameters
         definesignal!(replica;
                       prn=prn, f_d=f_d,
@@ -287,8 +286,8 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
     # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
     for i in 3:N
         # Calculate the current code start index
-        t₀ = (((N+1)-n0)%N)/f_code_d
-        code_start_idx = Int64((t₀*f_s))
+        t₀ = ((N-n0)%N)/f_code_d
+        code_start_idx = t₀*f_s + 1
         # Set signal parameters
         definesignal!(replica;
                       prn=prn, f_d=f_d,
@@ -331,7 +330,7 @@ function trackprn(data::GNSSData, replica, prn, ϕ_init, fd_init, n0_idx_init;
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
     end
     # Return `TrackResults` struct
-    return TrackResults(prn, sigtype, dll_parms, pll_parms, M, T, N,
+    return TrackResults(prn, replica.type, dll_parms, pll_parms, M, T, N,
                         data.file_name, data.data_type, data.nADC,
                         data.start_data_idx, data.t_length,
                         data.total_data_length, data.sample_num, f_s,

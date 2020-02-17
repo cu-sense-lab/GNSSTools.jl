@@ -100,7 +100,7 @@ code frequency and code frequency rate, respectively.
 function calcinitcodephase(code_length, f_code_d, f_code_dd,
                            f_s, code_start_idx)
 	t₀ = (code_start_idx-1)/f_s
-	init_phase = - f_code_d*t₀ - 0.5*f_code_dd*t₀^2
+	init_phase = -f_code_d*t₀ - 0.5*f_code_dd*t₀^2
     return (init_phase%code_length + code_length)%code_length
 end
 
@@ -181,7 +181,7 @@ function definesignal!(signal::L5QSignal;
                        include_adc=signal.include_adc,
                        include_noise=signal.include_noise,
                        code_start_idx=signal.code_start_idx,
-                       code_ship_start=missing,
+                       code_chip_start=missing,
                        isreplica=signal.isreplica)
 	## Calculate code chipping rates with Doppler applied
 	# L5Q
@@ -191,14 +191,19 @@ function definesignal!(signal::L5QSignal;
 	f_nh_d = nh_chipping_rate*(1. + f_d/L5_freq)
 	f_nh_dd = nh_chipping_rate*fd_rate/L5_freq
 	# Calculate the L5Q and nh code phase offsets
-	l5q_init_code_phase = calcinitcodephase(L5_code_length,
-                                            f_l5q_d, f_l5q_dd,
-                                            signal.f_s,
-                                            code_start_idx)
-	nh_init_code_phase = calcinitcodephase(nh_code_length,
-                                           f_nh_d, f_nh_dd,
-                                           signal.f_s,
-                                           code_start_idx)
+    if ismissing(code_chip_start)
+	   l5q_init_code_phase = calcinitcodephase(L5_code_length,
+                                                f_l5q_d, f_l5q_dd,
+                                                signal.f_s,
+                                                code_start_idx)
+	   nh_init_code_phase = calcinitcodephase(nh_code_length,
+                                              f_nh_d, f_nh_dd,
+                                              signal.f_s,
+                                              code_start_idx)
+    else
+        l5q_init_code_phase = code_chip_start
+        nh_init_code_phase = code_chip_start
+    end
 	# Store udated variables to "L5QSignal" struct
 	signal.prn = prn
 	signal.f_d = f_d
