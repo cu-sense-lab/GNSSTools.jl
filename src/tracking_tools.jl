@@ -137,7 +137,7 @@ end
 Calculates the code phase error.
 """
 function Z4(dll_parms::DLLParms, ZE, ZP, ZL)
-    return 1/dll_parms.d * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))
+    return 0.5 * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))
 end
 
 
@@ -199,7 +199,7 @@ Perform code and phase tracking on data in `data`.
 that are minumum amount to track a given PRN.
 """
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
-                  DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
+                  DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=1,
                   t_length=data.t_length, fd_rate=0.)
     # Check signal type of replica
     if (typeof(replica.type) == Val{:l5q}) | (typeof(replica.type) == Val{:l5i})
@@ -245,7 +245,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Set signal parameters
         definesignal!(replica;
                       prn=prn, f_d=f_d,
-                      fd_rate=fd_rate, ϕ=ϕ, f_if=0.,
+                      fd_rate=fd_rate, ϕ=0., f_if=0.,
                       include_carrier=true,
                       include_noise=false,
                       include_adc=false,
@@ -278,12 +278,12 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         phi_filtered[i] = ϕ + ϕ_meas
         delta_fd[i] = dfd
         ZP[i] = zp
-        # Update code phase with filtered code phase error and propagate to next `i`
-        # n0 += n0_err_filtered + f_code_d*T
-        # Updated and propagate carrier phase to next `i`
-        ϕ += ϕ_meas + (f_if + f_d)*T
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
+        # Update code phase with filtered code phase error and propagate to next `i`
+        n0 += n0_err_filtered + f_code_d*T
+        # Updated and propagate carrier phase to next `i`
+        ϕ += ϕ_meas# + (f_if + f_d)*T
         next!(p)
     end
     # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
@@ -294,7 +294,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Set signal parameters
         definesignal!(replica;
                       prn=prn, f_d=f_d,
-                      fd_rate=0., ϕ=ϕ, f_if=0.,
+                      fd_rate=0., ϕ=0., f_if=0.,
                       include_carrier=true,
                       include_noise=false,
                       include_adc=false,
@@ -325,12 +325,12 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         phi_filtered[i] = ϕ + ϕ_filt
         delta_fd[i] = dfd
         ZP[i] = zp
-        # Update code phase with filtered code phase error and propagate to next `i`
-        # n0 += n0_err_filtered + f_code_d*T
-        # Update and propagate carrier phase to next `i`
-        ϕ += ϕ_filt + (f_if + f_d)*T
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
+        # Update code phase with filtered code phase error and propagate to next `i`
+        n0 += n0_err_filtered + f_code_d*T
+        # Update and propagate carrier phase to next `i`
+        ϕ += ϕ_meas# + (f_if + f_d)*T
         next!(p)
     end
     # Return `TrackResults` struct
@@ -387,7 +387,7 @@ function plotresults(results::TrackResults; saveto=missing)
     plot(results.phi_filtered.*180 ./π, "b.")
     xlabel("Time (ms)")
     ylabel("ϕ (degrees)")
-    ylim([-180, 180])
+    # ylim([-180, 180])
     title("PLL Tracking")
     legend()
     subplot2grid((3,2), (1,0), colspan=2, rowspan=1)
