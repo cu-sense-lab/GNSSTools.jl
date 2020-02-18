@@ -49,6 +49,7 @@ mutable struct L5QSignal
 	f_nh_dd::Float64
 	sample_num::Int64
 	isreplica::Bool
+    noexp::Bool
 end
 
 
@@ -86,6 +87,7 @@ mutable struct L5ISignal
     f_db_dd::Float64
     sample_num::Int64
     isreplica::Bool
+    noexp::Bool
 end
 
 
@@ -150,7 +152,7 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                      include_noise,
                      f_l5q_d, f_l5q_dd,
                      f_nh_d, f_nh_dd, sample_num,
-                     isreplica)
+                     isreplica, false)
 end
 
 
@@ -184,8 +186,8 @@ function definesignal!(signal::L5QSignal;
                        include_adc=signal.include_adc,
                        include_noise=signal.include_noise,
                        code_start_idx=signal.code_start_idx,
-                       code_chip_start=missing,
-                       isreplica=signal.isreplica)
+                       isreplica=signal.isreplica,
+                       noexp=signal.noexp)
 	## Calculate code chipping rates with Doppler applied
 	# L5Q
 	f_l5q_d = L5_chipping_rate*(1. + f_d/L5_freq)
@@ -194,19 +196,14 @@ function definesignal!(signal::L5QSignal;
 	f_nh_d = nh_chipping_rate*(1. + f_d/L5_freq)
 	f_nh_dd = nh_chipping_rate*fd_rate/L5_freq
 	# Calculate the L5Q and nh code phase offsets
-    if ismissing(code_chip_start)
-	   l5q_init_code_phase = calcinitcodephase(L5_code_length,
-                                                f_l5q_d, f_l5q_dd,
-                                                signal.f_s,
-                                                code_start_idx)
-	   nh_init_code_phase = calcinitcodephase(nh_code_length,
-                                              f_nh_d, f_nh_dd,
-                                              signal.f_s,
-                                              code_start_idx)
-    else
-        l5q_init_code_phase = code_chip_start
-        nh_init_code_phase = code_chip_start
-    end
+	l5q_init_code_phase = calcinitcodephase(L5_code_length,
+                                            f_l5q_d, f_l5q_dd,
+                                            signal.f_s,
+                                            code_start_idx)
+	nh_init_code_phase = calcinitcodephase(nh_code_length,
+                                           f_nh_d, f_nh_dd,
+                                           signal.f_s,
+                                           code_start_idx)
 	# Store udated variables to "L5QSignal" struct
 	signal.prn = prn
 	signal.f_d = f_d
@@ -226,7 +223,9 @@ function definesignal!(signal::L5QSignal;
 	signal.f_nh_dd = f_nh_dd
 	signal.l5q_init_code_phase = l5q_init_code_phase
 	signal.nh_init_code_phase = nh_init_code_phase
+    signal.code_start_idx = code_start_idx
 	signal.isreplica = isreplica
+    signal.noexp = noexp
 	return signal
 end
 
@@ -343,6 +342,7 @@ function generatesignal!(signal::L5QSignal,
 	f_if = signal.f_if
 	fd_rate = signal.fd_rate
 	ϕ = signal.ϕ
+    noexp = signal.noexp
 	@threads for i in 1:signal.sample_num
 		@inbounds t = signal.t[i]
 		# Get L5Q code value at t
@@ -354,8 +354,12 @@ function generatesignal!(signal::L5QSignal,
                               signal.f_nh_d, signal.f_nh_dd,
                               t, nh_code_length)]
 		# XOR l51 and nh20 and modulated with complex exponential
-		@inbounds signal.data[i] = ((xor(l5q, nh)*2-1) *
-			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+        if noexp
+            @inbounds signal.data[i] = complex(float((xor(l5q, nh)*2-1)))
+        else
+            @inbounds signal.data[i] = ((xor(l5q, nh)*2-1) *
+                                         exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+        end
 	end
 	return signal
 end

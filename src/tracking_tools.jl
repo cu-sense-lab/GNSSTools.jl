@@ -86,7 +86,7 @@ function definepll(T, B, ξ)
     a₂ = ωₙ^2*T^2 - 4*ξ*T*ωₙ + 4
     b₀ = ωₙ^2*T^2 + 4*ξ*T*ωₙ
     b₁ = 2*ωₙ^2*T^2
-    b₂ = ωₙ^2*T^2 - 4*ξ*ωₙ*T
+    b₂ = ωₙ^2*T^2 - 4*ξ*T*ωₙ
     descriminator = "ϕ = atan(Imag(ZP)/Real(ZP))"
     return PLLParms(T, ξ, B, ωₙ, a₀, a₁, a₂, b₀, b₁, b₂, descriminator)
 end
@@ -284,7 +284,9 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
-        n0 += n0_err_filtered + f_code_d*T
+        if i > 1
+            n0 += n0_err_filtered + f_code_d*T
+        end
         # Updated and propagate carrier phase to next `i`
         ϕ += ϕ_meas# + (f_if + f_d)*T
         next!(p)

@@ -37,7 +37,8 @@ function fineacquisition(data, replica, prn, fd_course,
                   include_noise=false,
                   include_adc=false,
                   code_start_idx=n₀_idx_course,
-                  isreplica=true)
+                  isreplica=true,
+                  noexp=true)
     # Generate signal
     generatesignal!(replica)
     # Wipeoff IF and course Doppler from data and multiply by replica

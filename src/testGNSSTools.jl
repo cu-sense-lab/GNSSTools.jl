@@ -64,7 +64,7 @@ function testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
 	fd_center = f_d  # Hz
 	Δfd = 1/data.t_length  # Hz
 	sample_num = data.sample_num
-	corr_result = gencorrresult(fd_range, Δfd, sample_num)
+	corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
 	courseacquisition!(corr_result, data, replica, prn;
 	                   fd_center=fd_center, fd_range=fd_range,
 	                   fd_rate=fd_rate, Δfd=Δfd, threads=threads)
@@ -79,7 +79,7 @@ function testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
 		println("Fine Acquisition Results")
 		println("fd = $(results.fd_est)Hz")
 		println("n₀ = $(results.n0_idx_course) samples")
-		println("ϕ₀ = $(results.ϕ_int) rad")
+		println("ϕ₀ = $(results.ϕ_init) rad")
 	end 
 	if showplot
 		figure()
