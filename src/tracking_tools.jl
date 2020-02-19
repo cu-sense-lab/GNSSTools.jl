@@ -166,6 +166,7 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
     zl = 0. + 0im
     datasegment = view(data.data, (i-1)*N+1:i*N)
     ts = view(data.t, (i-1)*N+1:i*N)
+    # ts = view(data.t, 1:N)
     # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
     @threads for j in 1:N
         @inbounds wipeoff = datasegment[j]*exp(-(2π*(f_if+f_d)*ts[j] + ϕ)*1im)
@@ -209,13 +210,13 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         error("Signal type specified not supported. Aborting.")
     end
     # Compute the spacing between the ZE, ZP, and ZL correlators
-    d = Int64(floor(data.f_s/sig_freq/2))
+    d = Int64(floor(data.f_s/chipping_rate/2))
     # Initialize common variables and initial conditions
     T = replica.t_length
     t_length = data.t_length
     f_s = data.f_s
     f_if = data.f_if
-    N = Int64(T*data.f_s)
+    N = replica.sample_num
     f_d = fd_init
     ϕ = ϕ_init
     f_code_d = chipping_rate*(1. + f_d/sig_freq)
@@ -223,8 +224,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                                 f_code_d, 0.,
                                 f_s, n0_idx_init)
     n0 = n0_init
-    M = Int64(floor(t_length/T))
-    t = Array(0:T:M*T)
+    M = Int64(floor(data.t_length/replica.t_length))
+    t = Array(0:T:M*T-T)
     # Define DLL and PLL parameter structs
     dll_parms = definedll(T, DLL_B, d)
     pll_parms = definepll(T, PLL_B, damping)
@@ -253,7 +254,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                       include_noise=false,
                       include_adc=false,
                       code_start_idx=code_start_idx,
-                      nADC=nADC, isreplica=true)
+                      nADC=nADC, isreplica=true, noexp=true)
         # Generate prompt correlator
         generatesignal!(replica)
         # Calculate early, prompt, and late correlator outputs
@@ -304,7 +305,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                       include_noise=false,
                       include_adc=false,
                       code_start_idx=n0,
-                      nADC=nADC, isreplica=true)
+                      nADC=nADC, isreplica=true, noexp=true)
         # Generate prompt correlator
         generatesignal!(replica)
         # Calculate early, prompt, and late correlator outputs
@@ -362,7 +363,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                         start_data_idx, data.t_length,
                         total_data_length, data.sample_num, f_s,
                         f_if, data_start_time, site_loc_lla,
-                        n0_idx_init, n0_init, ϕ_init, fd_init, t,
+                        float(n0_idx_init), n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, phi_measured, phi_filtered,
                         delta_fd, ZP, SNR, data_bits, code_length)
