@@ -40,7 +40,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             data, replica::L5QSignal,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/replica.t_length,
-                            threads=8, message="Correlating...",
+                            threads=nthreads(), message="Correlating...",
                             operation="replace", start_idx=1,
                             showprogressbar=true)
     # Set number of threads to use for FFTW functions

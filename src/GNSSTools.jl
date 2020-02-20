@@ -18,7 +18,7 @@ module GNSSTools
     include("course_acquisition_tools.jl")
     include("fine_acquisition_tools.jl")
     include("rinex_tools.jl")
-    # include("tracking_tools.jl")
+    include("tracking_tools.jl")
     include("testGNSSTools.jl")
 
     export c
@@ -40,7 +40,8 @@ module GNSSTools
     export fineacquisition
     export calcsnr
     export loadrinex
-    # export trackprn
+    export trackprn
+    export plotresults
     export testcourseacquisition
     export testcourseacquisitiondata
     export testnoncoherentintegration

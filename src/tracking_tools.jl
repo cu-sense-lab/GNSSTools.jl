@@ -114,8 +114,8 @@ end
 
 
 """
-    filtercarrierphase(pll_parms::PLLParms, ϕ_meas,
-                       ϕ_filt_1, ϕ_filt_2)
+    filtercarrierphase(pll_parms::PLLParms, ϕ_meas, ϕ_meas_1,
+                       ϕ_meas_2, ϕ_filt_1, ϕ_filt_2)
 
 Fiters the raw phase measurement using 2ⁿᵈ order PLL filter.
 """
@@ -142,7 +142,7 @@ end
 
 
 """
-    filtercodephase(dll_parms::DLLParms, current_code_err, last_code_err)
+    filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_err)
 
 Returns the filtered code phase measusurement.
 """
@@ -160,31 +160,35 @@ the parameters to `replica` and run `generatesignal!(replica)` before
 calling this method.
 """
 function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
-    # Initialize correlator results
-    ze = 0. + 0im
-    zp = 0. + 0im
-    zl = 0. + 0im
-    datasegment = view(data.data, (i-1)*N+1:i*N)
-    ts = view(data.t, (i-1)*N+1:i*N)
+    ## Initialize correlator results
+    # ze = 0. + 0im
+    # zp = 0. + 0im
+    # zl = 0. + 0im
+    # datasegment = view(data.data, (i-1)*N+1:i*N)
+    # ts = view(data.t, (i-1)*N+1:i*N)
     # ts = view(data.t, 1:N)
-    # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
-    @threads for j in 1:N
-        @inbounds wipeoff = datasegment[j]*exp(-(2π*(f_if+f_d)*ts[j] + ϕ)*1im)
-        @inbounds zp += conj(replica.data[j]) * wipeoff
-        zeidx = j + d
-        if zeidx > N
-            zeidx = zeidx - N
-        end
-        zlidx = j - d
-        if zlidx < 1
-            zlidx = zlidx + N
-        end
-        @inbounds ze += conj(replica.data[zeidx]) * wipeoff
-        @inbounds zl += conj(replica.data[zlidx]) * wipeoff
-    end
-    ze = ze/N
-    zp = zp/N
-    zl = zl/N
+    ## Perform carrier and phase wipeoff and apply early, prompt, and late correlators
+    # for j in 1:N
+    #     @inbounds wipeoff = datasegment[j]*exp(-(2π*(f_if+f_d)*ts[j] + ϕ)*1im)
+    #     @inbounds zp += conj(replica.data[j]) * wipeoff
+    #     zeidx = j + d
+    #     if zeidx > N
+    #         zeidx = zeidx - N
+    #     end
+    #     zlidx = j - d
+    #     if zlidx < 1
+    #         zlidx = zlidx + N
+    #     end
+    #     @inbounds ze += conj(replica.data[zeidx]) * wipeoff
+    #     @inbounds zl += conj(replica.data[zlidx]) * wipeoff
+    # end
+    wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[(i-1)*N+1:i*N] .+ ϕ).*1im)
+    ze = sum(conj.(circshift(replica.data, -d)).*wipeoff)/N
+    zp = sum(conj.(replica.data).*wipeoff)/N
+    zl = sum(conj.(circshift(replica.data, d)).*wipeoff)/N
+    # ze = ze/N
+    # zp = zp/N
+    # zl = zl/N
     return (ze, zp, zl)
 end
 
@@ -254,7 +258,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                       include_noise=false,
                       include_adc=false,
                       code_start_idx=code_start_idx,
-                      nADC=nADC, isreplica=true, noexp=true)
+                      isreplica=true, noexp=true)
         # Generate prompt correlator
         generatesignal!(replica)
         # Calculate early, prompt, and late correlator outputs
@@ -278,8 +282,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         code_err_filt[i] = n0_err_filtered
         code_phase_meas[i] = n0 + n0_err
         code_phase_filt[i] = n0 + n0_err_filtered
-        phi_measured[i] = ϕ + ϕ_meas
-        phi_filtered[i] = ϕ + ϕ_meas
+        phi_measured[i] = ϕ_meas
+        phi_filtered[i] = ϕ_meas
         delta_fd[i] = dfd
         ZP[i] = zp
         # Calculate main code chipping rate at next `i`
@@ -300,12 +304,12 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Set signal parameters
         definesignal!(replica;
                       prn=prn, f_d=f_d,
-                      fd_rate=0., ϕ=0., f_if=0.,
+                      fd_rate=fd_rate, ϕ=0., f_if=0.,
                       include_carrier=true,
                       include_noise=false,
                       include_adc=false,
-                      code_start_idx=n0,
-                      nADC=nADC, isreplica=true, noexp=true)
+                      code_start_idx=code_start_idx,
+                      isreplica=true, noexp=true)
         # Generate prompt correlator
         generatesignal!(replica)
         # Calculate early, prompt, and late correlator outputs
@@ -316,8 +320,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         ϕ_meas = measurephase(zp)
         # Filter carrier phase measurement
         ϕ_filt = filtercarrierphase(pll_parms, ϕ_meas,
-                                    code_phase_meas[i-1], code_phase_meas[i-2],
-                                    code_phase_filt[i-1], code_phase_filt[i-2])
+                                    phi_measured[i-1], phi_measured[i-2],
+                                    phi_filtered[i-1], phi_filtered[i-2])
         # Filter raw code phase error measurement
         n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
         # Calculate dfd
@@ -327,8 +331,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         code_err_filt[i] = n0_err_filtered
         code_phase_meas[i] = n0 + n0_err
         code_phase_filt[i] = n0 + n0_err_filtered
-        phi_measured[i] = ϕ + ϕ_meas
-        phi_filtered[i] = ϕ + ϕ_filt
+        phi_measured[i] = ϕ_meas
+        phi_filtered[i] = ϕ_filt
         delta_fd[i] = dfd
         ZP[i] = zp
         # Calculate main code chipping rate at next `i`
@@ -336,7 +340,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Update code phase with filtered code phase error and propagate to next `i`
         n0 += n0_err_filtered + f_code_d*T
         # Update and propagate carrier phase to next `i`
-        ϕ += ϕ_meas# + (f_if + f_d)*T
+        ϕ += ϕ_filt# + (f_if + f_d)*T
         next!(p)
     end
     # Return `TrackResults` struct
@@ -414,7 +418,7 @@ function plotresults(results::TrackResults; saveto=missing)
     ylabel("ZP")
     title("Prompt Correlator Output")
     legend()
-    suptitle("PRN $(prn)\nfd = $(Int(round(results.data_init_fd))) Hz\nn₀ = $(results.data_init_n0) samples")
+    suptitle("PRN $(results.prn)\nfd = $(Int(round(results.data_init_fd))) Hz\nn₀ = $(results.data_init_n0) samples")
     # subplots_adjust(hspace=0.4, wspace=0.4)
     subplots_adjust(hspace=0.4, wspace=0.2)
     if ~ismissing(saveto)

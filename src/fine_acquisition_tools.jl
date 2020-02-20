@@ -5,6 +5,7 @@ A struct that stores the fine acquisition fine acquisition
 results for both the carrier and FFT based methods.
 """
 struct FineAcquisitionResults{T}
+    prn::Int64
     type::String
     fd_course::Float64
     fd_rate::Float64
@@ -52,8 +53,8 @@ function fineacquisition(data, replica, prn, fd_course,
     # Find peak within ±[x]kHz, where `x` is defined by freq_lim
     # From index 1 to N/2: positive frequencies
     # From index N/2 to N: negative frequencies
-    Δf = 1/data.t_length
-    N = data.sample_num
+    Δf = 1/replica.t_length
+    N = replica.sample_num
     N_over_2 = Int64(floor(N/2))
     N_lim = Int64(floor(freq_lim/Δf))
     pos_freq_interval = (1, N_lim)
@@ -66,6 +67,9 @@ function fineacquisition(data, replica, prn, fd_course,
     @inbounds for i in pos_freq_interval[1]:pos_freq_interval[2]
         data_abs2 = abs2(replica.data[i])
         if data_abs2 > pk_valabs2
+            # global pk_valabs2
+            # global pk_val
+            # global pk_idx
             pk_valabs2 = data_abs2
             pk_val = replica.data[i]
             pk_idx = i
@@ -75,6 +79,9 @@ function fineacquisition(data, replica, prn, fd_course,
     @inbounds for i in neg_freq_interval[1]:neg_freq_interval[2]
         data_abs2 = abs2(replica.data[i])
         if data_abs2 > pk_valabs2
+            # global pk_valabs2
+            # global pk_val
+            # global pk_idx
             pk_valabs2 = data_abs2
             pk_val = replica.data[i]
             pk_idx = i
@@ -91,7 +98,7 @@ function fineacquisition(data, replica, prn, fd_course,
     ϕ_init = atan(imag(pk_val)/real(pk_val))
     replica.isreplica = false
     # Return `FineAcquisitionResults` struct
-    return FineAcquisitionResults(String(:fft), fd_course, fd_rate, n₀_idx_course,
+    return FineAcquisitionResults(prn, String(:fft), fd_course, fd_rate, n₀_idx_course,
                                   t_length, fd_fine, fd_est, ϕ_init, "N/A")
 end
 
@@ -179,6 +186,6 @@ function fineacquisition(data, replica, prn, fd_course,
     fd_fine = dϕavg/(2π*N/f_s)
     fd_est = fd_course + fd_fine
     # Return `FineAcquisitionResults` struct
-    return FineAcquisitionResults(String(:carrier), fd_course, fd_rate, n₀_idx_course,
+    return FineAcquisitionResults(prn, String(:carrier), fd_course, fd_rate, n₀_idx_course,
                                   t_length, fd_fine, fd_est, ϕ_init, M)
 end
