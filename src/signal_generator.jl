@@ -1,4 +1,22 @@
 """
+    l5q
+
+Array of symbols specifying that a signal
+is a an L5 dataless signal.
+"""
+const l5q = [:l5, :q]
+
+
+"""
+    l5i
+
+Array of symbols specifying that a signal
+is a an L5 signal with data bits.
+"""
+const l5i = [:l5, :i]
+
+
+"""
     L5QSignal()
 
 Struct for holding L5Q GNSS signal properties for
@@ -15,7 +33,7 @@ mutable struct L5QSignal
 	Tsys::Float64
 	CN0::Float64
 	ϕ::Float64
-	nADC::Float64
+	nADC::Int64
 	B::Float64
 	code_start_idx::Float64
 	l5q_init_code_phase::Float64
@@ -31,26 +49,67 @@ mutable struct L5QSignal
 	f_nh_dd::Float64
 	sample_num::Int64
 	isreplica::Bool
+    noexp::Bool
+    chipping_rate::Float64
+    sig_freq::Float64
+    code_length::Int64
 end
 
 
 """
-    calcinitcodephase(code_length, f_d, fd_rate, f_s,
-                      code_start_idx)
+    L5ISignal()
+
+Struct for holding L5Q GNSS signal properties for
+signal generation.
+"""
+mutable struct L5ISignal
+    type::Val{:l5q}
+    prn::Int64
+    f_s::Float64
+    t_length::Float64
+    f_if::Float64
+    f_d::Float64
+    fd_rate::Float64
+    Tsys::Float64
+    CN0::Float64
+    ϕ::Float64
+    nADC::Int64
+    B::Float64
+    code_start_idx::Float64
+    l5q_init_code_phase::Float64
+    databit_init_code_phase::Float64
+    t::Array{Float64,1}
+    data::Array{Complex{Float64},1}
+    include_carrier::Bool
+    include_adc::Bool
+    include_noise::Bool
+    include_databits::Bool
+    f_l5q_d::Float64
+    f_l5q_dd::Float64
+    f_db_d::Float64  # databit Doppler
+    f_db_dd::Float64
+    sample_num::Int64
+    isreplica::Bool
+    noexp::Bool
+    chipping_rate::Float64
+    sig_freq::Float64
+    code_length::Float64
+end
+
+
+"""
+    calcinitcodephase(code_length, f_code_d, f_code_dd,
+                      f_s, code_start_idx)
 
 Calculates the initial code phase of a given code
 where f_d and fd_rate are the Doppler affected
 code frequency and code frequency rate, respectively. 
 """
-function calcinitcodephase(code_length, f_d, fd_rate, f_s,
-                           code_start_idx)
+function calcinitcodephase(code_length, f_code_d, f_code_dd,
+                           f_s, code_start_idx)
 	t₀ = (code_start_idx-1)/f_s
-	init_phase = 1 - f_d*t₀ - 0.5*fd_rate*t₀^2
-	if init_phase <= 0
-		return code_length + 1 - abs(init_phase)%code_length
-	else
-		return init_phase%code_length
-	end
+	init_phase = -f_code_d*t₀ - 0.5*f_code_dd*t₀^2
+    return (init_phase%code_length + code_length)%code_length
 end
 
 
@@ -69,9 +128,12 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                       CN0=45., ϕ=0., nADC=4, B=2.046e7,
                       include_carrier=true, include_adc=true,
                       include_noise=true, code_start_idx=1)
-	# Generate time vector
-	t = Array(0:1/f_s:t_length-1/f_s)  # s
 	sample_num = Int(f_s * t_length)
+    # Generate time vector
+    t = Array{Float64}(undef, sample_num)
+    @threads for i in 1:sample_num
+        @inbounds t[i] = (i-1)/f_s  # s
+    end
 	# Calculate code chipping rates with Doppler applied
 	# L5Q
 	f_l5q_d = L5_chipping_rate*(1. + f_d/L5_freq)
@@ -96,7 +158,8 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                      include_noise,
                      f_l5q_d, f_l5q_dd,
                      f_nh_d, f_nh_dd, sample_num,
-                     isreplica)
+                     isreplica, false, L5_chipping_rate,
+                     L5_freq, L5_code_length)
 end
 
 
@@ -130,7 +193,8 @@ function definesignal!(signal::L5QSignal;
                        include_adc=signal.include_adc,
                        include_noise=signal.include_noise,
                        code_start_idx=signal.code_start_idx,
-                       isreplica=signal.isreplica)
+                       isreplica=signal.isreplica,
+                       noexp=signal.noexp)
 	## Calculate code chipping rates with Doppler applied
 	# L5Q
 	f_l5q_d = L5_chipping_rate*(1. + f_d/L5_freq)
@@ -166,7 +230,9 @@ function definesignal!(signal::L5QSignal;
 	signal.f_nh_dd = f_nh_dd
 	signal.l5q_init_code_phase = l5q_init_code_phase
 	signal.nh_init_code_phase = nh_init_code_phase
+    signal.code_start_idx = code_start_idx
 	signal.isreplica = isreplica
+    signal.noexp = noexp
 	return signal
 end
 
@@ -178,18 +244,14 @@ Calculates the index in the codes for a given t.
 """
 function calccodeidx(init_chip, f_code_d, f_code_dd,
                      t, code_length)
-	chip = Int(floor(init_chip-1+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
-	if chip == 0
-		return code_length
-	else
-		return chip
-	end
+	return Int(floor(init_chip+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
 end
 
 
 """
     generatesignal!(signal::L5QSignal,
-                    isreplica::Val{false}=Val(signal.isreplica))
+                    isreplica::Val{false}=Val(signal.isreplica);
+                    t_length=signal.t_length)
 
 Generates local GNSS signal using paramters defined in a
 L5QSignal struct.
@@ -199,13 +261,20 @@ and Neuman sequence.
 
 No need to specify `isreplica`. Set `isreplica` to `true` to
 use alternate method, which ignores all `Bool` flags in `signal`.
+
+Specify `t_length` to be ≲ to `replica.t_length` for different
+signal generation lengths. **NOTE:** The size of the `replica.data`
+array will still be the same size. You will need to keep track
+of the `t_length` you passed to `generatesignal!`.
 """
 function generatesignal!(signal::L5QSignal,
-	                     isreplica::Val{false}=Val(signal.isreplica))
+	                     isreplica::Val{false}=Val(signal.isreplica);
+                         t_length=signal.t_length)
 	# Common parmeters used for entire signal
 	prn = signal.prn
 	Tsys = signal.Tsys
 	CN0 = signal.CN0
+    f_s = signal.f_s
 	f_d = signal.f_d
 	f_if = signal.f_if
 	fd_rate = signal.fd_rate
@@ -219,7 +288,7 @@ function generatesignal!(signal::L5QSignal,
 	adc_scale = 2^(nADC-1)-1
 	carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
 	noise_amp = sqrt(k*B*Tsys)
-	@threads for i in 1:signal.sample_num
+	@threads for i in 1:Int64(float(t_length*f_s))
 		@inbounds t = signal.t[i]
 		# Get L5Q code value at t
 		l5q = l5q_codes[prn][calccodeidx(signal.l5q_init_code_phase,
@@ -269,9 +338,8 @@ Generates a signal with carrier, ADC quantization, noise,
 and Neuman sequence.
 
 This version is used only when `isreplica` is set to `true`
-in `signal` and ignores all the `include_*` flags in `signal`,
-except `include_neuman_code`. Exponential without the amplitude
-is included automatically.
+in `signal` and ignores all the `include_*` flags in `signal`.
+Exponential without the amplitude is included automatically.
 """
 function generatesignal!(signal::L5QSignal,
 	                     isreplica::Val{true}=Val(signal.isreplica))
@@ -281,6 +349,7 @@ function generatesignal!(signal::L5QSignal,
 	f_if = signal.f_if
 	fd_rate = signal.fd_rate
 	ϕ = signal.ϕ
+    noexp = signal.noexp
 	@threads for i in 1:signal.sample_num
 		@inbounds t = signal.t[i]
 		# Get L5Q code value at t
@@ -292,8 +361,12 @@ function generatesignal!(signal::L5QSignal,
                               signal.f_nh_d, signal.f_nh_dd,
                               t, nh_code_length)]
 		# XOR l51 and nh20 and modulated with complex exponential
-		@inbounds signal.data[i] = ((xor(l5q, nh)*2-1) *
-			                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+        if noexp
+            @inbounds signal.data[i] = complex(float((xor(l5q, nh)*2-1)))
+        else
+            @inbounds signal.data[i] = ((xor(l5q, nh)*2-1) *
+                                         exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+        end
 	end
 	return signal
 end
