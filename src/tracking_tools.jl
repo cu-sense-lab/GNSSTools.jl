@@ -66,6 +66,7 @@ struct TrackResults{T1,T2}
     code_phase_filt::Array{Float64,1}
     phi_measured::Array{Float64,1}
     phi_filtered::Array{Float64,1}
+    phi::Array{Float64,1}
     delta_fd::Array{Float64,1}
     ZP::Array{Complex{Float64},1}
     SNR::Array{Float64,1}
@@ -244,6 +245,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     code_phase_filt = Array{Float64}(undef, M)
     phi_measured = Array{Float64}(undef, M)
     phi_filtered = Array{Float64}(undef, M)
+    phi = Array{Float64}(undef, M)
     delta_fd = Array{Float64}(undef, M)
     ZP = Array{Complex{Float64}}(undef, M)
     SNR = Array{Float64}(undef, M)
@@ -288,6 +290,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         code_phase_filt[i] = n0 + n0_err_filtered
         phi_measured[i] = ϕ_meas
         phi_filtered[i] = ϕ_meas
+        phi[i] = ϕ
         delta_fd[i] = dfd
         ZP[i] = zp
         if real(zp) > 0
@@ -342,6 +345,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         code_phase_filt[i] = n0 + n0_err_filtered
         phi_measured[i] = ϕ_meas
         phi_filtered[i] = ϕ_filt
+        phi[i] = ϕ
         delta_fd[i] = dfd
         ZP[i] = zp
         if real(zp) > 0
@@ -383,7 +387,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                         f_if, data_start_time, site_loc_lla,
                         float(n0_idx_init), n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
-                        code_phase_filt, phi_measured, phi_filtered,
+                        code_phase_filt, phi_measured, phi_filtered, phi,
                         delta_fd, ZP, SNR, data_bits, code_length)
 end
 
