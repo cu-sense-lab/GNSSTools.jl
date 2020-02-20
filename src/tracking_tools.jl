@@ -286,6 +286,11 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         phi_filtered[i] = ϕ_meas
         delta_fd[i] = dfd
         ZP[i] = zp
+        if real(zp) > 0
+            data_bits[i] = 1
+        else
+            data_bits[i] = 0
+        end
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
@@ -335,6 +340,11 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         phi_filtered[i] = ϕ_filt
         delta_fd[i] = dfd
         ZP[i] = zp
+        if real(zp) > 0
+            data_bits[i] = 1
+        else
+            data_bits[i] = 0
+        end
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
