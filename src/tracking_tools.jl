@@ -205,14 +205,18 @@ that are minumum amount to track a given PRN.
 """
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0.)
-    # Check signal type of replica
-    if (typeof(replica.type) == Val{:l5q}) | (typeof(replica.type) == Val{:l5i})
-        chipping_rate = L5_chipping_rate
-        sig_freq = L5_freq
-        code_length = L5_code_length
-    else
-        error("Signal type specified not supported. Aborting.")
-    end
+    # # Check signal type of replica
+    # if (typeof(replica.type) == Val{:l5q}) | (typeof(replica.type) == Val{:l5i})
+    #     chipping_rate = L5_chipping_rate
+    #     sig_freq = L5_freq
+    #     code_length = L5_code_length
+    # else
+    #     error("Signal type specified not supported. Aborting.")
+    # end
+    # Assign signal specific parameters
+    chipping_rate = replica.chipping_rate
+    sig_freq = replica.sig_freq
+    code_length = replica.code_length
     # Compute the spacing between the ZE, ZP, and ZL correlators
     d = Int64(floor(data.f_s/chipping_rate/2))
     # Initialize common variables and initial conditions

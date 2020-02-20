@@ -50,6 +50,9 @@ mutable struct L5QSignal
 	sample_num::Int64
 	isreplica::Bool
     noexp::Bool
+    chipping_rate::Float64
+    sig_freq::Float64
+    code_length::Int64
 end
 
 
@@ -88,6 +91,9 @@ mutable struct L5ISignal
     sample_num::Int64
     isreplica::Bool
     noexp::Bool
+    chipping_rate::Float64
+    sig_freq::Float64
+    code_length::Float64
 end
 
 
@@ -152,7 +158,8 @@ function definesignal(type::Val{:l5q}, prn, f_s, t_length;
                      include_noise,
                      f_l5q_d, f_l5q_dd,
                      f_nh_d, f_nh_dd, sample_num,
-                     isreplica, false)
+                     isreplica, false, L5_chipping_rate,
+                     L5_freq, L5_code_length)
 end
 
 
