@@ -42,8 +42,8 @@ struct TrackResults{T1,T2}
     dll_parms::DLLParms
     pll_parms::PLLParms
     M::Int64
-    integration_len::Float64
-    integration_N::Int64
+    T::Float64
+    N::Int64
     data_file::String
     data_type::String
     data_nADC::Int64
@@ -302,7 +302,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
         if i > 1
-            n0 += n0_err_filtered + f_code_d*T
+            n0 += n0_err_filtered# + f_code_d*T
         end
         # Updated and propagate carrier phase to next `i`
         ϕ += ϕ_meas# + (f_if + f_d)*T
@@ -356,7 +356,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
-        n0 += n0_err_filtered + f_code_d*T
+        n0 += n0_err_filtered# + f_code_d*T
         # Update and propagate carrier phase to next `i`
         ϕ += ϕ_filt# + (f_if + f_d)*T
         next!(p)
@@ -402,25 +402,25 @@ function plotresults(results::TrackResults; saveto=missing)
     matplotlib.gridspec.GridSpec(3,2)
     # Plot code phase errors
     subplot2grid((3,2), (0,0), colspan=1, rowspan=1)
-    plot(results.code_phase_meas.%results.code_length, "k.", label="Measured code phase")
-    plot(results.code_phase_filt.%results.code_length, "b-", label="Filtered code phase")
-    xlabel("Time (ms)")
+    plot(results.t, results.code_phase_meas.%results.code_length, "k.", label="Measured code phase")
+    plot(results.t, results.code_phase_filt.%results.code_length, "b-", label="Filtered code phase")
+    xlabel("Time (s)")
     ylabel("Code Phase (chips)")
     title("DLL Tracking")
     legend()
     # Plot filtered and measured phase errors
     subplot2grid((3,2), (0,1), colspan=1, rowspan=1)
-    plot(results.phi_measured.*180 ./π, "k.", label="Measured ϕ")
-    plot(results.phi_filtered.*180 ./π, "b-", label="Filtered ϕ")
-    plot(results.phi_filtered.*180 ./π, "b.")
-    xlabel("Time (ms)")
+    plot(results.t, results.phi_measured.*180 ./π, "k.", label="Measured ϕ")
+    plot(results.t, results.phi_filtered.*180 ./π, "b-", label="Filtered ϕ")
+    plot(results.t, results.phi_filtered.*180 ./π, "b.")
+    xlabel("Time (s)")
     ylabel("ϕ (degrees)")
     # ylim([-180, 180])
     title("PLL Tracking")
     legend()
     subplot2grid((3,2), (1,0), colspan=2, rowspan=1)
-    plot(results.delta_fd.+results.data_init_fd, "k.")
-    xlabel("Time (ms)")
+    plot(results.t, results.delta_fd.+results.data_init_fd, "k.")
+    xlabel("Time (s)")
     ylabel("Doppler (Hz)")
     title("Doppler Frequency Estimate")
     # subplot2grid((3,2), (1,1), colspan=1, rowspan=1)
@@ -430,9 +430,9 @@ function plotresults(results::TrackResults; saveto=missing)
     # title("Prompt Correlator SNR")
     # Plot ZP real and imaginary parts
     subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
-    plot(real(results.ZP), label="real(ZP)")
-    plot(imag(results.ZP), label="imag(ZP)")
-    xlabel("Time (ms)")
+    plot(results.t, real(results.ZP), label="real(ZP)")
+    plot(results.t, imag(results.ZP), label="imag(ZP)")
+    xlabel("Time (s)")
     ylabel("ZP")
     title("Prompt Correlator Output")
     legend()
