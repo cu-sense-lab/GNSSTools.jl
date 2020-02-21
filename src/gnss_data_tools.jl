@@ -1,27 +1,4 @@
 """
-    Data()
-
-
-Structure for holding signal data.
-"""
-struct GNSSData{T1,T2}
-	file_name::String
-	f_s::Float64
-	f_if::Float64
-	t_length::Float64
-	start_data_idx::Int64
-	t::Array{Float64,1}
-	data::Array{Complex{Float64},1}
-	data_type::String
-	data_start_time::T1
-	site_loc_lla::T2
-	sample_num::Int64
-	total_data_length::Float64
-	nADC::Int64
-end
-
-
-"""
     loaddata(data_type, file_name, f_s, f_if, t_length;
              start_data_idx=1, site_lla=missing, data_start_time=missing)
 
