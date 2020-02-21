@@ -36,7 +36,8 @@ module GNSSTools
     export L5_chipping_rate
     export nh_chipping_rate
     export L5QSignal
-    export definesignal, definesignal!
+    export definesignal
+    export definesignal!
     export generatesignal!
     export fft_correlate
     export GNSSData

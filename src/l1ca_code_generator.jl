@@ -71,8 +71,8 @@ function ca_code_chips(prn::Int64)
     G2 = ones(Int64, 10)
     # Get phase selector taps for specific PRN
     phase_sel_taps = l1ca_taps[prn][1:2]
-    ca_code = Array{Int64}(undef, l1ca_chip_length)
-    @inbounds for chip in 1:l1ca_chip_length
+    ca_code = Array{Int64}(undef, l1ca_code_length)
+    @inbounds for chip in 1:l1ca_code_length
         G1_output = G1[10]
         G1_epoch = xor(G1_output, G1[3])
         # Calculate phase selector output
