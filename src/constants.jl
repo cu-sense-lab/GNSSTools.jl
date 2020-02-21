@@ -22,3 +22,15 @@ Rₑ = 6371.000e3  # meters
 From [NASA Earth Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html)
 """
 const Rₑ = 6371.000e3  # meters
+
+
+"""
+L1 frequency (Hz)
+"""
+const L1_freq = 1575.42e6  # Hz
+
+
+"""
+    L5 Frequency (Hz)
+"""
+const L5_freq = 1176.45e6  # Hz

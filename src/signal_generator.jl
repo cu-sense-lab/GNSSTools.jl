@@ -298,22 +298,23 @@ function generatesignal!(signal::L5QSignal,
 		nh = nh20[calccodeidx(signal.nh_init_code_phase,
                               signal.f_nh_d, signal.f_nh_dd,
                               t, nh_code_length)]
+        bit_value = xor(l5q, nh)*2-1
 		if include_carrier & include_noise
 			# Calculate code value with carrier and noise
-			@inbounds signal.data[i] = ((xor(l5q, nh)*2-1) * carrier_amp *
+			@inbounds signal.data[i] = (bit_value * carrier_amp *
 			                            exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
 			                            noise_amp * randn(sigtype))
 		elseif include_carrier & ~include_noise
 			# Calculate code value with carrier and no noise
-			@inbounds signal.data[i] = ((xor(l5q, nh)*2-1) * carrier_amp *
+			@inbounds signal.data[i] = (bit_value * carrier_amp *
 			                            exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
 		elseif ~include_carrier & include_noise
 			# Calculate code value with noise and no carrier
-			@inbounds signal.data[i] = ((xor(l5q, nh)*2-1) +
+			@inbounds signal.data[i] = (bit_value +
 			                            noise_amp * randn(sigtype))
 		else
 			# Calculate code value only
-			@inbounds signal.data[i] = complex(float((xor(l5q, nh)*2-1)))
+			@inbounds signal.data[i] = complex(float(bit_value))
 		end
 	end
 	# Quantize signal
@@ -360,12 +361,13 @@ function generatesignal!(signal::L5QSignal,
 		nh = nh20[calccodeidx(signal.nh_init_code_phase,
                               signal.f_nh_d, signal.f_nh_dd,
                               t, nh_code_length)]
+        bit_value = xor(l5q, nh)*2-1
 		# XOR l51 and nh20 and modulated with complex exponential
         if noexp
-            @inbounds signal.data[i] = complex(float((xor(l5q, nh)*2-1)))
+            @inbounds signal.data[i] = complex(float(bit_value))
         else
-            @inbounds signal.data[i] = ((xor(l5q, nh)*2-1) *
-                                         exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+            @inbounds signal.data[i] = (bit_value *
+                                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
         end
 	end
 	return signal

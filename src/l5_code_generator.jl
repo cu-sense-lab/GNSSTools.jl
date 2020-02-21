@@ -1,10 +1,3 @@
-## L5Q constants
-"""
-    L5 Frequency (Hz)
-"""
-const L5_freq = 1176.45e6  # Hz
-
-
 """
     L5_code_length
 

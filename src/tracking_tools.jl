@@ -64,6 +64,7 @@ struct TrackResults{T1,T2}
     code_err_filt::Array{Float64,1}
     code_phase_meas::Array{Float64,1}
     code_phase_filt::Array{Float64,1}
+    n0::Array{Float64,1}
     phi_measured::Array{Float64,1}
     phi_filtered::Array{Float64,1}
     phi::Array{Float64,1}
@@ -206,14 +207,6 @@ that are minumum amount to track a given PRN.
 """
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0.)
-    # # Check signal type of replica
-    # if (typeof(replica.type) == Val{:l5q}) | (typeof(replica.type) == Val{:l5i})
-    #     chipping_rate = L5_chipping_rate
-    #     sig_freq = L5_freq
-    #     code_length = L5_code_length
-    # else
-    #     error("Signal type specified not supported. Aborting.")
-    # end
     # Assign signal specific parameters
     chipping_rate = replica.chipping_rate
     sig_freq = replica.sig_freq
@@ -243,6 +236,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     code_err_filt = Array{Float64}(undef, M)
     code_phase_meas = Array{Float64}(undef, M)
     code_phase_filt = Array{Float64}(undef, M)
+    n0s = Array{Float64}(undef, M)
     phi_measured = Array{Float64}(undef, M)
     phi_filtered = Array{Float64}(undef, M)
     phi = Array{Float64}(undef, M)
@@ -288,6 +282,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         code_err_filt[i] = n0_err_filtered
         code_phase_meas[i] = n0 + n0_err
         code_phase_filt[i] = n0 + n0_err_filtered
+        n0s[i] = n0
         phi_measured[i] = ϕ_meas
         phi_filtered[i] = ϕ_meas
         phi[i] = ϕ
@@ -343,6 +338,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         code_err_filt[i] = n0_err_filtered
         code_phase_meas[i] = n0 + n0_err
         code_phase_filt[i] = n0 + n0_err_filtered
+        n0s[i] = n0
         phi_measured[i] = ϕ_meas
         phi_filtered[i] = ϕ_filt
         phi[i] = ϕ
@@ -387,8 +383,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                         f_if, data_start_time, site_loc_lla,
                         float(n0_idx_init), n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
-                        code_phase_filt, phi_measured, phi_filtered, phi,
-                        delta_fd, ZP, SNR, data_bits, code_length)
+                        code_phase_filt, n0s, phi_measured, phi_filtered,
+                        phi, delta_fd, ZP, SNR, data_bits, code_length)
 end
 
 
