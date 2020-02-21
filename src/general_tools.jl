@@ -101,3 +101,33 @@ const gnsstypes = Dict(Val{:l5q}() => "l5q",
                        Val{:carrier}() => "carrier",
                        Val{:sc8}() => "sc8",
                        Val{:sc4}() => "sc4")
+
+
+"""
+    calcinitcodephase(code_length, f_code_d, f_code_dd,
+                      f_s, code_start_idx)
+
+Calculates the initial code phase of a given code
+where f_d and fd_rate are the Doppler affected
+code frequency and code frequency rate, respectively. 
+"""
+function calcinitcodephase(code_length, f_code_d, f_code_dd,
+                           f_s, code_start_idx)
+    t₀ = (code_start_idx-1)/f_s
+    init_phase = -f_code_d*t₀ - 0.5*f_code_dd*t₀^2
+    return (init_phase%code_length + code_length)%code_length
+end
+
+
+"""
+    calccodeidx(init_chip, f_code_d, f_code_dd, t, code_length)
+
+Calculates the index in the codes for a given t.
+"""
+function calccodeidx(init_chip, f_code_d, f_code_dd,
+                     t, code_length)
+    return Int(floor(init_chip+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
+end
+
+
+

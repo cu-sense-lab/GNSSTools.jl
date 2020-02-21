@@ -3,7 +3,7 @@
 
 L1 C/A Code chipping rate (Hz)
 """
-const l1ca_code_rate = 1.023e6  # Hz
+const l1ca_chipping_rate = 1.023e6  # Hz
 
 
 """
@@ -11,7 +11,7 @@ const l1ca_code_rate = 1.023e6  # Hz
 
 L1 C/A code chip length in 1ms
 """
-const l1ca_chip_length = 1023  # chips
+const l1ca_code_length = 1023  # chips
 
 
 """
