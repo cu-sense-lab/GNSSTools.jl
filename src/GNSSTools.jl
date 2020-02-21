@@ -13,6 +13,7 @@ module GNSSTools
     include("constants.jl")
     include("general_tools.jl")
     include("signal_types.jl")
+    include("calc_code_val.jl")
     include("definesignal.jl")
     include("generatesignal.jl")
     include("l1ca_code_generator.jl")
