@@ -15,6 +15,15 @@ const l1ca_code_length = 1023  # chips
 
 
 """
+    l1ca_db_chipping_rate
+
+The chipping rate of the data bits
+for the L1 C/A code.
+"""
+const l1ca_db_chipping_rate = 50  # Hz
+
+
+"""
     l1ca_taps
 
 Dictionary containing the phase selector

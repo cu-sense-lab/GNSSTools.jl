@@ -19,14 +19,14 @@ end
 
 
 """
-    fineacquisition(data, replica, fd_course,
+    fineacquisition(data::GNSSSignal, replica::ReplicaSignal, fd_course,
                     n₀_course, type::Val{:fft})
 
 Performs an FFT based fine acquisition on `data`. Note that `t_length` must
 equal `replica.t_length`. `data` can be either a `GNSSData` or `L5QSignal`
 struct, however, `data` and `replica` must be two seperate structs.
 """
-function fineacquisition(data, replica, prn, fd_course,
+function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=10000.)
     # Generate replica
@@ -104,7 +104,7 @@ end
 
 
 """
-    fineacquisition(data::GNSSData, replica, fd_course,
+    fineacquisition(data::GNSSSignal, replica::ReplicaSignal, fd_course,
                     n₀_course, type::Val{:carrier})
 
 Performs an carrier based fine acquisition on `data`.
@@ -112,7 +112,7 @@ Performs an carrier based fine acquisition on `data`.
 
 `M` is the multiple of the length of replica to be used for fine acquisition.
 """
-function fineacquisition(data, replica, prn, fd_course,
+function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=50000., M=1)
     # Check that the data length is at least 2x greater than the size of `replica`
