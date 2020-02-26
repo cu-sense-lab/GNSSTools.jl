@@ -37,6 +37,34 @@ function calc_code_val(signal::L5QSignal, t)
     # Get Neuman code sequence value at t
     nh = nh20[calccodeidx(signal.nh_init_code_phase,
                           signal.f_nh_d, signal.f_nh_dd,
-                          t, nh_code_length)]
+                          t, nh20_code_length)]
     return 2*xor(l5q, nh) - 1
+end
+
+
+"""
+    calc_code_val(signal::L5ISignal, t)
+
+Calculates the value of the L5I code with
+parameters defined by `signal` at a time
+specified by `t` in seconds. Returns an
+Int64 value that is either -1 or 1.
+"""
+function calc_code_val(signal::L5ISignal, t)
+    # Get L5I code value at t
+    l5i = l5i_codes[signal.prn][calccodeidx(signal.l5i_init_code_phase,
+                                            signal.f_l5i_d, signal.f_l5i_dd,
+                                            t, L5_code_length)]
+    # Get Neuman code sequence value at t
+    nh = nh10[calccodeidx(signal.nh_init_code_phase,
+                          signal.f_nh_d, signal.f_nh_dd,
+                          t, nh10_code_length)]
+    if signal.include_databits && ~signal.isreplica
+        databit = signal.databits[calccodeidx(signal.db_init_code_phase,
+                                              signal.f_db_d, signal.f_db_dd,
+                                              t, signal.db_code_length)]
+        return 2*xor(l5i, nh, databit) - 1
+    else
+        return 2*xor(l5i, nh) - 1
+    end
 end

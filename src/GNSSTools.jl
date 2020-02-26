@@ -35,10 +35,13 @@ module GNSSTools
     export l1ca_codes
     export L5_freq
     export L5_code_length
-    export nh_code_length
+    export nh10_code_length
+    export nh20_code_length
     export L5_chipping_rate
     export nh_chipping_rate
+    export L5_db_chipping_rate
     export l5q_codes
+    export nh10
     export nh20
     export l5i_codes
     export definesignal

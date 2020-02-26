@@ -150,7 +150,7 @@ Struct for holding L5Q GNSS signal properties for
 signal generation.
 """
 mutable struct L5ISignal <: ReplicaSignal
-    type::Val{:l5q}
+    type::Val{:l5i}
     prn::Int64
     f_s::Float64
     t_length::Float64
@@ -163,16 +163,19 @@ mutable struct L5ISignal <: ReplicaSignal
     nADC::Int64
     B::Float64
     code_start_idx::Float64
-    l5q_init_code_phase::Float64
-    databit_init_code_phase::Float64
+    l5i_init_code_phase::Float64
+    nh_init_code_phase::Float64
+    db_init_code_phase::Float64
     t::Array{Float64,1}
     data::Array{Complex{Float64},1}
     include_carrier::Bool
     include_adc::Bool
     include_noise::Bool
     include_databits::Bool
-    f_l5q_d::Float64
-    f_l5q_dd::Float64
+    f_l5i_d::Float64
+    f_l5i_dd::Float64
+    f_nh_d::Float64
+    f_nh_dd::Float64
     f_db_d::Float64  # databit Doppler
     f_db_dd::Float64
     sample_num::Int64
@@ -180,5 +183,7 @@ mutable struct L5ISignal <: ReplicaSignal
     noexp::Bool
     chipping_rate::Float64
     sig_freq::Float64
-    code_length::Float64
+    code_length::Int64
+    db_code_length::Int64
+    databits::Array{Int64,1}
 end
