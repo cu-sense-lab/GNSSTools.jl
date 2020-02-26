@@ -15,14 +15,14 @@ end
 
 """
     courseacquisition!(corr_result::Array{Float64,2},
-                       data, replica::L5QSignal,
+                       data, replica::ReplicaSignal,
                        prn; fd_center=0., fd_range=5000.,
                        fd_rate=0., Δfd=1/data.t_length,
                        threads=8, message="Correlating...",
                        operation="replace", start_idx=1)
 
-Performs course acquisition on either `GNSSData` or `L5QSignal`
-type struct using defined `L5QSignal` type struct. No need
+Performs course acquisition on either `GNSSData` or `ReplicaSignal`
+type struct using defined `ReplicaSignal` type struct. No need
 to use `generatesignal!` before calling this function.
 Operates in place on `corr_result`. 
 
@@ -37,7 +37,7 @@ Operates in place on `corr_result`.
 Doppler bin.
 """
 function courseacquisition!(corr_result::Array{Float64,2},
-                            data, replica::L5QSignal,
+                            data::GNSSSignal, replica::ReplicaSignal,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/replica.t_length,
                             threads=nthreads(), message="Correlating...",
@@ -73,7 +73,8 @@ function courseacquisition!(corr_result::Array{Float64,2},
                       include_noise=false,
                       include_adc=false,
                       code_start_idx=1,
-                      nADC=nADC, isreplica=true)
+                      nADC=nADC, isreplica=true,
+                      noexp=false)
         # Generate signal
         generatesignal!(replica)
         # Perform in place FFT on replica
@@ -108,14 +109,14 @@ end
 
 """
     courseacquisition!(corr_result::Array{Float64,2},
-                       data, replica::L5QSignal,
+                       data::GNSSSignal, replica::ReplicaSignal,
                        prn, N=1; fd_center=0., fd_range=5000.,
                        fd_rate=0., Δfd=1/data.t_length,
                        threads=8, message="Correlating...",
                        operation="replace", start_idx=1)
 
 Performs non-coherent course acquisition on either `GNSSData` or
-`L5QSignal` type struct using defined `L5QSignal` type struct.
+`ReplicaSignal` type struct using defined `ReplicaSignal` type struct.
 No need to use `generatesignal!` before calling this function.
 Operates in place on `corr_result`.
 
@@ -130,7 +131,7 @@ Operates in place on `corr_result`.
 Doppler bin.
 """
 function courseacquisition!(corr_result::Array{Float64,2},
-                            data, replica::L5QSignal,
+                            data::GNSSSignal, replica::ReplicaSignal,
                             prn, N; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/replica.t_length,
                             threads=8, message="Correlating...",
@@ -175,7 +176,8 @@ function courseacquisition!(corr_result::Array{Float64,2},
                       include_noise=false,
                       include_adc=false,
                       code_start_idx=1,
-                      nADC=nADC, isreplica=true)
+                      nADC=nADC, isreplica=true,
+                      noexp=false)
         # Generate signal
         generatesignal!(replica)
         # Perform in place FFT on replica
