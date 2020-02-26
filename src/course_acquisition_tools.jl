@@ -73,7 +73,8 @@ function courseacquisition!(corr_result::Array{Float64,2},
                       include_noise=false,
                       include_adc=false,
                       code_start_idx=1,
-                      nADC=nADC, isreplica=true)
+                      nADC=nADC, isreplica=true,
+                      noexp=false)
         # Generate signal
         generatesignal!(replica)
         # Perform in place FFT on replica
@@ -175,7 +176,8 @@ function courseacquisition!(corr_result::Array{Float64,2},
                       include_noise=false,
                       include_adc=false,
                       code_start_idx=1,
-                      nADC=nADC, isreplica=true)
+                      nADC=nADC, isreplica=true,
+                      noexp=false)
         # Generate signal
         generatesignal!(replica)
         # Perform in place FFT on replica
