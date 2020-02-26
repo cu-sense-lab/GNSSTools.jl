@@ -8,8 +8,8 @@ fd_range = 5000.
 threads = nthreads()
 M = 4000
 # Simulate signal with noise
-type = Val(:l5q)
-# type = Val(:l1ca)
+# type = Val(:l5q)
+type = Val(:l1ca)
 # L5Q parameters
 if typeof(type) == Val{:l5q}
     f_s = 25e6  # Hz
@@ -74,7 +74,7 @@ courseacquisition!(corr_result, data, replica, prn;
 max_idx = argmax(corr_result)
 fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
 if typeof(type) == Val{:l5q}
-    n0_est = max_idx[2]%Int(f_s*nh_code_length/nh_chipping_rate)
+    n0_est = max_idx[2]%Int(f_s*nh20_code_length/nh20_chipping_rate)
 else
     n0_est = max_idx[2]
 end

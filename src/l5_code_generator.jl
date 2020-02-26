@@ -8,12 +8,22 @@ const L5_code_length = 10230  # chips
 
 
 """
-    nh_code_length
+    nh20_code_length
 
 The number of bits in the Neuman
 sequence in a 1s segment.
 """
-const nh_code_length = 20  # chips
+const nh20_code_length = 20  # chips
+
+
+"""
+    nh10_code_length
+
+The number of bits in the Neuman
+sequence in a 1s segment.
+"""
+const nh10_code_length = 10  # chips
+
 
 """
     L5_chipping_rate
@@ -141,11 +151,21 @@ const XB_I_intial_conditions = Dict( 1 => [0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0
 """
     nh20
 
-A 20-bit Neuman-Hofman code XORed to the L5 Q code.
+A 20-bit Neuman-Hofman code XORed to the L5Q code.
 nh20 is 20ms in length, where every bit is XORed to
-each 1ms L5 Q code sequence.
+each 1ms L5Q code sequence.
 """
 const nh20 = [0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0]
+
+
+"""
+    nh10
+
+A 10-bit Neuman-Hofman code XORed to the L5I code.
+nh10 is 10ms in length, where every bit is XORed to
+each 1ms L5I code sequence.
+"""
+const nh10 = [0, 0, 0, 0, 1, 1, 0, 1, 0, 1]
 
 
 """
