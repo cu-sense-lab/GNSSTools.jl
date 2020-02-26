@@ -8,18 +8,35 @@ fd_range = 5000.
 threads = nthreads()
 M = 4000
 # Simulate signal with noise
-type = Val(:l5q)
-f_s = 25e6  # Hz
-f_if = 0.  # Hz
-Tsys = 535.  # K
-CN0 = 45.  # dB*Hz
-ϕ = π/4  # rad
-nADC = 4  # bits
-B = 2.046e7  # Hz
-include_carrier = true
-include_adc = true
-include_noise = true
-data = definesignal(type::Val{:l5q}, prn, f_s, M*t_length;
+# type = Val(:l5q)
+type = Val(:l1ca)
+# L5Q parameters
+if typeof(type) == Val{:l5q}
+    f_s = 25e6  # Hz
+    f_if = 0.  # Hz
+    Tsys = 535.  # K
+    CN0 = 45.  # dB*Hz
+    ϕ = π/4  # rad
+    nADC = 4  # bits
+    B = 2.046e7  # Hz
+    include_carrier = true
+    include_adc = true
+    include_noise = true
+end
+if typeof(type) == Val{:l1ca}
+    f_s = 5e6  # Hz
+    f_if = 1.25e6  # Hz
+    Tsys = 535.  # K
+    CN0 = 45.  # dB*Hz
+    ϕ = π/4  # rad
+    nADC = 4  # bits
+    B = 2.046e6  # Hz
+    include_carrier = true
+    include_adc = true
+    include_noise = true
+end
+# L1 C/A parameters
+data = definesignal(type, f_s, M*t_length; prn=prn,
                     f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                     CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
                     include_carrier=include_carrier,
@@ -27,14 +44,14 @@ data = definesignal(type::Val{:l5q}, prn, f_s, M*t_length;
                     include_noise=include_noise,
                     code_start_idx=n0)
 generatesignal!(data)
-replica = definesignal(type::Val{:l5q}, prn, f_s, replica_tlength;
+replica = definesignal(type, f_s, replica_tlength; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                            CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
                            include_carrier=include_carrier,
                            include_adc=false,
                            include_noise=false,
                            code_start_idx=1)
-replicalong = definesignal(type::Val{:l5q}, prn, f_s, 20*t_length;
+replicalong = definesignal(type, f_s, 20*t_length; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                            CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
                            include_carrier=include_carrier,
@@ -50,7 +67,11 @@ courseacquisition!(corr_result, data, replica, prn;
                    fd_rate=fd_rate, Δfd=Δfd, threads=threads)
 max_idx = argmax(corr_result)
 fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
-n0_est = max_idx[2]%Int(f_s*nh_code_length/nh_chipping_rate)
+if typeof(type) == Val{:l5q}
+    n0_est = max_idx[2]%Int(f_s*nh_code_length/nh_chipping_rate)
+else
+    n0_est = max_idx[2]
+end
 results = fineacquisition(data, replicalong, prn, fd_est,
                           n0_est, Val(:fft))
 trackresults = trackprn(data, replica, prn, results.ϕ_init,
