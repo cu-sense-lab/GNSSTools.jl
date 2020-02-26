@@ -10,10 +10,10 @@ function calc_code_val(signal::L1CASignal, t)
     l1ca_code = l1ca_codes[signal.prn][calccodeidx(signal.l1ca_init_code_phase,
                                                    signal.f_l1ca_d, signal.f_l1ca_dd,
                                                    t, l1ca_code_length)]
-    if signal.include_databits
+    if signal.include_databits && ~signal.isreplica
         databit = signal.databits[signal.prn][calccodeidx(signal.db_init_code_phase,
                                                           signal.f_db_d, signal.f_db_dd,
-                                                          t, db_code_length)]
+                                                          t, signal.db_code_length)]
         return 2*xor(l1ca_code, databit) - 1
     else
         return 2*l1ca_code - 1

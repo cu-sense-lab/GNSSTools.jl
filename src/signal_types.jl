@@ -81,7 +81,7 @@ mutable struct L1CASignal <: ReplicaSignal
     sig_freq::Float64
     code_length::Int64
     db_code_length::Int64
-    databits::Array{Float64,1}
+    databits::Array{Int64,1}
 end
 
 

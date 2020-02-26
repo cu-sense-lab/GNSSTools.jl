@@ -28,7 +28,7 @@ function definesignal(type::Val{:l1ca}, prn, f_s, t_length;
     # Calculate code chipping rates with Doppler applied
     # L1 C/A
     f_l1ca_d = l1ca_chipping_rate*(1. + f_d/L1_freq)
-    f_l1ca_d = l1ca_chipping_rate*fd_rate/L1_freq
+    f_l1ca_dd = l1ca_chipping_rate*fd_rate/L1_freq
     # Data bit sequence
     f_db_d = l1ca_db_chipping_rate*(1. + f_d/L5_freq)
     f_db_dd = l1ca_db_chipping_rate*fd_rate/L5_freq
@@ -43,6 +43,8 @@ function definesignal(type::Val{:l1ca}, prn, f_s, t_length;
     data = Array{Complex{Float64}}(undef, sample_num)
     isreplica = false
     noexp = false
+    # Generate random databit vector
+    databits = rand(0:1, db_code_length)
     return L1CASignal(type, prn, f_s, t_length, f_if, f_d, fd_rate,
                       Tsys, CN0, ϕ, nADC, B, code_start_idx,
                       l1ca_init_code_phase, db_init_code_phase, t,
@@ -51,7 +53,7 @@ function definesignal(type::Val{:l1ca}, prn, f_s, t_length;
                       f_l1ca_d, f_l1ca_dd,
                       f_db_d, f_db_dd, sample_num,
                       isreplica, noexp, l1ca_chipping_rate,
-                      L1_freq, l1ca_code_length, db_code_length)
+                      L1_freq, l1ca_code_length, db_code_length, databits)
 end
 
 
@@ -97,11 +99,11 @@ function definesignal!(signal::L1CASignal;
     f_db_d = l1ca_db_chipping_rate*(1. + f_d/L1_freq)
     f_db_dd = l1ca_db_chipping_rate*fd_rate/L1_freq
     # Calculate the L1 C/A and data bit code phase offsets
-    l1ca_init_code_phase = calcinitcodephase(L1_code_length,
+    l1ca_init_code_phase = calcinitcodephase(l1ca_code_length,
                                             f_l1ca_d, f_l1ca_dd,
                                             signal.f_s,
                                             code_start_idx)
-    db_init_code_phase = calcinitcodephase(db_code_length,
+    db_init_code_phase = calcinitcodephase(signal.db_code_length,
                                            f_db_d, f_db_dd,
                                            signal.f_s,
                                            code_start_idx)
@@ -122,7 +124,7 @@ function definesignal!(signal::L1CASignal;
     signal.f_l1ca_dd = f_l1ca_dd
     signal.f_db_d = f_db_d
     signal.f_db_dd = f_db_dd
-    signal.lca_init_code_phase = lca_init_code_phase
+    signal.l1ca_init_code_phase = l1ca_init_code_phase
     signal.db_init_code_phase = db_init_code_phase
     signal.code_start_idx = code_start_idx
     signal.isreplica = isreplica

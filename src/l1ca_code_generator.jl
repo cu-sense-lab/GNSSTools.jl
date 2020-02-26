@@ -20,7 +20,7 @@ const l1ca_code_length = 1023  # chips
 The chipping rate of the data bits
 for the L1 C/A code.
 """
-const l1ca_db_chipping_rate = 50  # Hz
+const l1ca_db_chipping_rate = 50.  # Hz
 
 
 """

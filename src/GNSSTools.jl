@@ -30,13 +30,13 @@ module GNSSTools
     export Rₑ
     export L1_freq
     export l1ca_code_length
+    export l1ca_db_chipping_rate
     export l1ca_chipping_rate
     export L5_freq
     export L5_code_length
     export nh_code_length
     export L5_chipping_rate
     export nh_chipping_rate
-    export L5QSignal
     export definesignal
     export definesignal!
     export generatesignal!
