@@ -97,6 +97,7 @@ type used in `GNSSTools`.
 """
 const gnsstypes = Dict(Val{:l5q}() => "l5q",
                        Val{:l5i}() => "l5i",
+                       Val{:l1ca}() => "l1ca",
                        Val{:fft}() => "fft",
                        Val{:carrier}() => "carrier",
                        Val{:sc8}() => "sc8",

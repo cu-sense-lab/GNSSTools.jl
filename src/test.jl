@@ -1,15 +1,15 @@
 prn = 1
 n0 = 1000.
-f_d = 0.
+f_d = 800.
 fd_rate = 0.
 t_length = 1e-3
 replica_tlength = 1e-3
 fd_range = 5000.
 threads = nthreads()
-M = 1
+M = 4000
 # Simulate signal with noise
-# type = Val(:l5q)
-type = Val(:l1ca)
+type = Val(:l5q)
+# type = Val(:l1ca)
 # L5Q parameters
 if typeof(type) == Val{:l5q}
     f_s = 25e6  # Hz
@@ -22,19 +22,21 @@ if typeof(type) == Val{:l5q}
     include_carrier = true
     include_adc = true
     include_noise = true
+    RLM = 20
 end
 if typeof(type) == Val{:l1ca}
     f_s = 5e6  # Hz
-    f_if = 0.  # Hz
+    f_if = 1.25e6  # Hz
     Tsys = 535.  # K
     CN0 = 45.  # dB*Hz
     ϕ = 0.  # rad
     nADC = 4  # bits
     B = 2.046e6  # Hz
-    include_carrier = false
-    include_adc = false
-    include_noise = false
-    include_databits = false
+    include_carrier = true
+    include_adc = true
+    include_noise = true
+    include_databits = true
+    RLM = 10
 end
 # L1 C/A parameters
 data = definesignal(type, f_s, M*t_length; prn=prn,
@@ -55,7 +57,7 @@ replica = definesignal(type, f_s, replica_tlength; prn=prn,
                            include_adc=false,
                            include_noise=false,
                            code_start_idx=1)
-replicalong = definesignal(type, f_s, 20*t_length; prn=prn,
+replicalong = definesignal(type, f_s, RLM*t_length; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                            CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
                            include_carrier=include_carrier,
