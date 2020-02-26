@@ -51,8 +51,8 @@ specified by `t` in seconds. Returns an
 Int64 value that is either -1 or 1.
 """
 function calc_code_val(signal::L5ISignal, t)
-    # Get L5Q code value at t
-    l5q = l5i_codes[signal.prn][calccodeidx(signal.l5i_init_code_phase,
+    # Get L5I code value at t
+    l5i = l5i_codes[signal.prn][calccodeidx(signal.l5i_init_code_phase,
                                             signal.f_l5i_d, signal.f_l5i_dd,
                                             t, L5_code_length)]
     # Get Neuman code sequence value at t
@@ -63,8 +63,8 @@ function calc_code_val(signal::L5ISignal, t)
         databit = signal.databits[calccodeidx(signal.db_init_code_phase,
                                               signal.f_db_d, signal.f_db_dd,
                                               t, signal.db_code_length)]
-        return 2*xor(l5q, nh, databit) - 1
+        return 2*xor(l5i, nh, databit) - 1
     else
-        return 2*xor(l5q, nh) - 1
+        return 2*xor(l5i, nh) - 1
     end
 end

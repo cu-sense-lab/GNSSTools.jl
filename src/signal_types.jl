@@ -165,7 +165,7 @@ mutable struct L5ISignal <: ReplicaSignal
     code_start_idx::Float64
     l5i_init_code_phase::Float64
     nh_init_code_phase::Float64
-    databit_init_code_phase::Float64
+    db_init_code_phase::Float64
     t::Array{Float64,1}
     data::Array{Complex{Float64},1}
     include_carrier::Bool
@@ -183,7 +183,7 @@ mutable struct L5ISignal <: ReplicaSignal
     noexp::Bool
     chipping_rate::Float64
     sig_freq::Float64
-    code_length::Float64
+    code_length::Int64
     db_code_length::Int64
     databits::Array{Int64,1}
 end

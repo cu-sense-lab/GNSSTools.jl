@@ -39,6 +39,7 @@ module GNSSTools
     export nh20_code_length
     export L5_chipping_rate
     export nh_chipping_rate
+    export L5_db_chipping_rate
     export l5q_codes
     export nh10
     export nh20

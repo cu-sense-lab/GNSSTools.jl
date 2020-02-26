@@ -44,6 +44,14 @@ const nh_chipping_rate = 1000.  # Hz
 
 
 """
+   L5_db_chipping_rate
+
+The chipping rate of the databits for L5I. 
+"""
+const L5_db_chipping_rate = 100.  # Hz
+
+
+"""
     XA_XB_code_length
 
 The length of the XA and XB codes used to

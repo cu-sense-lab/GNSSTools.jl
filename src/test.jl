@@ -9,7 +9,8 @@ threads = nthreads()
 M = 4000
 # Simulate signal with noise
 # type = Val(:l5q)
-type = Val(:l1ca)
+type = Val(:l5i)
+# type = Val(:l1ca)
 # L5Q parameters
 if typeof(type) == Val{:l5q}
     f_s = 25e6  # Hz
@@ -24,6 +25,22 @@ if typeof(type) == Val{:l5q}
     include_noise = true
     RLM = 20
 end
+
+if typeof(type) == Val{:l5i}
+    f_s = 25e6  # Hz
+    f_if = 0.  # Hz
+    Tsys = 535.  # K
+    CN0 = 45.  # dB*Hz
+    ϕ = π/4  # rad
+    nADC = 4  # bits
+    B = 2.046e7  # Hz
+    include_carrier = true
+    include_adc = true
+    include_noise = true
+    include_databits = false
+    RLM = 10
+end
+
 if typeof(type) == Val{:l1ca}
     f_s = 5e6  # Hz
     f_if = 1.25e6  # Hz
@@ -46,7 +63,7 @@ data = definesignal(type, f_s, M*t_length; prn=prn,
                     include_adc=include_adc,
                     include_noise=include_noise,
                     code_start_idx=n0)
-if typeof(type) == Val{:l1ca}
+if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
     data.include_databits = include_databits
 end
 generatesignal!(data)
