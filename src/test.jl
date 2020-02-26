@@ -3,14 +3,14 @@ n0 = 1000.
 f_d = 800.
 fd_rate = 0.
 t_length = 1e-3
-replica_tlength = 1e-3
 fd_range = 5000.
 threads = nthreads()
 M = 4000
-# Simulate signal with noise
+
 # type = Val(:l5q)
 type = Val(:l5i)
-# type = Val(:l1ca)
+# type = Val(:l1ca)\
+
 # L5Q parameters
 if typeof(type) == Val{:l5q}
     f_s = 25e6  # Hz
@@ -37,7 +37,7 @@ if typeof(type) == Val{:l5i}
     include_carrier = true
     include_adc = true
     include_noise = true
-    include_databits = false
+    include_databits = true
     RLM = 10
 end
 
@@ -67,7 +67,7 @@ if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
     data.include_databits = include_databits
 end
 generatesignal!(data)
-replica = definesignal(type, f_s, replica_tlength; prn=prn,
+replica = definesignal(type, f_s, t_length; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                            CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
                            include_carrier=include_carrier,
