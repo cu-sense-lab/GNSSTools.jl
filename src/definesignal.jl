@@ -93,8 +93,8 @@ function definesignal!(signal::L1CASignal;
                        include_databits=signal.include_databits)
     ## Calculate code chipping rates with Doppler applied
     # L1 C/A
-    f_l1ca_d = L5_chipping_rate*(1. + f_d/L1_freq)
-    f_l1ca_dd = L5_chipping_rate*fd_rate/L1_freq
+    f_l1ca_d = l1ca_chipping_rate*(1. + f_d/L1_freq)
+    f_l1ca_dd = l1ca_chipping_rate*fd_rate/L1_freq
     # Data bit sequence
     f_db_d = l1ca_db_chipping_rate*(1. + f_d/L1_freq)
     f_db_dd = l1ca_db_chipping_rate*fd_rate/L1_freq

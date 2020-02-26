@@ -6,7 +6,7 @@ t_length = 1e-3
 replica_tlength = 1e-3
 fd_range = 5000.
 threads = nthreads()
-M = 4000
+M = 1
 # Simulate signal with noise
 # type = Val(:l5q)
 type = Val(:l1ca)
@@ -25,7 +25,7 @@ if typeof(type) == Val{:l5q}
 end
 if typeof(type) == Val{:l1ca}
     f_s = 5e6  # Hz
-    f_if = 1.25e6  # Hz
+    f_if = 0.  # Hz
     Tsys = 535.  # K
     CN0 = 45.  # dB*Hz
     ϕ = 0.  # rad
