@@ -11,7 +11,7 @@
 Define properties of locally generated L1 C/A signal
 based off its type, PRN, etc.
 """
-function definesignal(type::Val{:l1ca}, prn, f_s, t_length;
+function definesignal(type::Val{:l1ca}, f_s, t_length; prn=1,
                       f_if=0., f_d=0., fd_rate=0., Tsys=535.,
                       CN0=45., ϕ=0., nADC=4, B=2.046e6,
                       include_carrier=true, include_adc=true,
@@ -147,7 +147,7 @@ end
 Define properties of locally generated L5Q signal
 based off its type, PRN, etc.
 """
-function definesignal(type::Val{:l5q}, prn, f_s, t_length;
+function definesignal(type::Val{:l5q}, f_s, t_length; prn=1,
                       f_if=0., f_d=0., fd_rate=0., Tsys=535.,
                       CN0=45., ϕ=0., nADC=4, B=2.046e7,
                       include_carrier=true, include_adc=true,
