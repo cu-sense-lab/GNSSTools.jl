@@ -81,9 +81,8 @@ replicalong = definesignal(type, f_s, RLM*t_length; prn=prn,
                            include_adc=false,
                            include_noise=false,
                            code_start_idx=1)
-# Perform cross correlation using function
-fd_center = 0.  # Hz
 Δfd = 1/replica.t_length  # Hz
+fd_center = round(f_d/Δfd)*Δfd  # Hz
 corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
 courseacquisition!(corr_result, data, replica, prn;
                    fd_center=fd_center, fd_range=fd_range,
@@ -92,6 +91,8 @@ max_idx = argmax(corr_result)
 fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
 if typeof(type) == Val{:l5q}
     n0_est = max_idx[2]%Int(f_s*nh20_code_length/nh20_chipping_rate)
+elseif typeof(type) == Val{:l5i}
+    n0_est = max_idx[2]%Int(f_s*nh10_code_length/nh10_chipping_rate)
 else
     n0_est = max_idx[2]
 end
