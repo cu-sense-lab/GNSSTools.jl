@@ -436,6 +436,6 @@ function plotresults(results::TrackResults; saveto=missing)
     # subplots_adjust(hspace=0.4, wspace=0.4)
     subplots_adjust(hspace=0.4, wspace=0.2)
     if ~ismissing(saveto)
-        savefig(saveto)
+        savefig(saveto::String)
     end
 end
