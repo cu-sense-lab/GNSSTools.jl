@@ -24,14 +24,14 @@ function definesignal(type::Val{:l1ca}, f_s, t_length; prn=1,
         @inbounds t[i] = (i-1)/f_s  # s
     end
     # Calculate number of data bits (use `ceil` to ensure that databits do not repeat)
-    db_code_length = Int64(floor(l1ca_db_chipping_rate*t_length))
+    db_code_length = Int64(ceil(l1ca_db_chipping_rate*t_length))
     # Calculate code chipping rates with Doppler applied
     # L1 C/A
     f_l1ca_d = l1ca_chipping_rate*(1. + f_d/L1_freq)
     f_l1ca_dd = l1ca_chipping_rate*fd_rate/L1_freq
     # Data bit sequence
-    f_db_d = l1ca_db_chipping_rate*(1. + f_d/L5_freq)
-    f_db_dd = l1ca_db_chipping_rate*fd_rate/L5_freq
+    f_db_d = l1ca_db_chipping_rate*(1. + f_d/L1_freq)
+    f_db_dd = l1ca_db_chipping_rate*fd_rate/L1_freq
     # Calculate the L1 C/A and data bit code phase offsets
     l1ca_init_code_phase = calcinitcodephase(l1ca_code_length,
                                              f_l1ca_d, f_l1ca_dd,

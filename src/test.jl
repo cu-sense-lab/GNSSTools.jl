@@ -1,6 +1,6 @@
 prn = 1
 n0 = 1000.
-f_d = 800.
+f_d = 0.
 fd_rate = 0.
 t_length = 1e-3
 replica_tlength = 1e-3
@@ -28,12 +28,13 @@ if typeof(type) == Val{:l1ca}
     f_if = 1.25e6  # Hz
     Tsys = 535.  # K
     CN0 = 45.  # dB*Hz
-    ϕ = π/4  # rad
+    ϕ = 0.  # rad
     nADC = 4  # bits
     B = 2.046e6  # Hz
-    include_carrier = true
-    include_adc = true
-    include_noise = true
+    include_carrier = false
+    include_adc = false
+    include_noise = false
+    include_databits = false
 end
 # L1 C/A parameters
 data = definesignal(type, f_s, M*t_length; prn=prn,
@@ -43,6 +44,9 @@ data = definesignal(type, f_s, M*t_length; prn=prn,
                     include_adc=include_adc,
                     include_noise=include_noise,
                     code_start_idx=n0)
+if typeof(type) == Val{:l1ca}
+    data.include_databits = include_databits
+end
 generatesignal!(data)
 replica = definesignal(type, f_s, replica_tlength; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
