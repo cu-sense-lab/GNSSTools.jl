@@ -280,8 +280,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Save to allocated arrays
         code_err_meas[i] = n0_err
         code_err_filt[i] = n0_err_filtered
-        code_phase_meas[i] = n0 + n0_err
-        code_phase_filt[i] = n0 + n0_err_filtered
+        code_phase_meas[i] = (n0 + n0_err)%code_length
+        code_phase_filt[i] = (n0 + n0_err_filtered)%code_length
         n0s[i] = n0
         phi_measured[i] = ϕ_meas
         phi_filtered[i] = ϕ_meas
@@ -297,7 +297,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
         if i > 1
-            n0 += n0_err_filtered# + f_code_d*T
+            n0 += (n0_err_filtered + f_code_d*T)%code_length
         end
         # Updated and propagate carrier phase to next `i`
         ϕ += ϕ_meas# + (f_if + f_d)*T
@@ -352,7 +352,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
-        n0 += n0_err_filtered# + f_code_d*T
+        n0 += (n0_err_filtered + f_code_d*T)%code_length
         # Update and propagate carrier phase to next `i`
         ϕ += ϕ_filt# + (f_if + f_d)*T
         next!(p)
@@ -436,6 +436,6 @@ function plotresults(results::TrackResults; saveto=missing)
     # subplots_adjust(hspace=0.4, wspace=0.4)
     subplots_adjust(hspace=0.4, wspace=0.2)
     if ~ismissing(saveto)
-        savefig(saveto)
+        savefig(saveto::String)
     end
 end

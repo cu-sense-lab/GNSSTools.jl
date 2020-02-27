@@ -203,9 +203,9 @@ end
 Generates the XB code sequence for 1ms for the
 specified PRN.
 """
-function xbregister(prn::Integer)
-    xb_register = deepcopy(XB_Q_intial_conditions[prn])
-    xb_code = zeros(eltype(XB_Q_intial_conditions[prn]),
+function xbregister(prn::Integer, intial_conditions)
+    xb_register = deepcopy(intial_conditions[prn])
+    xb_code = zeros(eltype(intial_conditions[prn]),
     	            L5_code_length)
     @inbounds for i in 1:L5_code_length
         xb_code[i] = xb_register[end]
@@ -233,7 +233,7 @@ in "XB_intial_conditions."
     function gen_xb_codes()
 	xb_codes = typeof(XB_Q_intial_conditions)()
 	for prn in keys(XB_Q_intial_conditions)
-		xb_codes[prn] = xbregister(prn)
+		xb_codes[prn] = xbregister(prn, XB_Q_intial_conditions)
 	end
 	return xb_codes
 end
@@ -258,7 +258,7 @@ Generates the L5Q codes for each PRN listed in
 function gen_l5q_codes()
 	l5q_codes = typeof(XB_Q_intial_conditions)()
 	for prn in keys(XB_Q_intial_conditions)
-		l5q_codes[prn] = xor.(xa_code, xbregister(prn))
+		l5q_codes[prn] = xor.(xa_code, xbregister(prn, XB_Q_intial_conditions))
 	end
 	return l5q_codes
 end
@@ -272,11 +272,11 @@ Generates the L5I codes for each PRN listed in
 "XB_I_intial_conditions."
 """
 function gen_l5i_codes()
-  l5i_codes = typeof(XB_I_intial_conditions)()
-  for prn in keys(XB_I_intial_conditions)
-    l5i_codes[prn] = xor.(xa_code, xbregister(prn))
-  end
-  return l5i_codes
+    l5i_codes = typeof(XB_I_intial_conditions)()
+    for prn in keys(XB_I_intial_conditions)
+        l5i_codes[prn] = xor.(xa_code, xbregister(prn, XB_I_intial_conditions))
+    end
+    return l5i_codes
 end
 
 

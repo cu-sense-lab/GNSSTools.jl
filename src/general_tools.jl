@@ -131,4 +131,17 @@ function calccodeidx(init_chip, f_code_d, f_code_dd,
 end
 
 
+"""
+    calctvector(N, f_s)
 
+Generates a `N` long time vector
+with time spacing `Δt` or `1/f_s`.
+"""
+function calctvector(N, f_s)
+    # Generate time vector
+    t = Array{Float64}(undef, N)
+    @threads for i in 1:N
+        @inbounds t[i] = (i-1)/f_s
+    end
+    return t
+end
