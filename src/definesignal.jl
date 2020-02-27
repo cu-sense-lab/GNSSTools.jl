@@ -19,10 +19,7 @@ function definesignal(type::Val{:l1ca}, f_s, t_length; prn=1,
                       include_databits=true)
     sample_num = Int(f_s * t_length)
     # Generate time vector
-    t = Array{Float64}(undef, sample_num)
-    @threads for i in 1:sample_num
-        @inbounds t[i] = (i-1)/f_s  # s
-    end
+    t = calctvector(sample_num, f_s)
     # Calculate number of data bits (use `ceil` to ensure that databits do not repeat)
     db_code_length = Int64(ceil(l1ca_db_chipping_rate*t_length))
     # Calculate code chipping rates with Doppler applied
@@ -154,10 +151,7 @@ function definesignal(type::Val{:l5q}, f_s, t_length; prn=1,
                       include_noise=true, code_start_idx=1)
     sample_num = Int(f_s * t_length)
     # Generate time vector
-    t = Array{Float64}(undef, sample_num)
-    @threads for i in 1:sample_num
-        @inbounds t[i] = (i-1)/f_s  # s
-    end
+    t = calctvector(sample_num, f_s)
     # Calculate code chipping rates with Doppler applied
     # L5Q
     f_l5q_d = L5_chipping_rate*(1. + f_d/L5_freq)
@@ -284,10 +278,7 @@ function definesignal(type::Val{:l5i}, f_s, t_length; prn=1,
                       include_databits=true)
     sample_num = Int(f_s * t_length)
     # Generate time vector
-    t = Array{Float64}(undef, sample_num)
-    @threads for i in 1:sample_num
-        @inbounds t[i] = (i-1)/f_s  # s
-    end
+    t = calctvector(sample_num, f_s)
     # Calculate number of data bits (use `ceil` to ensure that databits do not repeat)
     db_code_length = Int64(ceil(L5_db_chipping_rate*t_length))
     # Calculate code chipping rates with Doppler applied

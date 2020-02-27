@@ -1,4 +1,4 @@
-prn = 1
+prn = 26
 n0 = 1000.
 f_d = 800.
 fd_rate = 0.
@@ -7,9 +7,9 @@ fd_range = 5000.
 threads = nthreads()
 M = 4000
 
-# type = Val(:l5q)
-type = Val(:l5i)
-# type = Val(:l1ca)\
+type = Val(:l5q)
+# type = Val(:l5i)
+# type = Val(:l1ca)
 
 # L5Q parameters
 if typeof(type) == Val{:l5q}
@@ -55,18 +55,27 @@ if typeof(type) == Val{:l1ca}
     include_databits = true
     RLM = 10
 end
-# L1 C/A parameters
-data = definesignal(type, f_s, M*t_length; prn=prn,
-                    f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-                    CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
-                    include_carrier=include_carrier,
-                    include_adc=include_adc,
-                    include_noise=include_noise,
-                    code_start_idx=n0)
-if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
-    data.include_databits = include_databits
-end
-generatesignal!(data)
+
+# Load data
+file_dir = "/media/Srv3Pool2/by-location/hi/"
+file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP5_X300_LB-SJ-10100-SF_Dish-LinW.sc4"
+file_path = string(file_dir, file_name)
+data_type = Val(:sc4)
+start_t = 0.
+data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
+                    start_data_idx=Int(f_s * start_t)+1)
+
+# data = definesignal(type, f_s, M*t_length; prn=prn,
+#                     f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+#                     CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
+#                     include_carrier=include_carrier,
+#                     include_adc=include_adc,
+#                     include_noise=include_noise,
+#                     code_start_idx=n0)
+# if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
+#     data.include_databits = include_databits
+# end
+# generatesignal!(data)
 replica = definesignal(type, f_s, t_length; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                            CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
@@ -90,9 +99,9 @@ courseacquisition!(corr_result, data, replica, prn;
 max_idx = argmax(corr_result)
 fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
 if typeof(type) == Val{:l5q}
-    n0_est = max_idx[2]%Int(f_s*nh20_code_length/nh20_chipping_rate)
+    n0_est = max_idx[2]%Int(f_s*nh20_code_length/nh_chipping_rate)
 elseif typeof(type) == Val{:l5i}
-    n0_est = max_idx[2]%Int(f_s*nh10_code_length/nh10_chipping_rate)
+    n0_est = max_idx[2]%Int(f_s*nh10_code_length/nh_chipping_rate)
 else
     n0_est = max_idx[2]
 end

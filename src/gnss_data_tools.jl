@@ -29,7 +29,7 @@ function loaddata(data_type, file_name, f_s, f_if, t_length;
 	# Calculate total data length in seconds
 	total_data_length = (end_idx)/f_s
 	# Generate time vector
-	t = Array(0:1/f_s:t_length-1/f_s)  # s
+	t = calctvector(sample_num, f_s)
 	return GNSSData(file_name, f_s, f_if, t_length, start_data_idx,
                     t, float.(data), String(dtype), data_start_time,
                     site_loc_lla, sample_num, total_data_length, nADC)
