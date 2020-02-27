@@ -8,8 +8,8 @@ threads = nthreads()
 M = 4000
 
 # type = Val(:l5q)
-type = Val(:l5i)
-# type = Val(:l1ca)
+# type = Val(:l5i)
+type = Val(:l1ca)
 
 # L5Q parameters
 if typeof(type) == Val{:l5q}
@@ -57,31 +57,29 @@ if typeof(type) == Val{:l1ca}
     RLM = 10
 end
 
-# # Load data
-# file_dir = "/media/Srv3Pool2/by-location/hi/"
-# file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP5_X300_LB-SJ-10100-SF_Dish-LinW.sc4"
-# # file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"
-# # file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP1_X300_LB-SJ-10100-SF_Dish-LinW.sc4"
-# # file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"
-# file_path = string(file_dir, file_name)
-# data_type = Val(:sc4)
-# start_t = 1e-3
-# data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
-#                     start_data_idx=Int(f_s * start_t)+1)
+# Load data
+file_dir = "/media/Srv3Pool2/by-location/hi/"
+# file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
+file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
+file_path = string(file_dir, file_name)
+data_type = Val(:sc4)
+start_t = 1e-3
+data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
+                    start_data_idx=Int(f_s * start_t)+1)
 
-data = definesignal(type, f_s, M*t_length; prn=prn,
-                    f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-                    CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
-                    include_carrier=include_carrier,
-                    include_adc=include_adc,
-                    include_noise=include_noise,
-                    code_start_idx=n0)
-if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
-    data.include_databits = include_databits
-end
-generatesignal!(data)
+# data = definesignal(type, f_s, M*t_length; prn=prn,
+#                     f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+#                     CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
+#                     include_carrier=include_carrier,
+#                     include_adc=include_adc,
+#                     include_noise=include_noise,
+#                     code_start_idx=n0)
+# if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
+#     data.include_databits = include_databits
+# end
+# generatesignal!(data)
 
-replica = definesignal(type, f_s, 20e-3; prn=prn,
+replica = definesignal(type, f_s, 1e-3; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                            CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
                            include_carrier=include_carrier,
