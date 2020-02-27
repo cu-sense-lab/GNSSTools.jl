@@ -7,8 +7,8 @@ fd_range = 5000.
 threads = nthreads()
 M = 4000
 
-type = Val(:l5q)
-# type = Val(:l5i)
+# type = Val(:l5q)
+type = Val(:l5i)
 # type = Val(:l1ca)
 
 # L5Q parameters
@@ -43,7 +43,8 @@ end
 
 if typeof(type) == Val{:l1ca}
     f_s = 5e6  # Hz
-    f_if = 1.25e6  # Hz
+    # f_if = 1.25e6  # Hz
+    f_if = 0.  # Hz
     Tsys = 535.  # K
     CN0 = 45.  # dB*Hz
     ϕ = 0.  # rad
@@ -56,27 +57,31 @@ if typeof(type) == Val{:l1ca}
     RLM = 10
 end
 
-# Load data
-file_dir = "/media/Srv3Pool2/by-location/hi/"
-file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP5_X300_LB-SJ-10100-SF_Dish-LinW.sc4"
-file_path = string(file_dir, file_name)
-data_type = Val(:sc4)
-start_t = 0.
-data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
-                    start_data_idx=Int(f_s * start_t)+1)
+# # Load data
+# file_dir = "/media/Srv3Pool2/by-location/hi/"
+# file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP5_X300_LB-SJ-10100-SF_Dish-LinW.sc4"
+# # file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"
+# # file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP1_X300_LB-SJ-10100-SF_Dish-LinW.sc4"
+# # file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"
+# file_path = string(file_dir, file_name)
+# data_type = Val(:sc4)
+# start_t = 1e-3
+# data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
+#                     start_data_idx=Int(f_s * start_t)+1)
 
-# data = definesignal(type, f_s, M*t_length; prn=prn,
-#                     f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-#                     CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
-#                     include_carrier=include_carrier,
-#                     include_adc=include_adc,
-#                     include_noise=include_noise,
-#                     code_start_idx=n0)
-# if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
-#     data.include_databits = include_databits
-# end
-# generatesignal!(data)
-replica = definesignal(type, f_s, t_length; prn=prn,
+data = definesignal(type, f_s, M*t_length; prn=prn,
+                    f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+                    CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
+                    include_carrier=include_carrier,
+                    include_adc=include_adc,
+                    include_noise=include_noise,
+                    code_start_idx=n0)
+if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
+    data.include_databits = include_databits
+end
+generatesignal!(data)
+
+replica = definesignal(type, f_s, 20e-3; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                            CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
                            include_carrier=include_carrier,
@@ -91,7 +96,8 @@ replicalong = definesignal(type, f_s, RLM*t_length; prn=prn,
                            include_noise=false,
                            code_start_idx=1)
 Δfd = 1/replica.t_length  # Hz
-fd_center = round(f_d/Δfd)*Δfd  # Hz
+# fd_center = round(f_d/Δfd)*Δfd  # Hz
+fd_center = 0.  # Hz
 corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
 courseacquisition!(corr_result, data, replica, prn;
                    fd_center=fd_center, fd_range=fd_range,
@@ -99,9 +105,9 @@ courseacquisition!(corr_result, data, replica, prn;
 max_idx = argmax(corr_result)
 fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
 if typeof(type) == Val{:l5q}
-    n0_est = max_idx[2]%Int(f_s*nh20_code_length/nh_chipping_rate)
+    n0_est = max_idx[2]#%Int(f_s*nh20_code_length/nh_chipping_rate)
 elseif typeof(type) == Val{:l5i}
-    n0_est = max_idx[2]%Int(f_s*nh10_code_length/nh_chipping_rate)
+    n0_est = max_idx[2]#%Int(f_s*nh10_code_length/nh_chipping_rate)
 else
     n0_est = max_idx[2]
 end
