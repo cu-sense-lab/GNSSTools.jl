@@ -7,9 +7,9 @@ fd_range = 5000.
 threads = nthreads()
 M = 4000
 
-# type = Val(:l5q)
+type = Val(:l5q)
 # type = Val(:l5i)
-type = Val(:l1ca)
+# type = Val(:l1ca)
 
 # L5Q parameters
 if typeof(type) == Val{:l5q}
@@ -59,8 +59,8 @@ end
 
 # Load data
 file_dir = "/media/Srv3Pool2/by-location/hi/"
-# file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
-file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
+file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
+# file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
 file_path = string(file_dir, file_name)
 data_type = Val(:sc4)
 start_t = 1e-3
