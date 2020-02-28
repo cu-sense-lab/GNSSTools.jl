@@ -62,7 +62,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     pk_val = 0. + 0im
     pk_valabs2 = 0.
     pk_idx = 1
-    #### TODO: Make the peak searching loops below functions and try to multi-thread them. ####
+    #### TODO: Make the peak searching loops below functions and multi-thread them. ####
     # Check positive frequencies for peak
     @inbounds for i in pos_freq_interval[1]:pos_freq_interval[2]
         data_abs2 = abs2(replica.data[i])
