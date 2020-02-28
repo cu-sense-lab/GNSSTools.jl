@@ -24,6 +24,7 @@ if typeof(type) == Val{:l5q}
     include_adc = true
     include_noise = true
     RLM = 20
+    file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
 end
 
 if typeof(type) == Val{:l5i}
@@ -39,6 +40,7 @@ if typeof(type) == Val{:l5i}
     include_noise = true
     include_databits = true
     RLM = 10
+    file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
 end
 
 if typeof(type) == Val{:l1ca}
@@ -55,12 +57,11 @@ if typeof(type) == Val{:l1ca}
     include_noise = true
     include_databits = true
     RLM = 10
+    file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
 end
 
 # Load data
 file_dir = "/media/Srv3Pool2/by-location/hi/"
-file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
-# file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
 file_path = string(file_dir, file_name)
 data_type = Val(:sc4)
 start_t = 1e-3
@@ -113,4 +114,5 @@ results = fineacquisition(data, replicalong, prn, fd_est,
                           n0_est, Val(:fft))
 trackresults = trackprn(data, replica, prn, results.ϕ_init,
                         results.fd_est, results.n0_idx_course)
-plotresults(trackresults)
+# plotresults(trackresults)
+# plotresults(trackresults; saveto="/home/bilardis/projects/GNSSTools.jl/figures/")
