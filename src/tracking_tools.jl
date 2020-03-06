@@ -300,7 +300,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
             n0 += (n0_err_filtered + f_code_d*T)%code_length
         end
         # Updated and propagate carrier phase to next `i`
-        ϕ += ϕ_meas# + (f_if + f_d)*T
+        ϕ += ϕ_meas# + 2*pi*(f_if + f_d)*T
         next!(p)
     end
     # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
@@ -354,7 +354,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         # Update code phase with filtered code phase error and propagate to next `i`
         n0 += (n0_err_filtered + f_code_d*T)%code_length
         # Update and propagate carrier phase to next `i`
-        ϕ += ϕ_filt# + (f_if + f_d)*T
+        ϕ += ϕ_filt# + 2*pi*(f_if + f_d)*T
         next!(p)
     end
     # Return `TrackResults` struct

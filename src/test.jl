@@ -7,9 +7,9 @@ fd_range = 5000.
 threads = nthreads()
 M = 4000
 
-type = Val(:l5q)
-# type = Val(:l5i)
-# type = Val(:l1ca)
+#type = Val(:l5q)
+type = Val(:l5i)
+#type = Val(:l1ca)
 
 # L5Q parameters
 if typeof(type) == Val{:l5q}
