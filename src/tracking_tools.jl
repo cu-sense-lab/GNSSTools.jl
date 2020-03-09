@@ -266,18 +266,17 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)
-        # Estimate carrier phase
+        # Estimate carrier phase and Doopler frequency errors
         dϕ_meas = measurephase(zp)
+        dfd = dϕ_meas/(2π*T)
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
             # Calculate dfd
             dfd = dϕ_meas/(2π*T)
-            fds[i] = fds[i-1] + dfd
         else
             n0_err_filtered = n0_err
             dfd = 0.
-            fds[i] = fd_init
         end
         # Save to allocated arrays
         code_err_meas[i] = n0_err
@@ -288,6 +287,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         dphi_measured[i] = dϕ_meas
         phi[i] = ϕ
         delta_fd[i] = G*dfd
+        fds[i] = f_d + G*dfd
         ZP[i] = zp
         if real(zp) > 0
             data_bits[i] = 1
