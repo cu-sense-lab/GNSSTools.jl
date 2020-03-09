@@ -7,9 +7,9 @@ fd_range = 5000.
 threads = nthreads()
 M = 4000
 
-#type = Val(:l5q)
-type = Val(:l5i)
-#type = Val(:l1ca)
+type = Val(:l5q)
+# type = Val(:l5i)
+# type = Val(:l1ca)
 
 # L5Q parameters
 if typeof(type) == Val{:l5q}
@@ -114,5 +114,5 @@ results = fineacquisition(data, replicalong, prn, fd_est,
                           n0_est, Val(:fft))
 trackresults = trackprn(data, replica, prn, results.ϕ_init,
                         results.fd_est, results.n0_idx_course)
-# plotresults(trackresults)
+plotresults(trackresults)
 # plotresults(trackresults; saveto="/home/bilardis/projects/GNSSTools.jl/figures/")

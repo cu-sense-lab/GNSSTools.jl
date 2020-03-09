@@ -69,6 +69,7 @@ struct TrackResults{T1,T2}
     phi_filtered::Array{Float64,1}
     phi::Array{Float64,1}
     delta_fd::Array{Float64,1}
+    fds::Array{Float64,1}
     ZP::Array{Complex{Float64},1}
     SNR::Array{Float64,1}
     data_bits::Array{Int64,1}
@@ -161,7 +162,7 @@ replica already containts the prompt correlator. Be sure to set
 the parameters to `replica` and run `generatesignal!(replica)` before
 calling this method.
 """
-function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
+function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d, dϕ, T, G=0.2)
     ## Initialize correlator results
     # ze = 0. + 0im
     # zp = 0. + 0im
@@ -184,7 +185,8 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
     #     @inbounds ze += conj(replica.data[zeidx]) * wipeoff
     #     @inbounds zl += conj(replica.data[zlidx]) * wipeoff
     # end
-    wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[(i-1)*N+1:i*N] .+ ϕ).*1im)
+    # wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[(i-1)*N+1:i*N] .+ ϕ).*1im)
+    wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d + G*dϕ/(2π*T)).*data.t[1:N] .+ ϕ).*1im)
     ze = sum(conj.(circshift(replica.data, -d)).*wipeoff)/N
     zp = sum(conj.(replica.data).*wipeoff)/N
     zl = sum(conj.(circshift(replica.data, d)).*wipeoff)/N
@@ -241,12 +243,74 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     phi_filtered = Array{Float64}(undef, M)
     phi = Array{Float64}(undef, M)
     delta_fd = Array{Float64}(undef, M)
+    fds = Array{Float64}(undef, M)
     ZP = Array{Complex{Float64}}(undef, M)
     SNR = Array{Float64}(undef, M)
     data_bits = Array{Int64}(undef, M)
     # Initialize 1ˢᵗ order DLL and 2ⁿᵈ PLL filters
     p = Progress(M, 1, "Tracking PRN $(prn)...")
-    for i in 1:2
+    # for i in 1:2
+    #     # Calculate the current code start index
+    #     t₀ = ((code_length-n0)%code_length)/f_code_d
+    #     code_start_idx = t₀*f_s + 1
+    #     # Set signal parameters
+    #     definesignal!(replica;
+    #                   prn=prn, f_d=f_d,
+    #                   fd_rate=fd_rate, ϕ=0., f_if=0.,
+    #                   include_carrier=true,
+    #                   include_noise=false,
+    #                   include_adc=false,
+    #                   code_start_idx=code_start_idx,
+    #                   isreplica=true, noexp=true)
+    #     # Generate prompt correlator
+    #     generatesignal!(replica)
+    #     # Calculate early, prompt, and late correlator outputs
+    #     ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
+    #     # Estimate code phase error
+    #     n0_err = Z4(dll_parms, ze, zp, zl)
+    #     # Estimate carrier phase
+    #     ϕ_meas = measurephase(zp)
+    #     # Filter and update code phase
+    #     if i > 1
+    #         # Filter raw code phase error measurement
+    #         n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
+    #         # Calculate dfd
+    #         dfd = phi_measured[i-1]/(2π*T)
+    #         fds[i] = fds[i-1] + dfd
+    #     else
+    #         n0_err_filtered = n0_err
+    #         dfd = 0.
+    #         fds[i] = fd_init
+    #     end
+    #     # Save to allocated arrays
+    #     code_err_meas[i] = n0_err
+    #     code_err_filt[i] = n0_err_filtered
+    #     code_phase_meas[i] = (n0 + n0_err)%code_length
+    #     code_phase_filt[i] = (n0 + n0_err_filtered)%code_length
+    #     n0s[i] = n0
+    #     phi_measured[i] = ϕ_meas
+    #     phi_filtered[i] = ϕ_meas
+    #     phi[i] = ϕ
+    #     delta_fd[i] = dfd
+    #     ZP[i] = zp
+    #     if real(zp) > 0
+    #         data_bits[i] = 1
+    #     else
+    #         data_bits[i] = 0
+    #     end
+    #     # Calculate main code chipping rate at next `i`
+    #     f_code_d = chipping_rate*(1. + f_d/sig_freq)
+    #     # Update code phase with filtered code phase error and propagate to next `i`
+    #     if i > 1
+    #         n0 += (n0_err_filtered + f_code_d*T)%code_length
+    #     end
+    #     # Updated and propagate carrier phase to next `i`
+    #     # ϕ += ϕ_meas# + 2*pi*(f_if + f_d)*T
+    #     # ϕ += 2*pi*(f_if + f_d)*T
+    #     next!(p)
+    # end
+    # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
+    for i in 1:M
         # Calculate the current code start index
         t₀ = ((code_length-n0)%code_length)/f_code_d
         code_start_idx = t₀*f_s + 1
@@ -267,72 +331,28 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         n0_err = Z4(dll_parms, ze, zp, zl)
         # Estimate carrier phase
         ϕ_meas = measurephase(zp)
-        # Filter and update code phase
+        # Filter carrier phase measurement\
+        if i > 2
+            ϕ_filt = filtercarrierphase(pll_parms, ϕ_meas,
+                                        phi_measured[i-1], phi_measured[i-2],
+                                        phi_filtered[i-1], phi_filtered[i-2])
+        else
+            ϕ_filt = ϕ_meas
+        # Filter raw code phase error measurement
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
             # Calculate dfd
-            dfd = (ϕ_meas - phi_measured[i-1])/(2π*T)
+            dfd = phi_measured[i-1]/(2π*T)
+            fds[i] = fds[i-1] + dfd
         else
             n0_err_filtered = n0_err
             dfd = 0.
+            fds[i] = fd_init
         end
-        # Save to allocated arrays
-        code_err_meas[i] = n0_err
-        code_err_filt[i] = n0_err_filtered
-        code_phase_meas[i] = (n0 + n0_err)%code_length
-        code_phase_filt[i] = (n0 + n0_err_filtered)%code_length
-        n0s[i] = n0
-        phi_measured[i] = ϕ_meas
-        phi_filtered[i] = ϕ_meas
-        phi[i] = ϕ
-        delta_fd[i] = dfd
-        ZP[i] = zp
-        if real(zp) > 0
-            data_bits[i] = 1
-        else
-            data_bits[i] = 0
-        end
-        # Calculate main code chipping rate at next `i`
-        f_code_d = chipping_rate*(1. + f_d/sig_freq)
-        # Update code phase with filtered code phase error and propagate to next `i`
-        if i > 1
-            n0 += (n0_err_filtered + f_code_d*T)%code_length
-        end
-        # Updated and propagate carrier phase to next `i`
-        ϕ += ϕ_meas# + 2*pi*(f_if + f_d)*T
-        next!(p)
-    end
-    # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
-    for i in 3:M
-        # Calculate the current code start index
-        t₀ = ((code_length-n0)%code_length)/f_code_d
-        code_start_idx = t₀*f_s + 1
-        # Set signal parameters
-        definesignal!(replica;
-                      prn=prn, f_d=f_d,
-                      fd_rate=fd_rate, ϕ=0., f_if=0.,
-                      include_carrier=true,
-                      include_noise=false,
-                      include_adc=false,
-                      code_start_idx=code_start_idx,
-                      isreplica=true, noexp=true)
-        # Generate prompt correlator
-        generatesignal!(replica)
-        # Calculate early, prompt, and late correlator outputs
-        ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
-        # Estimate code phase error
-        n0_err = Z4(dll_parms, ze, zp, zl)
-        # Estimate carrier phase
-        ϕ_meas = measurephase(zp)
-        # Filter carrier phase measurement
-        ϕ_filt = filtercarrierphase(pll_parms, ϕ_meas,
-                                    phi_measured[i-1], phi_measured[i-2],
-                                    phi_filtered[i-1], phi_filtered[i-2])
-        # Filter raw code phase error measurement
-        n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
         # Calculate dfd
-        dfd = (ϕ_meas - phi_measured[i-1])/(2π*T)
+        # dfd = (ϕ_meas - phi_measured[i-1])/(2π*T)
+        dfd = ϕ_meas/(2π*T)
         # Save to allocated arrays
         code_err_meas[i] = n0_err
         code_err_filt[i] = n0_err_filtered
@@ -343,18 +363,25 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         phi_filtered[i] = ϕ_filt
         phi[i] = ϕ
         delta_fd[i] = dfd
+        fds[i] = fds[i-1] + dfd
         ZP[i] = zp
         if real(zp) > 0
             data_bits[i] = 1
         else
             data_bits[i] = 0
         end
+        # Update f_d
+        # f_d = fd_init + dfd
+        f_d += dfd
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
-        n0 += (n0_err_filtered + f_code_d*T)%code_length
+        if i > 1
+            n0 += (n0_err_filtered + f_code_d*T)%code_length
+        end
         # Update and propagate carrier phase to next `i`
-        ϕ += ϕ_filt# + 2*pi*(f_if + f_d)*T
+        # ϕ += ϕ_filt# + 2π*(f_if + f_d)*T
+        # ϕ += 2π*(f_if + f_d)*T
         next!(p)
     end
     # Return `TrackResults` struct
@@ -384,7 +411,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                         float(n0_idx_init), n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, n0s, phi_measured, phi_filtered,
-                        phi, delta_fd, ZP, SNR, data_bits, code_length)
+                        phi, delta_fd, fds, ZP, SNR, data_bits, code_length)
 end
 
 
