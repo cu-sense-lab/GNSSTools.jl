@@ -65,10 +65,10 @@ struct TrackResults{T1,T2}
     code_phase_meas::Array{Float64,1}
     code_phase_filt::Array{Float64,1}
     n0::Array{Float64,1}
-    phi_measured::Array{Float64,1}
-    phi_filtered::Array{Float64,1}
+    dphi_meas::Array{Float64,1}
     phi::Array{Float64,1}
     delta_fd::Array{Float64,1}
+    fds::Array{Float64,1}
     ZP::Array{Complex{Float64},1}
     SNR::Array{Float64,1}
     data_bits::Array{Int64,1}
@@ -184,7 +184,8 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
     #     @inbounds ze += conj(replica.data[zeidx]) * wipeoff
     #     @inbounds zl += conj(replica.data[zlidx]) * wipeoff
     # end
-    wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[(i-1)*N+1:i*N] .+ ϕ).*1im)
+    # wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[(i-1)*N+1:i*N] .+ ϕ).*1im)
+    wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[1:N] .+ ϕ).*1im)
     ze = sum(conj.(circshift(replica.data, -d)).*wipeoff)/N
     zp = sum(conj.(replica.data).*wipeoff)/N
     zl = sum(conj.(circshift(replica.data, d)).*wipeoff)/N
@@ -206,7 +207,7 @@ Perform code and phase tracking on data in `data`.
 that are minumum amount to track a given PRN.
 """
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
-                  DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0.)
+                  DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2)
     # Assign signal specific parameters
     chipping_rate = replica.chipping_rate
     sig_freq = replica.sig_freq
@@ -237,16 +238,16 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     code_phase_meas = Array{Float64}(undef, M)
     code_phase_filt = Array{Float64}(undef, M)
     n0s = Array{Float64}(undef, M)
-    phi_measured = Array{Float64}(undef, M)
-    phi_filtered = Array{Float64}(undef, M)
+    dphi_measured = Array{Float64}(undef, M)
     phi = Array{Float64}(undef, M)
     delta_fd = Array{Float64}(undef, M)
+    fds = Array{Float64}(undef, M)
     ZP = Array{Complex{Float64}}(undef, M)
     SNR = Array{Float64}(undef, M)
     data_bits = Array{Int64}(undef, M)
-    # Initialize 1ˢᵗ order DLL and 2ⁿᵈ PLL filters
     p = Progress(M, 1, "Tracking PRN $(prn)...")
-    for i in 1:2
+    # Perform code, carrier phase, and Doppler frequency tracking
+    for i in 1:M
         # Calculate the current code start index
         t₀ = ((code_length-n0)%code_length)/f_code_d
         code_start_idx = t₀*f_s + 1
@@ -265,14 +266,14 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)
-        # Estimate carrier phase
-        ϕ_meas = measurephase(zp)
-        # Filter and update code phase
+        # Estimate carrier phase and Doopler frequency errors
+        dϕ_meas = measurephase(zp)
+        dfd = dϕ_meas/(2π*T)
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
             # Calculate dfd
-            dfd = (ϕ_meas - phi_measured[i-1])/(2π*T)
+            dfd = dϕ_meas/(2π*T)
         else
             n0_err_filtered = n0_err
             dfd = 0.
@@ -283,15 +284,19 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         code_phase_meas[i] = (n0 + n0_err)%code_length
         code_phase_filt[i] = (n0 + n0_err_filtered)%code_length
         n0s[i] = n0
-        phi_measured[i] = ϕ_meas
-        phi_filtered[i] = ϕ_meas
+        dphi_measured[i] = dϕ_meas
         phi[i] = ϕ
-        delta_fd[i] = dfd
+        delta_fd[i] = G*dfd
+        fds[i] = f_d + G*dfd
         ZP[i] = zp
         if real(zp) > 0
             data_bits[i] = 1
         else
             data_bits[i] = 0
+        end
+        # Update f_d
+        if i > 2
+            f_d += G*dfd
         end
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
@@ -299,62 +304,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         if i > 1
             n0 += (n0_err_filtered + f_code_d*T)%code_length
         end
-        # Updated and propagate carrier phase to next `i`
-        ϕ += ϕ_meas# + (f_if + f_d)*T
-        next!(p)
-    end
-    # Perform 1ˢᵗ and 2ⁿᵈ order DLL and PLL tracking, respectively
-    for i in 3:M
-        # Calculate the current code start index
-        t₀ = ((code_length-n0)%code_length)/f_code_d
-        code_start_idx = t₀*f_s + 1
-        # Set signal parameters
-        definesignal!(replica;
-                      prn=prn, f_d=f_d,
-                      fd_rate=fd_rate, ϕ=0., f_if=0.,
-                      include_carrier=true,
-                      include_noise=false,
-                      include_adc=false,
-                      code_start_idx=code_start_idx,
-                      isreplica=true, noexp=true)
-        # Generate prompt correlator
-        generatesignal!(replica)
-        # Calculate early, prompt, and late correlator outputs
-        ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
-        # Estimate code phase error
-        n0_err = Z4(dll_parms, ze, zp, zl)
-        # Estimate carrier phase
-        ϕ_meas = measurephase(zp)
-        # Filter carrier phase measurement
-        ϕ_filt = filtercarrierphase(pll_parms, ϕ_meas,
-                                    phi_measured[i-1], phi_measured[i-2],
-                                    phi_filtered[i-1], phi_filtered[i-2])
-        # Filter raw code phase error measurement
-        n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
-        # Calculate dfd
-        dfd = (ϕ_meas - phi_measured[i-1])/(2π*T)
-        # Save to allocated arrays
-        code_err_meas[i] = n0_err
-        code_err_filt[i] = n0_err_filtered
-        code_phase_meas[i] = n0 + n0_err
-        code_phase_filt[i] = n0 + n0_err_filtered
-        n0s[i] = n0
-        phi_measured[i] = ϕ_meas
-        phi_filtered[i] = ϕ_filt
-        phi[i] = ϕ
-        delta_fd[i] = dfd
-        ZP[i] = zp
-        if real(zp) > 0
-            data_bits[i] = 1
-        else
-            data_bits[i] = 0
-        end
-        # Calculate main code chipping rate at next `i`
-        f_code_d = chipping_rate*(1. + f_d/sig_freq)
-        # Update code phase with filtered code phase error and propagate to next `i`
-        n0 += (n0_err_filtered + f_code_d*T)%code_length
         # Update and propagate carrier phase to next `i`
-        ϕ += ϕ_filt# + (f_if + f_d)*T
+        ϕ += dϕ_meas + T*dfd/2 + 2π*(f_if + f_d)*T
         next!(p)
     end
     # Return `TrackResults` struct
@@ -383,8 +334,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                         f_if, data_start_time, site_loc_lla,
                         float(n0_idx_init), n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
-                        code_phase_filt, n0s, phi_measured, phi_filtered,
-                        phi, delta_fd, ZP, SNR, data_bits, code_length)
+                        code_phase_filt, n0s, dphi_measured, phi,
+                        delta_fd, fds, ZP, SNR, data_bits, code_length)
 end
 
 
@@ -406,16 +357,16 @@ function plotresults(results::TrackResults; saveto=missing)
     legend()
     # Plot filtered and measured phase errors
     subplot2grid((3,2), (0,1), colspan=1, rowspan=1)
-    plot(results.t, results.phi_measured.*180 ./π, "k.", label="Measured ϕ")
-    plot(results.t, results.phi_filtered.*180 ./π, "b-", label="Filtered ϕ")
-    plot(results.t, results.phi_filtered.*180 ./π, "b.")
+    plot(results.t, results.dphi_meas.*180 ./π, "k.", label="Measured ϕ")
+    # plot(results.t, results.phi_filtered.*180 ./π, "b-", label="Filtered ϕ")
+    # plot(results.t, results.phi_filtered.*180 ./π, "b.")
     xlabel("Time (s)")
     ylabel("ϕ (degrees)")
     # ylim([-180, 180])
     title("PLL Tracking")
     legend()
     subplot2grid((3,2), (1,0), colspan=2, rowspan=1)
-    plot(results.t, results.delta_fd.+results.data_init_fd, "k.")
+    plot(results.t, results.fds, "k.")
     xlabel("Time (s)")
     ylabel("Doppler (Hz)")
     title("Doppler Frequency Estimate")
