@@ -6,7 +6,7 @@
           CN0=45., Tsys=535., usesimdata=false, saveto=missing, T="short", G=0.2)
 
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
-and code
+and code/carrier phase and Doppler frequency tracking.
 """
 function demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threads=nthreads(),
                n0=1000., f_d=800., fd_range=5000., M=4000, fd_rate=0.,
