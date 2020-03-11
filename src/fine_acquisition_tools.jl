@@ -185,6 +185,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     # Calculate the fine Doppler frequency
     fd_fine = dϕavg/(2π*N/f_s)
     fd_est = fd_course + fd_fine
+    definesignal!(replica; isreplica=false)
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:carrier), fd_course, fd_rate, n₀_idx_course,
                                   t_length, fd_fine, fd_est, ϕ_init, M)

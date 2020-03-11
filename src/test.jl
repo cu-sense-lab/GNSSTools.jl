@@ -7,9 +7,9 @@ fd_range = 5000.
 threads = nthreads()
 M = 4000
 
-type = Val(:l5q)
+# type = Val(:l5q)
 # type = Val(:l5i)
-# type = Val(:l1ca)
+type = Val(:l1ca)
 
 # L5Q parameters
 if typeof(type) == Val{:l5q}
@@ -60,25 +60,25 @@ if typeof(type) == Val{:l1ca}
     file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
 end
 
-# Load data
-file_dir = "/media/Srv3Pool2/by-location/hi/"
-file_path = string(file_dir, file_name)
-data_type = Val(:sc4)
-start_t = 1e-3
-data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
-                    start_data_idx=Int(f_s * start_t)+1)
+# # Load data
+# file_dir = "/media/Srv3Pool2/by-location/hi/"
+# file_path = string(file_dir, file_name)
+# data_type = Val(:sc4)
+# start_t = 1e-3
+# data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
+#                     start_data_idx=Int(f_s * start_t)+1)
 
-# data = definesignal(type, f_s, M*t_length; prn=prn,
-#                     f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-#                     CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
-#                     include_carrier=include_carrier,
-#                     include_adc=include_adc,
-#                     include_noise=include_noise,
-#                     code_start_idx=n0)
-# if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
-#     data.include_databits = include_databits
-# end
-# generatesignal!(data)
+data = definesignal(type, f_s, M*t_length; prn=prn,
+                    f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+                    CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
+                    include_carrier=include_carrier,
+                    include_adc=include_adc,
+                    include_noise=include_noise,
+                    code_start_idx=n0)
+if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
+    data.include_databits = include_databits
+end
+generatesignal!(data)
 
 replica = definesignal(type, f_s, 1e-3; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
@@ -87,7 +87,7 @@ replica = definesignal(type, f_s, 1e-3; prn=prn,
                            include_adc=false,
                            include_noise=false,
                            code_start_idx=1)
-replicalong = definesignal(type, f_s, RLM*t_length; prn=prn,
+replicalong = definesignal(type, f_s, 2*RLM*t_length; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                            CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
                            include_carrier=include_carrier,
@@ -112,7 +112,7 @@ else
 end
 results = fineacquisition(data, replicalong, prn, fd_est,
                           n0_est, Val(:fft))
-trackresults = trackprn(data, replica, prn, results.ϕ_init,
+trackresults = trackprn(data, replicalong, prn, results.phi_init,
                         results.fd_est, results.n0_idx_course)
 plotresults(trackresults)
 # plotresults(trackresults; saveto="/home/bilardis/projects/GNSSTools.jl/figures/")
