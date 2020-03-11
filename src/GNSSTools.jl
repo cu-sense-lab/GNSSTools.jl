@@ -61,9 +61,6 @@ module GNSSTools
     export loadrinex
     export trackprn
     export plotresults
-    export testcourseacquisition
-    export testcourseacquisitiondata
-    export testnoncoherentintegration
-    export testnoncoherentintegration2
+    export demo
 
 end # module

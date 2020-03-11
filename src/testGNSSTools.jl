@@ -1,5 +1,5 @@
-function demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threads=nthreads()
-               n0=1000., f_d=800., t_length=1e-3, fd_range=5000., M=4000,
+function demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threads=nthreads(),
+               n0=1000., f_d=800., t_length=1e-3, fd_range=5000., M=4000, fd_rate=0.,
                f_if=0., phi=π/4, nADC=4, include_carrier=true, include_adc=true,
                include_noise=true, include_databits=true, start_t=1e-3, B=2.046e7,
                CN0=45., Tsys=535., usesimdata=false, saveto=missing, T=1e-3)
@@ -39,9 +39,10 @@ function demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threa
 
   if usesimdata
       # Simulate data
+      print("Generating PRN $(prn) signal...")
       data = definesignal(type, f_s, M*t_length; prn=prn,
                           f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-                          CN0=CN0, ϕ=phi nADC=nADC, B=B,
+                          CN0=CN0, ϕ=phi, nADC=nADC, B=B,
                           include_carrier=include_carrier,
                           include_adc=include_adc,
                           include_noise=include_noise,
@@ -50,8 +51,10 @@ function demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threa
           data.include_databits = include_databits
       end
       generatesignal!(data)
+      println("Done")
   else
       # Load data
+      print("Loading data...")
       if ismissing(file_dir)
         file_dir = "/media/Srv3Pool2/by-location/hi/"
       end
@@ -59,8 +62,10 @@ function demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threa
       data_type = Val(:sc4)
       data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
                           start_data_idx=Int(f_s * start_t)+1)
+      println("Done")
   end
 
+  print("Performing course acquisition...")
   # Define 1ms and RLM*1ms signals
   replica = definesignal(type, f_s, t_length)
   replicalong = definesignal(type, f_s, RLM*t_length)
@@ -80,13 +85,16 @@ function demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threa
   fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
   # Get course peak index location in time
   n0_est = max_idx[2]
+  println("Done")
   # Perform FFT based fine acquisition
   # Returns structure containing the fine, course,
   # and estimated Doppler frequency
+  print("Performing FFT based fine acquisition...")
   results = fineacquisition(data, replicalong, prn, fd_est,
                             n0_est, Val(:fft))
+  println("Done")
   # Perform code/carrier phase, and Doppler frequency tracking on signal
-  # using results from fine acquisition as the intial conditions 
+  # using results from fine acquisition as the intial conditions
   if ((sigtype == "l5q") | (sigtype == "l5i")) && (T == "long")
       # Use 20ms coherent integration for L5Q signal and 10ms
       # coherent integration for L5I signal
@@ -98,5 +106,7 @@ function demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threa
                               results.fd_est, results.n0_idx_course)
   end
   # Plot results and save if `saveto` is a string
+  print("Generating figure...")
   plotresults(trackresults; saveto=saveto)
+  println("Done")
 end
