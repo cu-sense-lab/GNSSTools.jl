@@ -207,7 +207,8 @@ Perform code and phase tracking on data in `data`.
 that are minumum amount to track a given PRN.
 """
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
-                  DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2)
+                  DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
+                  message="Tracking PRN $(prn) w/ T=$(Int64(floor(replica.t_length*1000)))...")
     # Assign signal specific parameters
     chipping_rate = replica.chipping_rate
     sig_freq = replica.sig_freq
@@ -245,7 +246,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     ZP = Array{Complex{Float64}}(undef, M)
     SNR = Array{Float64}(undef, M)
     data_bits = Array{Int64}(undef, M)
-    p = Progress(M, 1, "Tracking PRN $(prn)...")
+    p = Progress(M, 1, message)
     # Perform code, carrier phase, and Doppler frequency tracking
     for i in 1:M
         # Calculate the current code start index

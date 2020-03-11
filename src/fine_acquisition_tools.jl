@@ -13,7 +13,7 @@ struct FineAcquisitionResults{T}
     t_length::Float64
     fd_fine::Float64
     fd_est::Float64
-    ϕ_init::Float64
+    phi_init::Float64
     M::T
 end
 
