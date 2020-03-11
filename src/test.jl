@@ -87,7 +87,7 @@ replica = definesignal(type, f_s, 1e-3; prn=prn,
                            include_adc=false,
                            include_noise=false,
                            code_start_idx=1)
-replicalong = definesignal(type, f_s, 2*RLM*t_length; prn=prn,
+replicalong = definesignal(type, f_s, RLM*t_length; prn=prn,
                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                            CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
                            include_carrier=include_carrier,
@@ -112,7 +112,7 @@ else
 end
 results = fineacquisition(data, replicalong, prn, fd_est,
                           n0_est, Val(:fft))
-trackresults = trackprn(data, replicalong, prn, results.phi_init,
+trackresults = trackprn(data, replica, prn, results.phi_init,
                         results.fd_est, results.n0_idx_course)
 plotresults(trackresults)
 # plotresults(trackresults; saveto="/home/bilardis/projects/GNSSTools.jl/figures/")
