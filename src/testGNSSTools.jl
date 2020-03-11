@@ -1,355 +1,132 @@
 """
-    testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
-                           fd_range=5000., threads=nthreads(),
-                           showplot=false)
+    demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threads=nthreads(),
+          n0=1000., f_d=800., fd_range=5000., M=4000, fd_rate=0.,
+          f_if=0., phi=π/4, nADC=4, include_carrier=true, include_adc=true,
+          include_noise=true, include_databits=true, start_t=1e-3, B=2.046e7,
+          CN0=45., Tsys=535., usesimdata=false, saveto=missing, T="short", G=0.2)
 
-Simulates a noisy signal with parameters specified above and
-performs course acquisition on it. Prints the course Doppler
-and code phase (in samples) estimates. Set `showplot` to `true`
-to plot along the time index for estimated Doppler bin.
+Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
+and code
 """
-function testcourseacquisition(;prn=1, f_d=0., n0=1, t_length=1e-3,
-                                fd_range=5000., threads=nthreads(),
-                                showplot=false, fd_rate=0.,
-                                fineacqtype=:fft,
-                                M=2)
-	# Simulate signal with noise
-	type = Val(:l5q)
-	f_s = 25e6  # Hz
-	f_if = 0.  # Hz
-	Tsys = 535.  # K
-	CN0 = 45.  # dB*Hz
-	ϕ = 0.  # rad
-	nADC = 4  # bits
-	B = 2.046e7  # Hz
-	include_carrier = true
-	include_adc = true
-	include_noise = true
-	data = definesignal(type::Val{:l5q}, prn, f_s, t_length;
-	                    f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-	                    CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
-	                    include_carrier=include_carrier,
-	                    include_adc=include_adc,
-	                    include_noise=include_noise,
-	                    code_start_idx=n0)
-	if t_length < 0.5  # seconds
-		datalong = definesignal(type::Val{:l5q}, prn, f_s, M*t_length;
-	                        	f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-	                        	CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
-	                        	include_carrier=include_carrier,
-	                        	include_adc=include_adc,
-	                        	include_noise=include_noise,
-	                        	code_start_idx=n0)
-	end
-	generatesignal!(data)
-	generatesignal!(datalong)
-	# Generate replica signal for cross correlation
-	replica = definesignal(type::Val{:l5q}, prn, f_s, t_length;
-	                       f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-	                       CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
-	                       include_carrier=include_carrier,
-	                       include_adc=false,
-	                       include_noise=false,
-	                       code_start_idx=1)
-	if t_length < 0.5  # seconds
-		replicalong = definesignal(type::Val{:l5q}, prn, f_s, M*t_length;
-	                           	   f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-	                           	   CN0=CN0, ϕ=ϕ, nADC=nADC, B=B,
-	                           	   include_carrier=include_carrier,
-	                           	   include_adc=false,
-	                           	   include_noise=false,
-	                           	   code_start_idx=1)
-	end
-	# Perform cross correlation using function
-	fd_center = f_d  # Hz
-	Δfd = 1/data.t_length  # Hz
-	sample_num = data.sample_num
-	corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
-	courseacquisition!(corr_result, data, replica, prn;
-	                   fd_center=fd_center, fd_range=fd_range,
-	                   fd_rate=fd_rate, Δfd=Δfd, threads=threads)
-	max_idx = argmax(corr_result)
-	fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
-	n0_est = max_idx[2]%Int(f_s*nh_code_length/nh_chipping_rate)
-	println("\nPRN $(prn):\nfd = $(fd_est)Hz\nn₀ = $(n0_est) samples")
-	# Fine acquisition
-	if t_length < 0.5  # second
-		results = fineacquisition(datalong, replicalong, prn, fd_est,
-			                      n0_est, Val(fineacqtype))
-		println("Fine Acquisition Results")
-		println("fd = $(results.fd_est)Hz")
-		println("n₀ = $(results.n0_idx_course) samples")
-		println("ϕ₀ = $(results.ϕ_init) rad")
-	end 
-	if showplot
-		figure()
-		plot(corr_result[max_idx[1],:], "k-")
-		xlabel("n (Samples)")
-		ylabel("|replica⋆data|² at Peak Doppler Bin")
-		title("PRN $(prn)")
-	end
-end
+function demo(;prn=26, file_dir=missing, file_name=missing, sigtype="l5q", threads=nthreads(),
+               n0=1000., f_d=800., fd_range=5000., M=4000, fd_rate=0.,
+               f_if=0., phi=π/4, nADC=4, include_carrier=true, include_adc=true,
+               include_noise=true, include_databits=true, start_t=1e-3,
+               CN0=45., Tsys=535., usesimdata=false, saveto=missing, T="short", G=0.2)
+  # Select signal type
+  if sigtype == "l5q"
+      type = Val(:l5q)
+  elseif sigtype == "l5i"
+      type = Val(:l5i)
+  elseif sigtype == "l1ca"
+      type = Val(:l1ca)
+  end
 
+  t_length = 1e-3
 
-"""
-testcourseacquisitiondata(;prns=26, t_length=1e-3,
-                           threads=nthreads(),
-                           showplot=false,
-                           fd_center=0.,
-                           fd_range=5000.,
-                           file="test",
-                           start_t=0.)
+  # L5Q parameters
+  if typeof(type) == Val{:l5q}
+      f_s = 25e6  # Hz
+      B=2.046e7
+      RLM = 20
+      if ismissing(file_name)
+        file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
+      end
+  end
 
-Performs course acquisition on real data. Set `file` to "test"
-for 4-bit complex direct L5 data. Set `file` to "iss" for 8-bit
-ISS data. Note that direct signals from PRNs 12, 24, and 27
-exist in ISS data. Prints the course Doppler and code phase
-(in samples) estimates. Set `showplot` to `true` to plot along
-the time index for estimated Doppler bin.
-"""
-function testcourseacquisitiondata(;prns=26, t_length=1e-3,
-                                    threads=nthreads(),
-                                    showplot=false,
-                                    fd_center=0.,
-                                    fd_range=5000.,
-                                    file="test",
-                                    start_t=0.,
-                                    M=1)
-	# Load data
-	f_s = 25e6  # Hz
-	f_if = 0.  # Hz
-	if file == "test"
-		data_type = Val(:sc4)
-		file_dir = "/media/Srv3pool2/by-location/hi/"
-		file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP5_X300_LB-SJ-10100-SF_Dish-LinW.sc4"
-	elseif file == "iss"
-		data_type = Val(:sc8)
-		file_dir = "/media/share/taylors6/data/"
-		file_name = "20191023_195000_n200_cu-dish_1176.45_25.sc8"
-	end
-	file_path = string(file_dir, file_name)
-	data = loaddata(data_type, file_path, f_s, f_if, t_length;
-                    start_data_idx=Int(f_s * start_t)+1)
-	if t_length < 0.5  # second
-		datalong = loaddata(data_type, file_path, f_s, f_if, M*t_length;
-    	                      start_data_idx=Int(f_s * start_t)+1)
-		replicalong = definesignal(Val(:l5q), 1, f_s, M*t_length)
-	end
-	# Generate replica signal for cross correlation
-	replica = definesignal(Val(:l5q), 1, f_s, t_length)
-	# Perform cross correlation using function
-	fd_rate = 0.  # Hz
-	Δfd = 1/t_length  # Hz
-	sample_num = data.sample_num
-	corr_result = gencorrresult(fd_range, Δfd, sample_num)
-	# Set PRNs to course acquire
-	if prns == "all"
-		prns = Array(1:32)
-	elseif typeof(prns) != Array{Int64,1}
-		prns = [prns]
-	elseif typeof(prns) == Array{Int64,1}
-		# pass
-	else
-		error("Invalid format for prn. Can be array of PRNs, single prn or `all`.")
-	end
-	# Begin course and fine acquisition
-	for prn in prns
-		courseacquisition!(corr_result, data, replica, prn;
-		                   fd_center=fd_center, fd_range=fd_range,
-		                   fd_rate=fd_rate, Δfd=Δfd, threads=threads)
-		max_idx = argmax(corr_result)
-		fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
-		n0_est = max_idx[2]#%Int(f_s*nh_code_length/nh_chipping_rate)
-		snr_est = calcsnr(corr_result[max_idx[1],:])
-		println("\nPRN $(prn): Course Acquisition Results")
-		println("fd = $(fd_est)Hz")
-		println("n₀ = $(n0_est) samples")
-		println("SNR = $(snr_est)dB")
-		# Fine acquisition
-		if t_length < 0.5  # second
-			results, r = fineacquisition(datalong, replicalong, prn, fd_est, n0_est, Val(:fft))
-			println("Fine Acquisition Results")
-			println("fd = $(fd_est)Hz")
-			println("n₀ = $(n0_est) samples")
-			println("SNR = $(snr_est)dB")
-		end 
-		if showplot
-			figure()
-			plot(data.t.*1000, corr_result[max_idx[1],:], "k-")
-			xlabel("Time (ms)")
-			ylabel("|replica⋆data|² at Peak Doppler Bin")
-			title("PRN $(prn)")
-		end
-	end
-end
+  if typeof(type) == Val{:l5i}
+      f_s = 25e6  # Hz
+      B=2.046e7
+      RLM = 10
+      if ismissing(file_name)
+        file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
+      end
+  end
 
+  if typeof(type) == Val{:l1ca}
+      f_s = 5e6  # Hz
+      B=2.046e6
+      RLM = 10
+      if ismissing(file_name)
+        file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
+      end
+  end
 
-"""
-testnoncoherentintegration(;prns=26, t_length=1e-3,
-                            threads=nthreads(),
-                            showplot=false,
-                            fd_center=0.,
-                            fd_range=5000.,
-                            file="test",
-                            start_t=0.,
-                            N=1)
+  if usesimdata
+      # Simulate data
+      print("Generating PRN $(prn) signal...")
+      data = definesignal(type, f_s, M*t_length; prn=prn,
+                          f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+                          CN0=CN0, ϕ=phi, nADC=nADC, B=B,
+                          include_carrier=include_carrier,
+                          include_adc=include_adc,
+                          include_noise=include_noise,
+                          code_start_idx=n0)
+      if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
+          data.include_databits = include_databits
+      end
+      generatesignal!(data)
+      println("Done")
+  else
+      # Load data
+      print("Loading data...")
+      if ismissing(file_dir)
+        file_dir = "/media/Srv3Pool2/by-location/hi/"
+      end
+      file_path = string(file_dir, file_name)
+      data_type = Val(:sc4)
+      data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
+                          start_data_idx=Int(f_s * start_t)+1)
+      println("Done")
+  end
 
-Performs non-coherent course acquisition on real data. Set `file` to
-"test" for 4-bit complex direct L5 data. Set `file` to "iss" for 8-bit
-ISS data. Note that direct signals from PRNs 12, 24, and 27
-exist in ISS data. Prints the course Doppler and code phase
-(in samples) estimates. Set `showplot` to `true` to plot along
-the time index for estimated Doppler bin.
-"""
-function testnoncoherentintegration(;prns=26, t_length=1e-3,
-                                     threads=nthreads(),
-                                     showplot=false,
-                                     fd_center=0.,
-                                     fd_range=5000.,
-                                     file="test",
-                                     start_t=0.,
-                                     N=1)
-	# Load data
-	f_s = 25e6  # Hz
-	f_if = 0.  # Hz
-	if file == "test"
-		data_type = Val(:sc4)
-		file_dir = "/media/Srv3pool2/by-location/hi/"
-		file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP5_X300_LB-SJ-10100-SF_Dish-LinW.sc4"
-	elseif file == "iss"
-		data_type = Val(:sc8)
-		file_dir = "/media/share/taylors6/data/"
-		file_name = "20191023_195000_n200_cu-dish_1176.45_25.sc8"
-	end
-	file_path = string(file_dir, file_name)
-	data = loaddata(data_type, file_path, f_s, f_if, N*t_length;
-                    start_data_idx=Int(f_s * start_t)+1)
-	# Generate replica signal for cross correlation
-	replica = definesignal(Val(:l5q), 1, f_s, t_length)
-	# Perform cross correlation using function
-	fd_rate = 0.  # Hz
-	Δfd = 1/t_length  # Hz
-	sample_num = replica.sample_num
-	corr_result = gencorrresult(fd_range, Δfd, sample_num; iszeros=true)
-	# Set PRNs to course acquire
-	if prns == "all"
-		prns = Array(1:32)
-	elseif typeof(prns) != Array{Int64,1}
-		prns = [prns]
-	elseif typeof(prns) == Array{Int64,1}
-		# pass
-	else
-		error("Invalid format for prn. Can be array of PRNs, single prn or `all`.")
-	end
-	# Begin course acquisition
-	for prn in prns
-		p = Progress(N, 1, "Correlating PRN $(prn)...")
-		for n in 1:N
-			courseacquisition!(corr_result, data, replica, prn;
-		                   	   fd_center=fd_center, fd_range=fd_range,
-		                       fd_rate=fd_rate, Δfd=Δfd, threads=threads,
-		                       operation="add",
-		                       start_idx=(n-1)*sample_num+1,
-		                       showprogressbar=false)
-			next!(p)
-		end
-		max_idx = argmax(corr_result)
-		fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
-		n0_est = max_idx[2]#%Int(f_s*nh_code_length/nh_chipping_rate)
-		snr_est = calcsnr(corr_result[max_idx[1],:])
-		println("\nPRN $(prn):")
-		println("fd = $(fd_est)Hz")
-		println("n₀ = $(n0_est) samples")
-		println("SNR = $(snr_est)dB")
-		if showplot
-			figure()
-			plot(replica.t.*1000, corr_result[max_idx[1],:], "k-")
-			xlabel("Time (ms)")
-			ylabel("|replica⋆data|² at Peak Doppler Bin")
-			title("PRN $(prn)")
-		end
-	end
-end
-
-
-"""
-testnoncoherentintegration2(;prns=26, t_length=1e-3,
-                            threads=nthreads(),
-                            showplot=false,
-                            fd_center=0.,
-                            fd_range=5000.,
-                            file="test",
-                            start_t=0.,
-                            N=1)
-
-Performs non-coherent course acquisition on real data. Set `file` to
-"test" for 4-bit complex direct L5 data. Set `file` to "iss" for 8-bit
-ISS data. Note that direct signals from PRNs 12, 24, and 27
-exist in ISS data. Prints the course Doppler and code phase
-(in samples) estimates. Set `showplot` to `true` to plot along
-the time index for estimated Doppler bin.
-"""
-function testnoncoherentintegration2(;prns=26, t_length=1e-3,
-                                     threads=nthreads(),
-                                     showplot=false,
-                                     fd_center=0.,
-                                     fd_range=5000.,
-                                     file="test",
-                                     start_t=0.,
-                                     N=1)
-	# Load data
-	f_s = 25e6  # Hz
-	f_if = 0.  # Hz
-	if file == "test"
-		data_type = Val(:sc4)
-		file_dir = "/media/Srv3pool2/by-location/hi/"
-		file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP5_X300_LB-SJ-10100-SF_Dish-LinW.sc4"
-	elseif file == "iss"
-		data_type = Val(:sc8)
-		file_dir = "/media/share/taylors6/data/"
-		file_name = "20191023_195000_n200_cu-dish_1176.45_25.sc8"
-	end
-	file_path = string(file_dir, file_name)
-	data = loaddata(data_type, file_path, f_s, f_if, N*t_length;
-                    start_data_idx=Int(f_s * start_t)+1)
-	# Generate replica signal for cross correlation
-	replica = definesignal(Val(:l5q), 1, f_s, t_length)
-	# Perform cross correlation using function
-	fd_rate = 0.  # Hz
-	Δfd = 1/t_length  # Hz
-	sample_num = replica.sample_num
-	corr_result = gencorrresult(fd_range, Δfd, sample_num; iszeros=true)
-	# Set PRNs to course acquire
-	if prns == "all"
-		prns = Array(1:32)
-	elseif typeof(prns) != Array{Int64,1}
-		prns = [prns]
-	elseif typeof(prns) == Array{Int64,1}
-		# pass
-	else
-		error("Invalid format for prn. Can be array of PRNs, single prn or `all`.")
-	end
-	# Begin course acquisition
-	for prn in prns
-		courseacquisition!(corr_result, data, replica, prn, N;
-		                   fd_center=fd_center, fd_range=fd_range,
-		                   fd_rate=fd_rate, Δfd=Δfd, threads=threads,
-		                   operation="add",
-		                   showprogressbar=true)
-		max_idx = argmax(corr_result)
-		fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
-		n0_est = max_idx[2]#%Int(f_s*nh_code_length/nh_chipping_rate)
-		snr_est = calcsnr(corr_result[max_idx[1],:])
-		println("\nPRN $(prn):")
-		println("fd = $(fd_est)Hz")
-		println("n₀ = $(n0_est) samples")
-		println("SNR = $(snr_est)dB")
-		if showplot
-			figure()
-			plot(replica.t.*1000, corr_result[max_idx[1],:], "k-")
-			xlabel("Time (ms)")
-			ylabel("|replica⋆data|² at Peak Doppler Bin")
-			title("PRN $(prn)")
-		end
-	end
+  print("Performing course acquisition...")
+  if T == "long"
+      # Use 20ms coherent integration for L5Q signal and 10ms
+      # coherent integration for L5I signal
+      if sigtype == "l5i"
+          replica_t_length = 10e-3
+      elseif sigtype == "l5q"
+          replica_t_length = 20e-3
+      else
+          replica_t_length = 1e-3
+      end
+  else
+      replica_t_length = 1e-3
+  end
+  # Define 1ms and RLM*1ms signals
+  replica = definesignal(type, f_s, replica_t_length)
+  replicalong = definesignal(type, f_s, RLM*t_length)
+  # Calculate Doppler bin spacing for course acquisition
+  Δfd = 1/replica.t_length  # Hz
+  # fd_center = round(f_d/Δfd)*Δfd  # Hz
+  fd_center = 0.  # Hz
+  # Allocate space for correlation result
+  corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
+  # Perform course acquisition
+  courseacquisition!(corr_result, data, replica, prn;
+                     fd_center=fd_center, fd_range=fd_range,
+                     fd_rate=fd_rate, Δfd=Δfd, threads=threads)
+  # Get peak maximum index location
+  max_idx = argmax(corr_result)
+  # Calculate course Doppler frequency
+  fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
+  # Get course peak index location in time
+  n0_est = max_idx[2]
+  println("Done")
+  # Perform FFT based fine acquisition
+  # Returns structure containing the fine, course,
+  # and estimated Doppler frequency
+  print("Performing FFT based fine acquisition...")
+  results = fineacquisition(data, replicalong, prn, fd_est,
+                            n0_est, Val(:fft))
+  println("Done")
+  # Perform code/carrier phase, and Doppler frequency tracking on signal
+  # using results from fine acquisition as the intial conditions
+  trackresults = trackprn(data, replica, prn, results.phi_init,
+                          results.fd_est, results.n0_idx_course; G=G)
+  # Plot results and save if `saveto` is a string
+  print("Generating figure...")
+  plotresults(trackresults; saveto=saveto)
+  println("Done")
 end
