@@ -58,7 +58,7 @@ function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
         f_if = 0.  # Hz
         Tsys = 535.  # K
         CN0 = 45.  # dB*Hz
-        phi = 0.  # rad
+        phi = π/4  # rad
         nADC = 4  # bits
         B = 2.046e6  # Hz
         RLM = 10
