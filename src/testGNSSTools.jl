@@ -8,7 +8,7 @@ and code/carrier phase and Doppler frequency tracking.
 """
 function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
                include_noise=true, include_databits=true, simulatedata=false,
-               saveto=missing, T="short", G=0.2)
+               saveto=missing, T="short", G=0.2, showplot=true)
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
@@ -136,9 +136,12 @@ function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
     # Perform code/carrier phase, and Doppler frequency tracking on signal
     # using results from fine acquisition as the intial conditions
     trackresults = trackprn(data, replica, prn, results.phi_init,
-                            results.fd_est, results.n0_idx_course; G=G)
+                            results.fd_est, results.n0_idx_course,
+                            results.P, results.R; G=G)
     # Plot results and save if `saveto` is a string
-    print("Generating figure...")
-    plotresults(trackresults; saveto=saveto)
-    println("Done")
+    if showplot
+        print("Generating figure...")
+        plotresults(trackresults; saveto=saveto)
+        println("Done")
+    end
 end

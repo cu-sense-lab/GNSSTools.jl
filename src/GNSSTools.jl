@@ -8,6 +8,8 @@ module GNSSTools
     @reexport using Base.Threads
     @reexport using ProgressMeter
     @reexport using Statistics
+    @reexport using LinearAlgebra
+    @reexport using ControlSystems
     pygui(true)
 
     include("constants.jl")
@@ -60,6 +62,7 @@ module GNSSTools
     export calcsnr
     export loadrinex
     export trackprn
+    export calcA, calcC, calcQ
     export plotresults
     export demo
 

@@ -73,6 +73,12 @@ struct TrackResults{T1,T2}
     SNR::Array{Float64,1}
     data_bits::Array{Int64,1}
     code_length::Int64
+    # Carrier phase Kalman fiter matrices and results
+    Q::Array{Float64,2}
+    A::Array{Float64,2}
+    C::Array{Float64,2}
+    P::Array{Float64,2}
+    x::Array{Float64,2}
 end
 
 
@@ -197,6 +203,61 @@ end
 
 
 """
+	calcA(T, state_num=2)
+
+Calculate the state transition matrix, `A`, which is
+dependent on the integration time, `T`.
+"""
+function calcA(T, state_num=2)
+	if state_num == 2
+		return [1 T; 0 1]
+	elseif state_num == 3
+		error("3 state KF for carrier tracking not supported.")
+	else
+		error("Number of states specifed not valid. Choose either `1` or `2`.")
+	end
+end
+
+
+"""
+	calcC(T, state_num=2)
+
+Calculate the measurement matrix, `C`, using the integration
+time, `T`.
+"""
+function calcC(T, state_num=2)
+	if state_num == 2
+		return [1 T/2]
+	elseif state_num == 3
+		error("3 state KF for carrier tracking not supported.")
+	else
+		error("Number of states specifed not valid. Choose either `1` or `2`.")
+	end
+end
+
+
+"""
+	calcQ(T, h₀, h₋₂, state_num=2)
+
+Calculate the process noise covariance matrix, `Q`, which is
+dependent on the integration time, `T`, and receiver oscillator
+h-parameters, `h₀` and `h₋₂`. Can either specify `state_num`
+as 2 or 3. `f_L` is the carrier frequency.
+"""
+function calcQ(T, h₀, h₋₂, f_L, state_num=2)
+	qϕ = h₀/2  # oscillator phase PSD
+	qω = 2*π^2*h₋₂  # oscillator frequency PSD
+	if state_num == 2
+		return (2π*f_L)^2 .* [T*qϕ+T^3*qω/3 T^2*qω/2; T^2*qω/2 T*qω]
+	elseif state_num == 3
+		error("3 state KF for carrier tracking not supported.")
+	else
+		error("Number of states specifed not valid. Choose either `1` or `2`.")
+	end
+end
+
+
+"""
     trackprn(data, replica, prn, ϕ_init, fd_init, n0_init;
              DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
              t_length=data.t_length)
@@ -206,8 +267,9 @@ Perform code and phase tracking on data in `data`.
 `replica` decides the signal type. Can pass optional arguments
 that are minumum amount to track a given PRN.
 """
-function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
+function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P, R;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
+                  h₀=1e-21, h₋₂=2e-20, state_num=2,
                   message="Tracking PRN $(prn) with T=$(Int64(floor(replica.t_length*1000)))ms...")
     # Assign signal specific parameters
     chipping_rate = replica.chipping_rate
@@ -246,6 +308,15 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
     ZP = Array{Complex{Float64}}(undef, M)
     SNR = Array{Float64}(undef, M)
     data_bits = Array{Int64}(undef, M)
+    A = calcA(T)
+    C = calcC(T)
+    Q = calcQ(T, h₀, h₋₂, sig_freq)
+    P = Array{Float64}(undef, state_num, M)
+    x = Array{Float64}(undef, state_num, M)
+    xᵢ = [ϕ_init; 2π*(f_if+fd_init)]
+    K = dkalman(A, C, Q, Diagonal(R))
+    println(R)
+    println(K)
     p = Progress(M, 1, message)
     # Perform code, carrier phase, and Doppler frequency tracking
     for i in 1:M
@@ -269,12 +340,12 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         n0_err = Z4(dll_parms, ze, zp, zl)
         # Estimate carrier phase and Doopler frequency errors
         dϕ_meas = measurephase(zp)
-        dfd = dϕ_meas/(2π*T)
+        dfd = dϕ_meas/T
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
             # Calculate dfd
-            dfd = dϕ_meas/(2π*T)
+            dfd = dϕ_meas/T
         else
             n0_err_filtered = n0_err
             dfd = 0.
@@ -287,18 +358,23 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
         n0s[i] = n0
         dphi_measured[i] = dϕ_meas
         phi[i] = ϕ
-        delta_fd[i] = G*dfd
-        fds[i] = f_d + G*dfd
+        delta_fd[i] = G*dfd/2π
+        fds[i] = f_d + G*dfd/2π
         ZP[i] = zp
         if real(zp) > 0
             data_bits[i] = 1
         else
             data_bits[i] = 0
         end
-        # Update f_d
-        if i > 2
-            f_d += G*dfd
-        end
+        # Update ϕ and f_d
+       	δϕ, δf_d = K*dϕ_meas
+       	if i > 2
+       		f_d += δf_d/T/2π
+       	end
+        # # Update f_d
+        # if i > 2
+        #     f_d += G*dfd/2π
+        # end
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
@@ -306,7 +382,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
             n0 += (n0_err_filtered + f_code_d*T)%code_length
         end
         # Update and propagate carrier phase to next `i`
-        ϕ += dϕ_meas + T*dfd/2 + 2π*(f_if + f_d)*T
+        ϕ += (C*[δϕ; δf_d])[1] + 2π*(f_if + f_d)*T
+        # ϕ += dϕ_meas + T*dfd/2 + 2π*(f_if + f_d)*T
         next!(p)
     end
     # Return `TrackResults` struct
@@ -336,7 +413,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init;
                         float(n0_idx_init), n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, n0s, dphi_measured, phi,
-                        delta_fd, fds, ZP, SNR, data_bits, code_length)
+                        delta_fd, fds, ZP, SNR, data_bits, code_length,
+                        Q, A, C, P, x)
 end
 
 

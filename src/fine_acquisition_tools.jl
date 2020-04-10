@@ -4,7 +4,7 @@
 A struct that stores the fine acquisition fine acquisition
 results for both the carrier and FFT based methods.
 """
-struct FineAcquisitionResults{T}
+struct FineAcquisitionResults{T1}
     prn::Int64
     type::String
     fd_course::Float64
@@ -14,7 +14,9 @@ struct FineAcquisitionResults{T}
     fd_fine::Float64
     fd_est::Float64
     phi_init::Float64
-    M::T
+    M::T1
+    P::Array{Float64,2}
+    R::Array{Float64,1}
 end
 
 
@@ -96,10 +98,20 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     fd_est = fd_course + fd_fine
     # Calculate initial phase
     ϕ_init = atan(imag(pk_val)/real(pk_val))
+    # Calculate the covariance matrix
+    # We estimate the error to be ±2 Doppler bin
+    err_bin_num = 2
+    pk_low = replica.data[pk_idx-err_bin_num]
+    pk_high = replica.data[pk_idx+err_bin_num]
+    ϕ_low = atan(imag(pk_low)/real(pk_low))
+    ϕ_high = atan(imag(pk_high)/real(pk_high))
+    ϕ_init_err = mean([ϕ_low, ϕ_high])
     replica.isreplica = false
+    P = diagm([ϕ_init_err^2, (err_bin_num*Δf)^2])
+    R = [ϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:fft), fd_course, fd_rate, n₀_idx_course,
-                                  t_length, fd_fine, fd_est, ϕ_init, "N/A")
+                                  t_length, fd_fine, fd_est, ϕ_init, "N/A", P, R)
 end
 
 
