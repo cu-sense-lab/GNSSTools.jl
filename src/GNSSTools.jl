@@ -4,12 +4,13 @@ module GNSSTools
 
     @reexport using Random
     @reexport using FFTW
-    @reexport using PyPlot
     @reexport using Base.Threads
     @reexport using ProgressMeter
     @reexport using Statistics
     @reexport using LinearAlgebra
     @reexport using ControlSystems
+    @reexport using SatelliteToolbox
+    @reexport using PyPlot
     pygui(true)
 
     include("constants.jl")
@@ -24,6 +25,7 @@ module GNSSTools
     include("course_acquisition_tools.jl")
     include("fine_acquisition_tools.jl")
     include("rinex_tools.jl")
+    include("tle_tools.jl")
     include("tracking_tools.jl")
     include("testGNSSTools.jl")
 
@@ -61,6 +63,7 @@ module GNSSTools
     export calctvector
     export calcsnr
     export loadrinex
+    export calcdoppler
     export trackprn
     export calcA, calcC, calcQ
     export plotresults

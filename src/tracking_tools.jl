@@ -1,7 +1,7 @@
 """
     PLLParms
 
-Struct for storing coefficients for the PLL filter. 
+Struct for storing coefficients for the PLL filter.
 """
 struct PLLParms
     T::Float64
@@ -315,8 +315,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P, R;
     x = Array{Float64}(undef, state_num, M)
     xᵢ = [ϕ_init; 2π*(f_if+fd_init)]
     K = dkalman(A, C, Q, Diagonal(R))
-    println(R)
-    println(K)
+    # println(R)
+    # println(K)
     p = Progress(M, 1, message)
     # Perform code, carrier phase, and Doppler frequency tracking
     for i in 1:M
@@ -420,8 +420,8 @@ end
 
 """
     plot(results::TrackResults, saveto=missing)
-   
-Plots the tracking results from the `trackprn` method. 
+
+Plots the tracking results from the `trackprn` method.
 """
 function plotresults(results::TrackResults; saveto=missing)
     figure(figsize=(14,8))

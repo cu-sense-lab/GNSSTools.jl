@@ -69,7 +69,7 @@ end
                   include_databits=signal.include_databits)
 
 Redefine properties of locally generated L5Q signal
-based off its type, PRN, etc. 
+based off its type, PRN, etc.
 
 Sampling rate (f_s) and signal length (t_length)
 are the only parameters that cannot be redefined.
@@ -196,7 +196,7 @@ end
                   isreplica=signal.isreplica)
 
 Redefine properties of locally generated L5Q signal
-based off its type, PRN, etc. 
+based off its type, PRN, etc.
 
 Sampling rate (f_s) and signal length (t_length)
 are the only parameters that cannot be redefined.
@@ -334,7 +334,7 @@ end
                   include_databits=signal.include_databits)
 
 Redefine properties of locally generated L5Q signal
-based off its type, PRN, etc. 
+based off its type, PRN, etc.
 
 Sampling rate (f_s) and signal length (t_length)
 are the only parameters that cannot be redefined.
