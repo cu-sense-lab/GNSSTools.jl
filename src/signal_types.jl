@@ -48,13 +48,13 @@ abstract type ReplicaSignal <: GNSSSignal end
 Struct for holding L1 C/A GNSS signal properties for
 signal generation.
 """
-mutable struct L1CASignal(T1) <: ReplicaSignal
+mutable struct L1CASignal <: ReplicaSignal
     type::Val{:l1ca}
     prn::Int64
     f_s::Float64
     t_length::Float64
     f_if::Float64
-    f_d::T1
+    f_d::Float64
     fd_rate::Float64
     Tsys::Float64
     CN0::Float64
@@ -109,13 +109,13 @@ const l5i = [:l5, :i]
 Struct for holding L5Q GNSS signal properties for
 signal generation.
 """
-mutable struct L5QSignal(T1) <: ReplicaSignal
+mutable struct L5QSignal <: ReplicaSignal
     type::Val{:l5q}
     prn::Int64
     f_s::Float64
     t_length::Float64
     f_if::Float64
-    f_d::T1
+    f_d::Float64
     fd_rate::Float64
     Tsys::Float64
     CN0::Float64
@@ -149,13 +149,13 @@ end
 Struct for holding L5Q GNSS signal properties for
 signal generation.
 """
-mutable struct L5ISignal(T1) <: ReplicaSignal
+mutable struct L5ISignal <: ReplicaSignal
     type::Val{:l5i}
     prn::Int64
     f_s::Float64
     t_length::Float64
     f_if::Float64
-    f_d::T1
+    f_d::Float64
     fd_rate::Float64
     Tsys::Float64
     CN0::Float64

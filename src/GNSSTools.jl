@@ -1,17 +1,32 @@
+__precompile__()
+
 module GNSSTools
 
     using Reexport
 
-    @reexport using Random
-    @reexport using FFTW
-    @reexport using Base.Threads
-    @reexport using ProgressMeter
-    @reexport using Statistics
-    @reexport using LinearAlgebra
-    @reexport using ControlSystems
-    @reexport using SatelliteToolbox
-    @reexport using PyPlot
+    using BenchmarkTools
+
+    println("Importing Random...")
+    using Random
+    println("Importing FFTW...")
+    using FFTW
+    println("Importing Threads...")
+    using Base.Threads
+    println("Importing Meter...")
+    using ProgressMeter
+    println("Importing Stats...")
+    using Statistics
+    println("Importing LinearAlgebra...")
+    using LinearAlgebra
+    println("Importing ControlSystems...")
+    import ControlSystems: dkalman
+    println("Importing SatTools...")
+    using SatelliteToolbox
+    println("Importing PyPlot...")
+    using PyPlot
     pygui(true)
+
+    println("Importing module functions...")
 
     include("constants.jl")
     include("general_tools.jl")
@@ -28,6 +43,8 @@ module GNSSTools
     include("tle_tools.jl")
     include("tracking_tools.jl")
     include("testGNSSTools.jl")
+
+    println("Exporting vars...")
 
     export c
     export k

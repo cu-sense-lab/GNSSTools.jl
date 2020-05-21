@@ -21,8 +21,10 @@ end
 
 
 """
-    fineacquisition(data::GNSSSignal, replica::ReplicaSignal, fd_course,
-                    n₀_course, type::Val{:fft})
+    fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
+                    n₀_idx_course, type::Val{:fft}; fd_rate=0.,
+                    t_length=replica.t_length, freq_lim=10000.,
+                    σω=10.)
 
 Performs an FFT based fine acquisition on `data`. Note that `t_length` must
 equal `replica.t_length`. `data` can be either a `GNSSData` or `L5QSignal`
@@ -30,7 +32,8 @@ struct, however, `data` and `replica` must be two seperate structs.
 """
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
-                         t_length=replica.t_length, freq_lim=10000.)
+                         t_length=replica.t_length, freq_lim=10000.,
+                         σω=10.)
     # Generate replica
     # Set signal parameters
     definesignal!(replica;
@@ -107,7 +110,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     ϕ_high = atan(imag(pk_high)/real(pk_high))
     ϕ_init_err = mean([ϕ_low, ϕ_high])
     replica.isreplica = false
-    P = diagm([ϕ_init_err^2, (err_bin_num*Δf)^2])
+    P = diagm([ϕ_init_err^2, (2π*err_bin_num*Δf)^2, σω^2])
     R = [ϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:fft), fd_course, fd_rate, n₀_idx_course,

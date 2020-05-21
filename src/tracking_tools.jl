@@ -269,7 +269,7 @@ that are minumum amount to track a given PRN.
 """
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P, R;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
-                  h₀=1e-21, h₋₂=2e-20, state_num=2,
+                  h₀=1e-21, h₋₂=2e-20, state_num=2, σω=10.,
                   message="Tracking PRN $(prn) with T=$(Int64(floor(replica.t_length*1000)))ms...")
     # Assign signal specific parameters
     chipping_rate = replica.chipping_rate
@@ -371,10 +371,6 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P, R;
        	if i > 2
        		f_d += δf_d/T/2π
        	end
-        # # Update f_d
-        # if i > 2
-        #     f_d += G*dfd/2π
-        # end
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
