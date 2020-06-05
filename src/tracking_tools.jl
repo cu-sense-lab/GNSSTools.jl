@@ -161,7 +161,7 @@ end
 
 
 """
-    getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
+    getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 
 Calculate the early, prompt, and late correlator ouputs. Note that
 replica already containts the prompt correlator. Be sure to set
@@ -262,9 +262,10 @@ end
 
 
 """
-    trackprn(data, replica, prn, ϕ_init, fd_init, n0_init;
-             DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
-             t_length=data.t_length)
+    trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
+                  DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
+                  h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10., state_num=2,
+				  dynamickf=false, covMult=1.)
 
 Perform code and phase tracking on data in `data`.
 
