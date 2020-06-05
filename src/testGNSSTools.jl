@@ -6,11 +6,12 @@
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking.
 """
-function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
+function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                include_noise=true, include_databits=true, simulatedata=true,
                saveto=missing, T="short", G=0.2, showplot=true, f_d=800.,
                fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
-               fd_range=5000., dll_b=5., state_num=2, dynamickf=false)
+               fd_range=5000., dll_b=5., state_num=2, dynamickf=false,
+               covMult=1., qₐ=10.)
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
@@ -132,7 +133,8 @@ function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
     trackresults = trackprn(data, replica, prn, results.phi_init,
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; G=G, DLL_B=dll_b,
-                            state_num=state_num, dynamickf=dynamickf)
+                            state_num=state_num, dynamickf=dynamickf,
+                            covMult=covMult, qₐ=qₐ)
     # Plot results and save if `saveto` is a string
     if showplot
         print("Generating figures...")
