@@ -274,6 +274,7 @@ that are minumum amount to track a given PRN.
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
                   h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10., state_num=2,
+				  dynamickf=false,
                   message="Tracking PRN $(prn) with T=$(Int64(floor(replica.t_length*1000)))ms...")
     # Assign signal specific parameters
     chipping_rate = replica.chipping_rate
@@ -329,6 +330,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 	end
 	x⁻ᵢ = deepcopy(x⁺ᵢ)
 	Kᵢ = zeros(size(x⁻ᵢ))
+	Kfixed = dkalman(A, C, Q, Diagonal(R))
     # println(R)
     # println(K)
     p = Progress(M, 1, message)
@@ -374,14 +376,16 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		# Correct state uncertaninty
 		P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
 		# Correct state
-		# x⁺ᵢ = x⁻ᵢ + [0.024, 0.25].*[dϕ_meas, dfd]
-		# x⁺ᵢ = x⁻ᵢ + Kᵢ.*[dϕ_meas, dfd]
+		if dynamickf
+			KF_gain = Kᵢ
+		else
+			KF_gain = Kfixed
+		end
 		# x⁺ᵢ = x⁻ᵢ + Kᵢ*dϕ_meas
 		if state_num == 3
-			x⁺ᵢ = x⁻ᵢ + [0.024*dϕ_meas, 0.25*dfd, 0.]
+			x⁺ᵢ = x⁻ᵢ + KF_gain.*[dϕ_meas, dfd, 0.]
 		else
-			x⁺ᵢ = x⁻ᵢ + [0.024*dϕ_meas, 0.25*dfd]
-			# x⁺ᵢ = x⁻ᵢ + Kᵢ.*[dϕ_meas, dfd]
+			x⁺ᵢ = x⁻ᵢ + KF_gain.*[dϕ_meas, dfd]
 		end
         if i > 1
             # Filter raw code phase error measurement
