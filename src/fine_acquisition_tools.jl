@@ -33,7 +33,7 @@ struct, however, `data` and `replica` must be two seperate structs.
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=10000.,
-                         σω=10.)
+                         σω=10., err_bin_num_ϕ=1, err_bin_num_f=2)
     # Generate replica
     # Set signal parameters
     definesignal!(replica;
@@ -103,9 +103,8 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     ϕ_init = atan(imag(pk_val)/real(pk_val))
     # Calculate the covariance matrix
     # We estimate the error to be ±2 Doppler bin
-    err_bin_num = 2
-    pk_low_idx = ((pk_idx-err_bin_num)+replica.sample_num)%replica.sample_num
-    pk_high_idx = ((pk_idx+err_bin_num)+replica.sample_num)%replica.sample_num
+    pk_low_idx = ((pk_idx-err_bin_num_ϕ)+replica.sample_num)%replica.sample_num
+    pk_high_idx = ((pk_idx+err_bin_num_ϕ)+replica.sample_num)%replica.sample_num
     if pk_low_idx == 0
         pk_low_idx = replica.sample_num
     end
@@ -116,9 +115,9 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     pk_high = replica.data[pk_high_idx]
     ϕ_low = atan(imag(pk_low)/real(pk_low))
     ϕ_high = atan(imag(pk_high)/real(pk_high))
-    ϕ_init_err = minimum([abs(ϕ_init-ϕ_low), abs(ϕ_init-ϕ_high)])
+    ϕ_init_err = mean([abs(ϕ_init-ϕ_low), abs(ϕ_init-ϕ_high)])
     replica.isreplica = false
-    P = diagm([ϕ_init_err^2, (2π*err_bin_num*Δf)^2, σω^2])
+    P = diagm([ϕ_init_err^2, (2π*err_bin_num_f*Δf)^2, σω^2])
     R = [ϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:fft), fd_course, fd_rate, n₀_idx_course,
