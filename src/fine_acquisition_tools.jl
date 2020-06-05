@@ -4,7 +4,7 @@
 A struct that stores the fine acquisition fine acquisition
 results for both the carrier and FFT based methods.
 """
-struct FineAcquisitionResults{T}
+struct FineAcquisitionResults{T1}
     prn::Int64
     type::String
     fd_course::Float64
@@ -14,13 +14,17 @@ struct FineAcquisitionResults{T}
     fd_fine::Float64
     fd_est::Float64
     phi_init::Float64
-    M::T
+    M::T1
+    P::Array{Float64,2}
+    R::Array{Float64,1}
 end
 
 
 """
-    fineacquisition(data::GNSSSignal, replica::ReplicaSignal, fd_course,
-                    n₀_course, type::Val{:fft})
+    fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
+                    n₀_idx_course, type::Val{:fft}; fd_rate=0.,
+                    t_length=replica.t_length, freq_lim=10000.,
+                    σω=10.)
 
 Performs an FFT based fine acquisition on `data`. Note that `t_length` must
 equal `replica.t_length`. `data` can be either a `GNSSData` or `L5QSignal`
@@ -28,7 +32,8 @@ struct, however, `data` and `replica` must be two seperate structs.
 """
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
-                         t_length=replica.t_length, freq_lim=10000.)
+                         t_length=replica.t_length, freq_lim=10000.,
+                         σω=10.)
     # Generate replica
     # Set signal parameters
     definesignal!(replica;
@@ -96,10 +101,28 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     fd_est = fd_course + fd_fine
     # Calculate initial phase
     ϕ_init = atan(imag(pk_val)/real(pk_val))
+    # Calculate the covariance matrix
+    # We estimate the error to be ±2 Doppler bin
+    err_bin_num = 2
+    pk_low_idx = ((pk_idx-err_bin_num)+replica.sample_num)%replica.sample_num
+    pk_high_idx = ((pk_idx+err_bin_num)+replica.sample_num)%replica.sample_num
+    if pk_low_idx == 0
+        pk_low_idx = replica.sample_num
+    end
+    if pk_high_idx == 0
+        pk_high_idx = replica.sample_num
+    end
+    pk_low = replica.data[pk_low_idx]
+    pk_high = replica.data[pk_high_idx]
+    ϕ_low = atan(imag(pk_low)/real(pk_low))
+    ϕ_high = atan(imag(pk_high)/real(pk_high))
+    ϕ_init_err = mean([ϕ_low, ϕ_high])
     replica.isreplica = false
+    P = diagm([ϕ_init_err^2, (2π*err_bin_num*Δf)^2, σω^2])
+    R = [ϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:fft), fd_course, fd_rate, n₀_idx_course,
-                                  t_length, fd_fine, fd_est, ϕ_init, "N/A")
+                                  t_length, fd_fine, fd_est, ϕ_init, "N/A", P, R)
 end
 
 

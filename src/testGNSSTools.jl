@@ -7,8 +7,10 @@ Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquis
 and code/carrier phase and Doppler frequency tracking.
 """
 function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
-               include_noise=true, include_databits=true, simulatedata=false,
-               saveto=missing, T="short", G=0.2)
+               include_noise=true, include_databits=true, simulatedata=true,
+               saveto=missing, T="short", G=0.2, showplot=true, f_d=800.,
+               fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
+               fd_range=5000.)
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
@@ -18,14 +20,7 @@ function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
         type = Val(:l1ca)
     end
 
-    prn = 26
-    n0 = 1000.
-    f_d = 800.
-    fd_rate = 0.
-    t_length = 1e-3
-    fd_range = 5000.
     threads = nthreads()
-    M = 4000
 
     # L5Q parameters
     if typeof(type) == Val{:l5q}
@@ -67,7 +62,7 @@ function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
 
     if simulatedata
         # Simulate data
-        print("Generating PRN $(prn) signal...")
+        print("Generating PRN $(prn) $(sigtype) signal...")
         data = definesignal(type, f_s, M*t_length; prn=prn,
                             f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                             CN0=CN0, ϕ=phi, nADC=nADC, B=B,
@@ -82,7 +77,7 @@ function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
         println("Done")
     else
         # Load data
-        print("Loading data...")
+        print("Loading $(sigtype) data...")
         file_dir = "/media/Srv3Pool2/by-location/hi/"
         file_path = string(file_dir, file_name)
         data_type = Val(:sc4)
@@ -129,16 +124,31 @@ function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
     # Perform FFT based fine acquisition
     # Returns structure containing the fine, course,
     # and estimated Doppler frequency
-    print("Performing FFT based fine acquisition...")
+    println("Performing FFT based fine acquisition...")
     results = fineacquisition(data, replicalong, prn, fd_est,
                               n0_est, Val(:fft))
-    println("Done")
     # Perform code/carrier phase, and Doppler frequency tracking on signal
     # using results from fine acquisition as the intial conditions
     trackresults = trackprn(data, replica, prn, results.phi_init,
-                            results.fd_est, results.n0_idx_course; G=G)
+                            results.fd_est, results.n0_idx_course,
+                            results.P, results.R; G=G)
     # Plot results and save if `saveto` is a string
-    print("Generating figure...")
-    plotresults(trackresults; saveto=saveto)
-    println("Done")
+    if showplot
+        print("Generating figures...")
+        # Course Acquisition Results
+        if sigtype == "l1ca"
+            fig, ax = subplots(1, 1)
+            img = ax.imshow(corr_result, interpolation="none", aspect="auto",
+                            extent=[0, size(corr_result)[2], fd_range, -fd_range],
+                            vmin=minimum(corr_result), vmax=maximum(corr_result)/4)
+            scatter(n0_est, fd_est, color="r", s=400, marker="o",
+                    facecolor="none")
+            xlabel("Samples")
+            ylabel("Doppler (Hz)")
+            suptitle("PRN $(prn)\nfd course: $(fd_est)Hz; n₀ course: $(n0_est)")
+        end
+        # Tracking results
+        plotresults(trackresults; saveto=saveto)
+        println("Done")
+    end
 end

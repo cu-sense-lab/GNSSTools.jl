@@ -1,14 +1,30 @@
+__precompile__()
+
 module GNSSTools
 
     using Reexport
 
-    @reexport using Random
-    @reexport using FFTW
-    @reexport using PyPlot
-    @reexport using Base.Threads
-    @reexport using ProgressMeter
-    @reexport using Statistics
+    using BenchmarkTools
+
+    println("Importing Random...")
+    using Random
+    println("Importing FFTW...")
+    using FFTW
+    println("Importing Threads...")
+    using Base.Threads
+    println("Importing Meter...")
+    using ProgressMeter
+    println("Importing Stats...")
+    using Statistics
+    println("Importing LinearAlgebra...")
+    using LinearAlgebra
+    println("Importing SatTools...")
+    using SatelliteToolbox
+    println("Importing PyPlot...")
+    using PyPlot
     pygui(true)
+
+    println("Importing module functions...")
 
     include("constants.jl")
     include("general_tools.jl")
@@ -22,8 +38,11 @@ module GNSSTools
     include("course_acquisition_tools.jl")
     include("fine_acquisition_tools.jl")
     include("rinex_tools.jl")
+    include("tle_tools.jl")
     include("tracking_tools.jl")
     include("testGNSSTools.jl")
+
+    println("Exporting vars...")
 
     export c
     export k
@@ -59,7 +78,9 @@ module GNSSTools
     export calctvector
     export calcsnr
     export loadrinex
+    export calcdoppler
     export trackprn
+    export calcA, calcC, calcQ
     export plotresults
     export demo
 

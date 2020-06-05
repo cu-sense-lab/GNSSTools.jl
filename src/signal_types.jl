@@ -3,7 +3,7 @@
 
 The most general type of
 signal type used in `GNSSTools`.
-Used for both `GNSSData` and 
+Used for both `GNSSData` and
 `ReplicaSignal` structs.
 """
 abstract type GNSSSignal end
@@ -82,6 +82,7 @@ mutable struct L1CASignal <: ReplicaSignal
     code_length::Int64
     db_code_length::Int64
     databits::Array{Int64,1}
+    # phase_noise::Array{Complex{Float64},1}
 end
 
 
@@ -140,6 +141,7 @@ mutable struct L5QSignal <: ReplicaSignal
     chipping_rate::Float64
     sig_freq::Float64
     code_length::Int64
+    # phase_noise::Array{Complex{Float64},1}
 end
 
 
@@ -186,4 +188,5 @@ mutable struct L5ISignal <: ReplicaSignal
     code_length::Int64
     db_code_length::Int64
     databits::Array{Int64,1}
+    # phase_noise::Array{Complex{Float64},1}
 end
