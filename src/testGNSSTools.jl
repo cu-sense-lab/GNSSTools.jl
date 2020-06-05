@@ -141,7 +141,7 @@ function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
             img = ax.imshow(corr_result, interpolation="none", aspect="auto",
                             extent=[0, size(corr_result)[2], fd_range, -fd_range],
                             vmin=minimum(corr_result), vmax=maximum(corr_result)/4)
-            scatter(fd_est, n0_est, color="r", s=400, marker="o",
+            scatter(n0_est, fd_est, color="r", s=400, marker="o",
                     facecolor="none")
             xlabel("Samples")
             ylabel("Doppler (Hz)")
