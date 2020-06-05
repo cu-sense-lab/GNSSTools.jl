@@ -382,7 +382,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		end
 		if dynamickf
 			KF_gain = Kᵢ
-			x⁺ᵢ = x⁻ᵢ + KF_gain.*state
+			x⁺ᵢ = x⁻ᵢ + KF_gain.*dϕ_meas
 		else
 			KF_gain = Kfixed
 			x⁺ᵢ = x⁻ᵢ + KF_gain.*state
