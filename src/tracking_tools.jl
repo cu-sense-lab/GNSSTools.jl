@@ -79,6 +79,7 @@ struct TrackResults{T1,T2}
     C::Array{Float64,2}
     P::Array{Float64,2}
     x::Array{Float64,2}
+	K::Array{Float64,2}
 end
 
 
@@ -167,7 +168,7 @@ replica already containts the prompt correlator. Be sure to set
 the parameters to `replica` and run `generatesignal!(replica)` before
 calling this method.
 """
-function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
+function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
     ## Initialize correlator results
     # ze = 0. + 0im
     # zp = 0. + 0im
@@ -191,7 +192,8 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
     #     @inbounds zl += conj(replica.data[zlidx]) * wipeoff
     # end
     # wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[(i-1)*N+1:i*N] .+ ϕ).*1im)
-    wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[1:N] .+ ϕ).*1im)
+    wipeoff = (data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[1:N] .+
+	                                          (0.5*2π).*fd_rate.*data.t[1:N].^2 .+ ϕ).*1im))
     ze = sum(conj.(circshift(replica.data, -d)).*wipeoff)/N
     zp = sum(conj.(replica.data).*wipeoff)/N
     zl = sum(conj.(circshift(replica.data, d)).*wipeoff)/N
@@ -315,6 +317,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
     Q = calcQ(T, h₀, h₋₂, qₐ, sig_freq, state_num)
     P = Array{Float64}(undef, size(A)[1], M)
     x = Array{Float64}(undef, size(A)[1], M)
+	K = Array{Float64}(undef, size(A)[1], M)
 	if state_num == 3
     	x⁺ᵢ = [ϕ_init; 2π*(f_if+fd_init); 0.]
 		P⁺ᵢ = deepcopy(P₀)
@@ -325,6 +328,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		error("Number of states specified must be either 2 or 3.")
 	end
 	x⁻ᵢ = deepcopy(x⁺ᵢ)
+	Kᵢ = zeros(size(x⁻ᵢ))
     # println(R)
     # println(K)
     p = Progress(M, 1, message)
@@ -338,6 +342,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		end
 		# ϕ = C*x⁻ᵢ[1]
 		f_d = ω/2π - f_if
+		fd_rate = ωdot/2π
 		f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Calculate the current code start index
         t₀ = ((code_length-n0)%code_length)/f_code_d
@@ -354,7 +359,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         # Generate prompt correlator
         generatesignal!(replica)
         # Calculate early, prompt, and late correlator outputs
-        ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
+        ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)  # chips
 		# Propogate state uncertaninty
@@ -365,10 +370,19 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         dfd = dϕ_meas/T  # rad/s
 		# Estimate Kalman gain
 		Kᵢ = (P⁻ᵢ*C')/(C*P⁻ᵢ*C' + R)
+		K[:,i] = Kᵢ
 		# Correct state uncertaninty
 		P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
 		# Correct state
-		x⁺ᵢ = x⁻ᵢ + Kᵢ*dϕ_meas
+		# x⁺ᵢ = x⁻ᵢ + [0.024, 0.25].*[dϕ_meas, dfd]
+		# x⁺ᵢ = x⁻ᵢ + Kᵢ.*[dϕ_meas, dfd]
+		# x⁺ᵢ = x⁻ᵢ + Kᵢ*dϕ_meas
+		if state_num == 3
+			x⁺ᵢ = x⁻ᵢ + [0.024*dϕ_meas, 0.25*dfd, 0.]
+		else
+			x⁺ᵢ = x⁻ᵢ + [0.024*dϕ_meas, 0.25*dfd]
+			# x⁺ᵢ = x⁻ᵢ + Kᵢ.*[dϕ_meas, dfd]
+		end
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
@@ -434,7 +448,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, n0s, dphi_measured, phi,
                         delta_fd, fds, ZP, SNR, data_bits, code_length,
-                        Q, A, C, P, x)
+                        Q, A, C, P, x, K)
 end
 
 
@@ -444,7 +458,8 @@ end
 Plots the tracking results from the `trackprn` method.
 """
 function plotresults(results::TrackResults; saveto=missing)
-    figure(figsize=(14,8))
+    # figure(figsize=(14,8))
+	figure()
     matplotlib.gridspec.GridSpec(3,2)
     # Plot code phase errors
     subplot2grid((3,2), (0,0), colspan=1, rowspan=1)
