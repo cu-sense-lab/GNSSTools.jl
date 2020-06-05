@@ -9,7 +9,8 @@ and code/carrier phase and Doppler frequency tracking.
 function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
                include_noise=true, include_databits=true, simulatedata=true,
                saveto=missing, T="short", G=0.2, showplot=true, f_d=800.,
-               fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000)
+               fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
+               fd_range=5000.)
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
@@ -19,7 +20,6 @@ function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
         type = Val(:l1ca)
     end
 
-    fd_range = 5000.
     threads = nthreads()
 
     # L5Q parameters
