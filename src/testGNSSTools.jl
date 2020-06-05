@@ -6,7 +6,7 @@
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking.
 """
-function demo(;sigtype="l5q", include_carrier=true, include_adc=true,
+function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                include_noise=true, include_databits=true, simulatedata=true,
                saveto=missing, T="short", G=0.2, showplot=true, f_d=800.,
                fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
