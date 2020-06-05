@@ -40,6 +40,7 @@ module GNSSTools
     include("rinex_tools.jl")
     include("tle_tools.jl")
     include("tracking_tools.jl")
+    include("dkalman.jl")
     include("testGNSSTools.jl")
 
     println("Exporting vars...")
@@ -82,6 +83,7 @@ module GNSSTools
     export trackprn
     export calcA, calcC, calcQ
     export plotresults
+    export dkalman
     export demo
 
 end # module
