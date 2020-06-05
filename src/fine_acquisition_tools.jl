@@ -116,7 +116,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     pk_high = replica.data[pk_high_idx]
     ϕ_low = atan(imag(pk_low)/real(pk_low))
     ϕ_high = atan(imag(pk_high)/real(pk_high))
-    ϕ_init_err = mean([ϕ_low, ϕ_high])
+    ϕ_init_err = minimum([abs(ϕ_init-ϕ_low), abs(ϕ_init-ϕ_high)])
     replica.isreplica = false
     P = diagm([ϕ_init_err^2, (2π*err_bin_num*Δf)^2, σω^2])
     R = [ϕ_init_err^2]
