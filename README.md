@@ -1,4 +1,4 @@
-# GNSSTools
+# GNSSTools (TEST)
 
 A general Julia package for working with GNSS data. Support course acquisition for L5Q signals. New will signals will be added on an as needed basis. Local signal generation and course acquisition methods support multithreading. See instructions for installing this package.
 
@@ -27,5 +27,5 @@ From terminal type `julia` and the type `]` to enter the package manager. Then c
 ```julia
 add git@192.168.3.66:bilardis/GNSSTools.jl.git
 ```
- 
+
 Julia will automatically install the neccessary dependencies and GNSSTools. Once complete, you can return the Julia REPL by hitting the `backspace` key. To update GNSSTools if newer versions are released, enter the package manager again by typing `]` and use `update GNSSTools`.
