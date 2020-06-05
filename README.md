@@ -1,4 +1,4 @@
-# GNSSTools (TEST)
+# GNSSTools
 
 A general Julia package for working with GNSS data. Support course acquisition for L5Q signals. New will signals will be added on an as needed basis. Local signal generation and course acquisition methods support multithreading. See instructions for installing this package.
 
