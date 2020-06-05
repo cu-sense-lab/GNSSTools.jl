@@ -104,8 +104,16 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     # Calculate the covariance matrix
     # We estimate the error to be ±2 Doppler bin
     err_bin_num = 2
-    pk_low = replica.data[pk_idx-err_bin_num]
-    pk_high = replica.data[pk_idx+err_bin_num]
+    pk_low_idx = ((pk_idx-err_bin_num)+replica.sample_num)%replica.sample_num
+    pk_high_idx = ((pk_idx+err_bin_num)+replica.sample_num)%replica.sample_num
+    if pk_low_idx == 0
+        pk_low_idx = replica.sample_num
+    end
+    if pk_high_idx == 0
+        pk_high_idx = replica.sample_num
+    end
+    pk_low = replica.data[pk_low_idx]
+    pk_high = replica.data[pk_high_idx]
     ϕ_low = atan(imag(pk_low)/real(pk_low))
     ϕ_high = atan(imag(pk_high)/real(pk_high))
     ϕ_init_err = mean([ϕ_low, ϕ_high])

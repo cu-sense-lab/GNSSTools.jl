@@ -18,8 +18,6 @@ module GNSSTools
     using Statistics
     println("Importing LinearAlgebra...")
     using LinearAlgebra
-    println("Importing ControlSystems...")
-    import ControlSystems: dkalman
     println("Importing SatTools...")
     using SatelliteToolbox
     println("Importing PyPlot...")

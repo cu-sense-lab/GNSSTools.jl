@@ -24,14 +24,14 @@ end
 Performs course acquisition on either `GNSSData` or `ReplicaSignal`
 type struct using defined `ReplicaSignal` type struct. No need
 to use `generatesignal!` before calling this function.
-Operates in place on `corr_result`. 
+Operates in place on `corr_result`.
 
 *NOTE:* If `data` is a replica signal structure type,
         it's structure type must be the same as the type
         of `replica`. They must also be separately defined
         or one must be a deep copy of the other. Do not
         pass the same structure to the `data` and `replica`
-        arguments. 
+        arguments.
 
 `corr_result` contains |conj(fft(replica)*fft(data)|² per
 Doppler bin.
@@ -125,7 +125,7 @@ Operates in place on `corr_result`.
         of `replica`. They must also be separately defined
         or one must be a deep copy of the other. Do not
         pass the same structure to the `data` and `replica`
-        arguments. 
+        arguments.
 
 `corr_result` contains |conj(fft(replica)*fft(data)|² per
 Doppler bin.
