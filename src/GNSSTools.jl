@@ -6,23 +6,24 @@ module GNSSTools
 
     using BenchmarkTools
 
-    println("Importing Random...")
+    print("Importing Random...")
     using Random
-    println("Importing FFTW...")
+    print("Done\nImporting FFTW...")
     using FFTW
-    println("Importing Threads...")
+    print("Done\nImporting Threads...")
     using Base.Threads
-    println("Importing ProgressMeter...")
+    print("Done\nImporting ProgressMeter...")
     using ProgressMeter
-    println("Importing Statistics...")
+    print("Done\nImporting Statistics...")
     using Statistics
-    println("Importing LinearAlgebra...")
+    print("Done\nImporting LinearAlgebra...")
     using LinearAlgebra
-    println("Importing SatelliteToolbox...")
+    print("Done\nImporting SatelliteToolbox...")
     using SatelliteToolbox
-    println("Importing PyPlot...")
+    print("Done\nImporting PyPlot...")
     using PyPlot
     pygui(true)
+    println("Done")
 
     println("Importing module files...")
 
@@ -43,7 +44,7 @@ module GNSSTools
     include("dkalman.jl")
     include("testGNSSTools.jl")
 
-    println("Exporting vars...")
+    print("Exporting vars...")
 
     export c
     export k
@@ -85,5 +86,7 @@ module GNSSTools
     export plotresults
     export dkalman
     export demo
+
+    println("Done")
 
 end # module
