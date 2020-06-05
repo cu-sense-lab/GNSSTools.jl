@@ -109,11 +109,12 @@ end
 
 """
     courseacquisition!(corr_result::Array{Float64,2},
-                       data::GNSSSignal, replica::ReplicaSignal,
-                       prn, N=1; fd_center=0., fd_range=5000.,
-                       fd_rate=0., Δfd=1/data.t_length,
-                       threads=8, message="Correlating...",
-                       operation="replace", start_idx=1)
+                            data::GNSSSignal, replica::ReplicaSignal,
+                            prn, N; fd_center=0., fd_range=5000.,
+                            fd_rate=0., Δfd=1/replica.t_length,
+                            threads=nthreads(), message="Correlating...",
+                            operation="add", start_idx=1,
+                            showprogressbar=true)
 
 Performs non-coherent course acquisition on either `GNSSData` or
 `ReplicaSignal` type struct using defined `ReplicaSignal` type struct.
@@ -134,7 +135,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             data::GNSSSignal, replica::ReplicaSignal,
                             prn, N; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/replica.t_length,
-                            threads=8, message="Correlating...",
+                            threads=nthreads(), message="Correlating...",
                             operation="add", start_idx=1,
                             showprogressbar=true)
     # Set number of threads to use for FFTW functions
@@ -150,7 +151,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
     doppler_bin_num = Int(fd_range/Δfd*2+1)
     # Carrier wipe data signal, make copy, and take FFT
     datafft = Array{Complex{Float64}}(undef, data.sample_num)
-    # Generate all replicas and store in `replicas`
+    # Wipeoff f_if from data
     @threads for i in 1:data.sample_num
         @inbounds datafft[i] = data.data[i]*exp(-2π*data.f_if*(data.t[i])*1im)
     end
