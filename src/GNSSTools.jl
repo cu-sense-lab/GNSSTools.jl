@@ -12,19 +12,19 @@ module GNSSTools
     using FFTW
     println("Importing Threads...")
     using Base.Threads
-    println("Importing Meter...")
+    println("Importing ProgressMeter...")
     using ProgressMeter
-    println("Importing Stats...")
+    println("Importing Statistics...")
     using Statistics
     println("Importing LinearAlgebra...")
     using LinearAlgebra
-    println("Importing SatTools...")
+    println("Importing SatelliteToolbox...")
     using SatelliteToolbox
     println("Importing PyPlot...")
     using PyPlot
     pygui(true)
 
-    println("Importing module functions...")
+    println("Importing module files...")
 
     include("constants.jl")
     include("general_tools.jl")
