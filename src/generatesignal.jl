@@ -18,7 +18,7 @@ array will still be the same size. You will need to keep track
 of the `t_length` you passed to `generatesignal!`.
 """
 function generatesignal!(signal::ReplicaSignal,
-                         isreplica::Val{false}=Val(signal.isreplica);
+                         isreplica::Val{false}=Val(signal.isreplica::Bool);
                          t_length=signal.t_length)
     # Common parmeters used for entire signal
     prn = signal.prn
@@ -44,17 +44,17 @@ function generatesignal!(signal::ReplicaSignal,
         code_val = calc_code_val(signal, t)
         if include_carrier & include_noise
             # Calculate code value with carrier and noise
-            @inbounds signal.data[i] = (code_val * carrier_amp *
-                                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im) +
-                                        noise_amp * randn(sigtype))
+            @inbounds signal.data[i] = code_val * carrier_amp *
+                                       cis(2π*(f_if + f_d + fd_rate*t)*t + ϕ) +
+                                       noise_amp * randn(sigtype)
         elseif include_carrier & ~include_noise
             # Calculate code value with carrier and no noise
-            @inbounds signal.data[i] = (code_val * carrier_amp *
-                                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+            @inbounds signal.data[i] = code_val * carrier_amp *
+                                       cis(2π*(f_if + f_d + fd_rate*t)*t + ϕ)
         elseif ~include_carrier & include_noise
             # Calculate code value with noise and no carrier
-            @inbounds signal.data[i] = (code_val +
-                                        noise_amp * randn(sigtype))
+            @inbounds signal.data[i] = code_val +
+                                       noise_amp * randn(sigtype)
         else
             # Calculate code value only
             @inbounds signal.data[i] = complex(float(code_val))
@@ -86,7 +86,7 @@ in `signal` and ignores all the `include_*` flags in `signal`.
 Exponential without the amplitude is included automatically.
 """
 function generatesignal!(signal::ReplicaSignal,
-                         isreplica::Val{true}=Val(signal.isreplica))
+                         isreplica::Val{true}=Val(signal.isreplica::Bool))
     # Common parmeters used for entire signal
     prn = signal.prn
     f_d = signal.f_d

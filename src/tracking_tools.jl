@@ -169,37 +169,39 @@ the parameters to `replica` and run `generatesignal!(replica)` before
 calling this method.
 """
 function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
-    ## Initialize correlator results
-    # ze = 0. + 0im
-    # zp = 0. + 0im
-    # zl = 0. + 0im
-    # datasegment = view(data.data, (i-1)*N+1:i*N)
-    # ts = view(data.t, (i-1)*N+1:i*N)
-    # ts = view(data.t, 1:N)
-    ## Perform carrier and phase wipeoff and apply early, prompt, and late correlators
-    # for j in 1:N
-    #     @inbounds wipeoff = datasegment[j]*exp(-(2π*(f_if+f_d)*ts[j] + ϕ)*1im)
-    #     @inbounds zp += conj(replica.data[j]) * wipeoff
-    #     zeidx = j + d
-    #     if zeidx > N
-    #         zeidx = zeidx - N
-    #     end
-    #     zlidx = j - d
-    #     if zlidx < 1
-    #         zlidx = zlidx + N
-    #     end
-    #     @inbounds ze += conj(replica.data[zeidx]) * wipeoff
-    #     @inbounds zl += conj(replica.data[zlidx]) * wipeoff
-    # end
-    # wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[(i-1)*N+1:i*N] .+ ϕ).*1im)
-    wipeoff = (data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[1:N] .+
-	                                          (0.5*2π).*fd_rate.*data.t[1:N].^2 .+ ϕ).*1im))
-    ze = sum(conj.(circshift(replica.data, -d)).*wipeoff)/N
-    zp = sum(conj.(replica.data).*wipeoff)/N
-    zl = sum(conj.(circshift(replica.data, d)).*wipeoff)/N
-    # ze = ze/N
-    # zp = zp/N
-    # zl = zl/N
+    # Initialize correlator results
+    ze = 0. + 0im
+    zp = 0. + 0im
+    zl = 0. + 0im
+    datasegment = view(data.data, (i-1)*N+1:i*N)
+    ts = view(data.t, 1:N)
+    # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
+    for j in 1:N
+        @inbounds wipeoff = datasegment[j]*cis(-(2π*(f_if+f_d)*ts[j] + π*fd_rate*ts[j]^2 + ϕ))  # cis = exp(1im*A)
+        @inbounds zp += conj(replica.data[j]) * wipeoff
+        zeidx = j + d
+        if zeidx > N
+            zeidx -= N
+        end
+        zlidx = j - d
+        if zlidx < 1
+            zlidx  += N
+        end
+        @inbounds ze += conj(replica.data[zeidx]) * wipeoff
+        @inbounds zl += conj(replica.data[zlidx]) * wipeoff
+    end
+	ze = ze/N
+    zp = zp/N
+    zl = zl/N
+
+	# t = view(data.t, 1:N)
+	# datasegment = view(data.data, (i-1)*N+1:i*N)
+    # # wipeoff = (data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[1:N] .+
+	# #                                           (0.5*2π).*fd_rate.*data.t[1:N].^2 .+ ϕ).*1im))
+	# wipeoff = (datasegment.*exp.(-(2π.*(f_if+f_d).*t .+ π.*fd_rate.*t.^2 .+ ϕ).*1im))
+    # ze = sum(conj.(circshift(replica.data, -d)).*wipeoff)/N
+    # zp = sum(conj.(replica.data).*wipeoff)/N
+    # zl = sum(conj.(circshift(replica.data, d)).*wipeoff)/N
     return (ze, zp, zl)
 end
 

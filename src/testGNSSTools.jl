@@ -133,12 +133,6 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                               n0_est, Val(:fft))
     # Perform code/carrier phase, and Doppler frequency tracking on signal
     # using results from fine acquisition as the intial conditions
-    println([results.fd_est, results.n0_idx_course, results.phi_init, results.R[1]])
-    println([results.P[1,1], results.P[2,2], results.P[3,3]])
-    # results.P[1,1] = 2.111910147046645
-    # results.R[1] = 2.111910147046645
-    # results.P[1,1] = 0.03317054267763411
-    # results.R[1] = 0.03317054267763411
     trackresults = trackprn(data, replica, prn, results.phi_init,
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; G=G, DLL_B=dll_b,
