@@ -274,7 +274,7 @@ that are minumum amount to track a given PRN.
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
                   h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10., state_num=2,
-				  dynamickf=false,
+				  dynamickf=false, covMult=1.,
                   message="Tracking PRN $(prn) with T=$(Int64(floor(replica.t_length*1000)))ms...")
     # Assign signal specific parameters
     chipping_rate = replica.chipping_rate
@@ -329,10 +329,9 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		error("Number of states specified must be either 2 or 3.")
 	end
 	x⁻ᵢ = deepcopy(x⁺ᵢ)
+	P⁺ᵢ = covMult .* P⁺ᵢ
 	Kᵢ = zeros(size(x⁻ᵢ))
 	Kfixed = dkalman(A, C, Q, Diagonal(R))
-    # println(R)
-    # println(K)
     p = Progress(M, 1, message)
     # Perform code, carrier phase, and Doppler frequency tracking
     for i in 1:M
@@ -342,7 +341,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 			ϕ, ω = x⁻ᵢ
 			ωdot = 0.
 		end
-		# ϕ = C*x⁻ᵢ[1]
+		# ϕ = (C*x⁻ᵢ)[1]
 		f_d = ω/2π - f_if
 		fd_rate = ωdot/2π
 		f_code_d = chipping_rate*(1. + f_d/sig_freq)
@@ -376,25 +375,23 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		# Correct state uncertaninty
 		P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
 		# Correct state
+		if state_num == 3
+			state = [dϕ_meas, dfd, 0.]
+		else
+			state = [dϕ_meas, dfd]
+		end
 		if dynamickf
 			KF_gain = Kᵢ
+			x⁺ᵢ = x⁻ᵢ + KF_gain.*state
 		else
 			KF_gain = Kfixed
-		end
-		# x⁺ᵢ = x⁻ᵢ + Kᵢ*dϕ_meas
-		if state_num == 3
-			x⁺ᵢ = x⁻ᵢ + KF_gain.*[dϕ_meas, dfd, 0.]
-		else
-			x⁺ᵢ = x⁻ᵢ + KF_gain.*[dϕ_meas, dfd]
+			x⁺ᵢ = x⁻ᵢ + KF_gain.*state
 		end
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
-            # # Calculate dfd
-            # dfd = dϕ_meas  # rad/s
         else
             n0_err_filtered = n0_err
-            # dfd = 0.
         end
         # Save to allocated arrays
         code_err_meas[i] = n0_err
@@ -403,9 +400,9 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         code_phase_filt[i] = (n0 + n0_err_filtered)%code_length
         n0s[i] = n0
         dphi_measured[i] = dϕ_meas
-        phi[i] = ϕ
+        phi[i] = x⁺ᵢ[1]
         delta_fd[i] = G*dfd/2π
-        fds[i] = f_d + G*dfd/2π
+        fds[i] = x⁺ᵢ[2]/2π - f_if
         ZP[i] = zp
         if real(zp) > 0
             data_bits[i] = 1
