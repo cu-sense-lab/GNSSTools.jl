@@ -340,7 +340,6 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 			ϕ, ω = x⁻ᵢ
 			ωdot = 0.
 		end
-		# ϕ = (C*x⁻ᵢ)[1]
 		f_d = ω/2π - f_if
 		fd_rate = ωdot/2π
 		f_code_d = chipping_rate*(1. + f_d/sig_freq)
@@ -416,8 +415,6 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         end
 		# Propagate x⁺ᵢ to next time step
 		x⁻ᵢ = A*x⁺ᵢ
-        # Update and propagate carrier phase to next `i`
-        # ϕ += (C*[δϕ; δf_d])[1] + 2π*(f_if + f_d)*T
         next!(p)
     end
     # Return `TrackResults` struct
@@ -457,9 +454,13 @@ end
 
 Plots the tracking results from the `trackprn` method.
 """
-function plotresults(results::TrackResults; saveto=missing)
-    # figure(figsize=(14,8))
-	figure()
+function plotresults(results::TrackResults; saveto=missing,
+	                 figsize=missing)
+	if ismissing(figsize)
+		figure()
+	else
+		figure(figsize=figsize)
+	end
     matplotlib.gridspec.GridSpec(3,2)
     # Plot code phase errors
     subplot2grid((3,2), (0,0), colspan=1, rowspan=1)
@@ -472,11 +473,8 @@ function plotresults(results::TrackResults; saveto=missing)
     # Plot filtered and measured phase errors
     subplot2grid((3,2), (0,1), colspan=1, rowspan=1)
     plot(results.t, results.dphi_meas.*180 ./π, "k.", label="Measured ϕ")
-    # plot(results.t, results.phi_filtered.*180 ./π, "b-", label="Filtered ϕ")
-    # plot(results.t, results.phi_filtered.*180 ./π, "b.")
     xlabel("Time (s)")
     ylabel("ϕ (degrees)")
-    # ylim([-180, 180])
     title("PLL Tracking")
     legend()
     subplot2grid((3,2), (1,0), colspan=2, rowspan=1)
@@ -484,11 +482,6 @@ function plotresults(results::TrackResults; saveto=missing)
     xlabel("Time (s)")
     ylabel("Doppler (Hz)")
     title("Doppler Frequency Estimate")
-    # subplot2grid((3,2), (1,1), colspan=1, rowspan=1)
-    # plot(SNRs, "k.")
-    # xlabel("Time (ms)")
-    # ylabel("SNR (dB)")
-    # title("Prompt Correlator SNR")
     # Plot ZP real and imaginary parts
     subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
     plot(results.t, real(results.ZP), label="real(ZP)")
