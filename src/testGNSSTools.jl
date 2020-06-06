@@ -4,7 +4,7 @@ demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
       saveto=missing, T="short", G=0.2, showplot=true, f_d=800.,
       fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
       fd_range=5000., dll_b=5., state_num=2, dynamickf=false,
-      covMult=1., qₐ=100.)
+      covMult=1., q_a=100.)
 
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking.
