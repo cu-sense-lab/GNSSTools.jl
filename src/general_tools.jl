@@ -110,7 +110,7 @@ const gnsstypes = Dict(Val{:l5q}() => "l5q",
 
 Calculates the initial code phase of a given code
 where f_d and fd_rate are the Doppler affected
-code frequency and code frequency rate, respectively. 
+code frequency and code frequency rate, respectively.
 """
 function calcinitcodephase(code_length, f_code_d, f_code_dd,
                            f_s, code_start_idx)

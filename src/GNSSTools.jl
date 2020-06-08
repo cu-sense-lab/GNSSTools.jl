@@ -4,8 +4,6 @@ module GNSSTools
 
     using Reexport
 
-    using BenchmarkTools
-
     print("Importing Random...")
     using Random
     print("Done\nImporting FFTW...")
@@ -18,8 +16,12 @@ module GNSSTools
     using Statistics
     print("Done\nImporting LinearAlgebra...")
     using LinearAlgebra
+    print("Done\nImporting CPUTime...")
+    using CPUTime
     print("Done\nImporting SatelliteToolbox...")
     using SatelliteToolbox
+    print("Done\nImporting ODE...")
+    using ODE
     print("Done\nImporting PyPlot...")
     using PyPlot
     pygui(true)
@@ -86,6 +88,7 @@ module GNSSTools
     export plotresults
     export dkalman
     export demo
+    export courseacquisitiontest
 
     println("Done")
 
