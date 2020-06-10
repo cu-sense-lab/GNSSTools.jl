@@ -173,10 +173,6 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
     ze = 0. + 0im
     zp = 0. + 0im
     zl = 0. + 0im
-	ZP = 0. + 0im
-	ZP_abs_sqrd = 0.
-	zp_abs_max = 0.
-	zp_abs_sqrd = 0.
     datasegment = view(data.data, (i-1)*N+1:i*N)
     ts = view(data.t, 1:N)
     # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
@@ -185,8 +181,7 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 		# NOTE: # cis = exp(1im*A)
         @inbounds wipeoff = datasegment[j]*cis(-(2π*(f_if+f_d)*ts[j] + π*fd_rate*ts[j]^2 + ϕ))
 		# Calculate prompt correlator output at specific t
-		ZP = conj(replica.data[j]) * wipeoff
-        @inbounds zp += ZP
+        @inbounds zp += conj(replica.data[j]) * wipeoff
 		# Get the index of the ZE and ZL correlators at given t
         zeidx = j + d
         if zeidx > N
@@ -199,22 +194,11 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 		# Calculate early and late correlator outputs
         @inbounds ze += conj(replica.data[zeidx]) * wipeoff
         @inbounds zl += conj(replica.data[zlidx]) * wipeoff
-		# Store ZP max value (if applicable) and sum ZP²
-		ZP_abs_sqrd = abs2(ZP)
-		if ZP_abs_sqrd > zp_abs_max
-			zp_abs_max = ZP_abs_sqrd
-		end
-		zp_abs_sqrd += ZP_abs_sqrd
     end
-	# Normalize correlator outputs
 	ze = ze/N
     zp = zp/N
     zl = zl/N
-	# Calculate SNR
-	PS = 2*zp_abs_max
-	PN = zp_abs_sqrd - PS/(N-2)
-	SNR = 10*log10(PS/PN)
-    return (ze, zp, zl, SNR)
+    return (ze, zp, zl)
 end
 
 
@@ -374,8 +358,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         # Generate prompt correlator
         generatesignal!(replica)
         # Calculate early, prompt, and late correlator outputs
-        ze, zp, zl, snr = getcorrelatoroutput(data, replica, i, N, f_if, f_d,
-		                                      fd_rate, ϕ, d)
+        ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)  # chips
 		# Propogate state uncertaninty
@@ -404,8 +387,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		end
         if i > 1
             # Filter raw code phase error measurement
-            n0_err_filtered = filtercodephase(dll_parms, n0_err,
-			                                  code_err_filt[i-1])
+            n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
         else
             n0_err_filtered = n0_err
         end
@@ -420,7 +402,6 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         delta_fd[i] = G*dfd/2π
         fds[i] = x⁺ᵢ[2]/2π - f_if
         ZP[i] = zp
-		SNR[i] = snr
         if real(zp) > 0
             data_bits[i] = 1
         else
@@ -496,18 +477,11 @@ function plotresults(results::TrackResults; saveto=missing,
     ylabel("ϕ (degrees)")
     title("PLL Tracking")
     legend()
-	# Doppler frequency estimate
-    subplot2grid((3,2), (1,0), colspan=1, rowspan=1)
+    subplot2grid((3,2), (1,0), colspan=2, rowspan=1)
     plot(results.t, results.fds, "k.")
     xlabel("Time (s)")
     ylabel("Doppler (Hz)")
     title("Doppler Frequency Estimate")
-	# SNR
-	subplot2grid((3,2), (1,1), colspan=1, rowspan=1)
-    plot(results.t, results.SNR, "k.")
-    xlabel("Time (s)")
-    ylabel("SNR (dB)")
-    title("SNR Estimate")
     # Plot ZP real and imaginary parts
     subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
     plot(results.t, real(results.ZP), label="real(ZP)")
