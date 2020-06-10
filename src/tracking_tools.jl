@@ -214,6 +214,7 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 	PS = 2*zp_abs_max
 	PN = zp_abs_sqrd - PS/(N-2)
 	SNR = 10*log10(PS/PN)
+	# If you see this, then it worked.
     return (ze, zp, zl, SNR)
 end
 
