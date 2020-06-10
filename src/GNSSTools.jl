@@ -4,27 +4,30 @@ module GNSSTools
 
     using Reexport
 
-    using BenchmarkTools
-
-    println("Importing Random...")
+    print("Importing Random...")
     using Random
-    println("Importing FFTW...")
+    print("Done\nImporting FFTW...")
     using FFTW
-    println("Importing Threads...")
+    print("Done\nImporting Threads...")
     using Base.Threads
-    println("Importing Meter...")
+    print("Done\nImporting ProgressMeter...")
     using ProgressMeter
-    println("Importing Stats...")
+    print("Done\nImporting Statistics...")
     using Statistics
-    println("Importing LinearAlgebra...")
+    print("Done\nImporting LinearAlgebra...")
     using LinearAlgebra
-    println("Importing SatTools...")
+    print("Done\nImporting CPUTime...")
+    using CPUTime
+    print("Done\nImporting SatelliteToolbox...")
     using SatelliteToolbox
-    println("Importing PyPlot...")
+    print("Done\nImporting ODE...")
+    using ODE
+    print("Done\nImporting PyPlot...")
     using PyPlot
     pygui(true)
+    println("Done")
 
-    println("Importing module functions...")
+    println("Importing module files...")
 
     include("constants.jl")
     include("general_tools.jl")
@@ -40,9 +43,10 @@ module GNSSTools
     include("rinex_tools.jl")
     include("tle_tools.jl")
     include("tracking_tools.jl")
+    include("dkalman.jl")
     include("testGNSSTools.jl")
 
-    println("Exporting vars...")
+    print("Exporting vars...")
 
     export c
     export k
@@ -82,6 +86,10 @@ module GNSSTools
     export trackprn
     export calcA, calcC, calcQ
     export plotresults
+    export dkalman
     export demo
+    export courseacquisitiontest
+
+    println("Done")
 
 end # module

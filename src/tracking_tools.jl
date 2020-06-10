@@ -79,6 +79,7 @@ struct TrackResults{T1,T2}
     C::Array{Float64,2}
     P::Array{Float64,2}
     x::Array{Float64,2}
+	K::Array{Float64,2}
 end
 
 
@@ -160,45 +161,60 @@ end
 
 
 """
-    getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
+    getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 
 Calculate the early, prompt, and late correlator ouputs. Note that
 replica already containts the prompt correlator. Be sure to set
 the parameters to `replica` and run `generatesignal!(replica)` before
 calling this method.
 """
-function getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
-    ## Initialize correlator results
-    # ze = 0. + 0im
-    # zp = 0. + 0im
-    # zl = 0. + 0im
-    # datasegment = view(data.data, (i-1)*N+1:i*N)
-    # ts = view(data.t, (i-1)*N+1:i*N)
-    # ts = view(data.t, 1:N)
-    ## Perform carrier and phase wipeoff and apply early, prompt, and late correlators
-    # for j in 1:N
-    #     @inbounds wipeoff = datasegment[j]*exp(-(2π*(f_if+f_d)*ts[j] + ϕ)*1im)
-    #     @inbounds zp += conj(replica.data[j]) * wipeoff
-    #     zeidx = j + d
-    #     if zeidx > N
-    #         zeidx = zeidx - N
-    #     end
-    #     zlidx = j - d
-    #     if zlidx < 1
-    #         zlidx = zlidx + N
-    #     end
-    #     @inbounds ze += conj(replica.data[zeidx]) * wipeoff
-    #     @inbounds zl += conj(replica.data[zlidx]) * wipeoff
-    # end
-    # wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[(i-1)*N+1:i*N] .+ ϕ).*1im)
-    wipeoff = data.data[(i-1)*N+1:i*N].*exp.(-(2π.*(f_if+f_d).*data.t[1:N] .+ ϕ).*1im)
-    ze = sum(conj.(circshift(replica.data, -d)).*wipeoff)/N
-    zp = sum(conj.(replica.data).*wipeoff)/N
-    zl = sum(conj.(circshift(replica.data, d)).*wipeoff)/N
-    # ze = ze/N
-    # zp = zp/N
-    # zl = zl/N
-    return (ze, zp, zl)
+function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
+    # Initialize correlator results
+    ze = 0. + 0im
+    zp = 0. + 0im
+    zl = 0. + 0im
+	ZP = 0. + 0im
+	ZP_abs_sqrd = 0.
+	zp_abs_max = 0.
+	zp_abs_sqrd = 0.
+    datasegment = view(data.data, (i-1)*N+1:i*N)
+    ts = view(data.t, 1:N)
+    # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
+    for j in 1:N
+		# Perform carrier wipeoff
+		# NOTE: # cis = exp(1im*A)
+        @inbounds wipeoff = datasegment[j]*cis(-(2π*(f_if+f_d)*ts[j] + π*fd_rate*ts[j]^2 + ϕ))
+		# Calculate prompt correlator output at specific t
+		ZP = conj(replica.data[j]) * wipeoff
+        @inbounds zp += ZP
+		# Get the index of the ZE and ZL correlators at given t
+        zeidx = j + d
+        if zeidx > N
+            zeidx -= N
+        end
+        zlidx = j - d
+        if zlidx < 1
+            zlidx  += N
+        end
+		# Calculate early and late correlator outputs
+        @inbounds ze += conj(replica.data[zeidx]) * wipeoff
+        @inbounds zl += conj(replica.data[zlidx]) * wipeoff
+		# Store ZP max value (if applicable) and sum ZP²
+		ZP_abs_sqrd = abs2(ZP)
+		if ZP_abs_sqrd > zp_abs_max
+			zp_abs_max = ZP_abs_sqrd
+		end
+		zp_abs_sqrd += ZP_abs_sqrd
+    end
+	# Normalize correlator outputs
+	ze = ze/N
+    zp = zp/N
+    zl = zl/N
+	# Calculate SNR
+	PS = 2*zp_abs_max
+	PN = zp_abs_sqrd - PS/(N-2)
+	SNR = 10*log10(PS/PN)
+    return (ze, zp, zl, SNR)
 end
 
 
@@ -260,9 +276,10 @@ end
 
 
 """
-    trackprn(data, replica, prn, ϕ_init, fd_init, n0_init;
-             DLL_B=5, PLL_B=15, damping=1.4, T=1e-3, M=1, d=2,
-             t_length=data.t_length)
+    trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
+                  DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
+                  h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10., state_num=2,
+				  dynamickf=false, covMult=1.)
 
 Perform code and phase tracking on data in `data`.
 
@@ -272,6 +289,7 @@ that are minumum amount to track a given PRN.
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
                   h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10., state_num=2,
+				  dynamickf=false, covMult=1.,
                   message="Tracking PRN $(prn) with T=$(Int64(floor(replica.t_length*1000)))ms...")
     # Assign signal specific parameters
     chipping_rate = replica.chipping_rate
@@ -315,6 +333,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
     Q = calcQ(T, h₀, h₋₂, qₐ, sig_freq, state_num)
     P = Array{Float64}(undef, size(A)[1], M)
     x = Array{Float64}(undef, size(A)[1], M)
+	K = Array{Float64}(undef, size(A)[1], M)
 	if state_num == 3
     	x⁺ᵢ = [ϕ_init; 2π*(f_if+fd_init); 0.]
 		P⁺ᵢ = deepcopy(P₀)
@@ -325,8 +344,9 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		error("Number of states specified must be either 2 or 3.")
 	end
 	x⁻ᵢ = deepcopy(x⁺ᵢ)
-    # println(R)
-    # println(K)
+	P⁺ᵢ = covMult .* P⁺ᵢ
+	Kᵢ = zeros(size(x⁻ᵢ))
+	Kfixed = dkalman(A, C, Q, Diagonal(R))
     p = Progress(M, 1, message)
     # Perform code, carrier phase, and Doppler frequency tracking
     for i in 1:M
@@ -336,8 +356,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 			ϕ, ω = x⁻ᵢ
 			ωdot = 0.
 		end
-		# ϕ = C*x⁻ᵢ[1]
 		f_d = ω/2π - f_if
+		fd_rate = ωdot/2π
 		f_code_d = chipping_rate*(1. + f_d/sig_freq)
         # Calculate the current code start index
         t₀ = ((code_length-n0)%code_length)/f_code_d
@@ -354,7 +374,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         # Generate prompt correlator
         generatesignal!(replica)
         # Calculate early, prompt, and late correlator outputs
-        ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, ϕ, d)
+        ze, zp, zl, snr = getcorrelatoroutput(data, replica, i, N, f_if, f_d,
+		                                      fd_rate, ϕ, d)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)  # chips
 		# Propogate state uncertaninty
@@ -365,18 +386,28 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         dfd = dϕ_meas/T  # rad/s
 		# Estimate Kalman gain
 		Kᵢ = (P⁻ᵢ*C')/(C*P⁻ᵢ*C' + R)
+		K[:,i] = Kᵢ
 		# Correct state uncertaninty
 		P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
 		# Correct state
-		x⁺ᵢ = x⁻ᵢ + Kᵢ*dϕ_meas
+		if state_num == 3
+			state = [dϕ_meas, dfd, 0.]
+		else
+			state = [dϕ_meas, dfd]
+		end
+		if dynamickf
+			KF_gain = Kᵢ
+			x⁺ᵢ = x⁻ᵢ + KF_gain.*dϕ_meas
+		else
+			KF_gain = Kfixed
+			x⁺ᵢ = x⁻ᵢ + KF_gain.*state
+		end
         if i > 1
             # Filter raw code phase error measurement
-            n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
-            # # Calculate dfd
-            # dfd = dϕ_meas  # rad/s
+            n0_err_filtered = filtercodephase(dll_parms, n0_err,
+			                                  code_err_filt[i-1])
         else
             n0_err_filtered = n0_err
-            # dfd = 0.
         end
         # Save to allocated arrays
         code_err_meas[i] = n0_err
@@ -385,10 +416,11 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         code_phase_filt[i] = (n0 + n0_err_filtered)%code_length
         n0s[i] = n0
         dphi_measured[i] = dϕ_meas
-        phi[i] = ϕ
+        phi[i] = x⁺ᵢ[1]
         delta_fd[i] = G*dfd/2π
-        fds[i] = f_d + G*dfd/2π
+        fds[i] = x⁺ᵢ[2]/2π - f_if
         ZP[i] = zp
+		SNR[i] = snr
         if real(zp) > 0
             data_bits[i] = 1
         else
@@ -402,8 +434,6 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         end
 		# Propagate x⁺ᵢ to next time step
 		x⁻ᵢ = A*x⁺ᵢ
-        # Update and propagate carrier phase to next `i`
-        # ϕ += (C*[δϕ; δf_d])[1] + 2π*(f_if + f_d)*T
         next!(p)
     end
     # Return `TrackResults` struct
@@ -434,7 +464,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, n0s, dphi_measured, phi,
                         delta_fd, fds, ZP, SNR, data_bits, code_length,
-                        Q, A, C, P, x)
+                        Q, A, C, P, x, K)
 end
 
 
@@ -443,8 +473,13 @@ end
 
 Plots the tracking results from the `trackprn` method.
 """
-function plotresults(results::TrackResults; saveto=missing)
-    figure(figsize=(14,8))
+function plotresults(results::TrackResults; saveto=missing,
+	                 figsize=missing)
+	if ismissing(figsize)
+		figure()
+	else
+		figure(figsize=figsize)
+	end
     matplotlib.gridspec.GridSpec(3,2)
     # Plot code phase errors
     subplot2grid((3,2), (0,0), colspan=1, rowspan=1)
@@ -457,23 +492,22 @@ function plotresults(results::TrackResults; saveto=missing)
     # Plot filtered and measured phase errors
     subplot2grid((3,2), (0,1), colspan=1, rowspan=1)
     plot(results.t, results.dphi_meas.*180 ./π, "k.", label="Measured ϕ")
-    # plot(results.t, results.phi_filtered.*180 ./π, "b-", label="Filtered ϕ")
-    # plot(results.t, results.phi_filtered.*180 ./π, "b.")
     xlabel("Time (s)")
     ylabel("ϕ (degrees)")
-    # ylim([-180, 180])
     title("PLL Tracking")
     legend()
-    subplot2grid((3,2), (1,0), colspan=2, rowspan=1)
+	# Doppler frequency estimate
+    subplot2grid((3,2), (1,0), colspan=1, rowspan=1)
     plot(results.t, results.fds, "k.")
     xlabel("Time (s)")
     ylabel("Doppler (Hz)")
     title("Doppler Frequency Estimate")
-    # subplot2grid((3,2), (1,1), colspan=1, rowspan=1)
-    # plot(SNRs, "k.")
-    # xlabel("Time (ms)")
-    # ylabel("SNR (dB)")
-    # title("Prompt Correlator SNR")
+	# SNR
+	subplot2grid((3,2), (1,1), colspan=1, rowspan=1)
+    plot(results.t, results.SNR, "k.")
+    xlabel("Time (s)")
+    ylabel("SNR (dB)")
+    title("SNR Estimate")
     # Plot ZP real and imaginary parts
     subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
     plot(results.t, real(results.ZP), label="real(ZP)")
