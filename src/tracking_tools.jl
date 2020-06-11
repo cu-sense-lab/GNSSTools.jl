@@ -183,7 +183,8 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 		# NOTE: # cis = exp(1im*A)
         @inbounds wipeoff = datasegment[j]*cis(-(2π*(f_if+f_d)*ts[j] + π*fd_rate*ts[j]^2 + ϕ))
 		# Calculate prompt correlator output at specific t
-        @inbounds zp += conj(replica.data[j]) * wipeoff
+		ZP = conj(replica.data[j]) * wipeoff
+        @inbounds zp += ZP
 		# Get the index of the ZE and ZL correlators at given t
         zeidx = j + d
         if zeidx > N
@@ -205,6 +206,8 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 	# In-place FFT on ZP_array
 	fft!(ZP_array)
 	# Find peak of FFT result and sum
+	zp_abs_sqrd = 0.
+	zp_abs_max = 0.
 	for j in 1:N
 		ZP_abs_sqrd = abs2(ZP_array[j])
 		if ZP_abs_sqrd > zp_abs_max
@@ -376,7 +379,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         # Generate prompt correlator
         generatesignal!(replica)
         # Calculate early, prompt, and late correlator outputs
-        ze, zp, zl = getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
+        ze, zp, zl, snr = getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)  # chips
 		# Propogate state uncertaninty
@@ -420,6 +423,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         delta_fd[i] = G*dfd/2π
         fds[i] = x⁺ᵢ[2]/2π - f_if
         ZP[i] = zp
+		SNR[i] = snr
         if real(zp) > 0
             data_bits[i] = 1
         else
@@ -495,11 +499,18 @@ function plotresults(results::TrackResults; saveto=missing,
     ylabel("ϕ (degrees)")
     title("PLL Tracking")
     legend()
-    subplot2grid((3,2), (1,0), colspan=2, rowspan=1)
+	# Doppler frequency estimate
+    subplot2grid((3,2), (1,0), colspan=1, rowspan=1)
     plot(results.t, results.fds, "k.")
     xlabel("Time (s)")
     ylabel("Doppler (Hz)")
     title("Doppler Frequency Estimate")
+	# SNR estimate
+	subplot2grid((3,2), (1,1), colspan=2, rowspan=1)
+    plot(results.t, results.SNR, "k.")
+    xlabel("Time (s)")
+    ylabel("SNR (dB)")
+    title("SNR Estimate")
     # Plot ZP real and imaginary parts
     subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
     plot(results.t, real(results.ZP), label="real(ZP)")
