@@ -179,6 +179,8 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 	zp_abs_sqrd = 0.
     datasegment = view(data.data, (i-1)*N+1:i*N)
     ts = view(data.t, 1:N)
+	# ZP_array = Array{Complex{Float64}}(undef, N)
+	ZP_array = zeros(Complex{Float64}, N)
     # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
     for j in 1:N
 		# Perform carrier wipeoff
@@ -199,22 +201,27 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 		# Calculate early and late correlator outputs
         @inbounds ze += conj(replica.data[zeidx]) * wipeoff
         @inbounds zl += conj(replica.data[zlidx]) * wipeoff
-		# Store ZP max value (if applicable) and sum ZP²
-		ZP_abs_sqrd = abs2(ZP)
-		if ZP_abs_sqrd > zp_abs_max
-			zp_abs_max = ZP_abs_sqrd
-		end
-		zp_abs_sqrd += ZP_abs_sqrd
+		# Store ZP result at `j` in `jᵗʰ` index in `ZP_array`
+		ZP_array[j] = ZP
     end
 	# Normalize correlator outputs
 	ze = ze/N
     zp = zp/N
     zl = zl/N
+	# In-place FFT on ZP_array
+	fft!(ZP_array)
+	# Find peak of FFT result and sum
+	for j in 1:N
+		ZP_abs_sqrd = abs2(ZP_array[j])
+		if ZP_abs_sqrd > zp_abs_max
+			zp_abs_max = ZP_abs_sqrd
+		end
+		zp_abs_sqrd += ZP_abs_sqrd
+	end
 	# Calculate SNR
 	PS = 2*zp_abs_max
 	PN = zp_abs_sqrd - PS/(N-2)
 	SNR = 10*log10(PS/PN)
-	# If you see this, then it worked.
     return (ze, zp, zl, SNR)
 end
 
