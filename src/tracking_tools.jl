@@ -175,8 +175,8 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
     zl = 0. + 0im
     datasegment = view(data.data, (i-1)*N+1:i*N)
     ts = view(data.t, 1:N)
-	# ZP_array = Array{Complex{Float64}}(undef, N)
-	ZP_array = zeros(Complex{Float64}, N)
+	ZP_array = Array{Complex{Float64}}(undef, N)
+	# ZP_array = zeros(Complex{Float64}, N)
     # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
     for j in 1:N
 		# Perform carrier wipeoff
