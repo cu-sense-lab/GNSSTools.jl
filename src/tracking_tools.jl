@@ -206,17 +206,17 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 	# In-place FFT on ZP_array
 	fft!(ZP_array)
 	# Find peak of FFT result and sum
+	zp_abs_sqrd_max = 0.
 	zp_abs_sqrd = 0.
-	zp_abs_max = 0.
 	for j in 1:N
 		ZP_abs_sqrd = abs2(ZP_array[j])
-		if ZP_abs_sqrd > zp_abs_max
-			zp_abs_max = ZP_abs_sqrd
+		if ZP_abs_sqrd > zp_abs_sqrd_max
+			zp_abs_sqrd_max = ZP_abs_sqrd
 		end
 		zp_abs_sqrd += ZP_abs_sqrd
 	end
 	# Calculate SNR
-	PS = 2*zp_abs_max
+	PS = 2*zp_abs_sqrd_max
 	PN = zp_abs_sqrd - PS/(N-2)
 	SNR = 10*log10(PS/PN)
     return (ze, zp, zl, SNR)

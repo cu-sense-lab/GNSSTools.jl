@@ -11,7 +11,7 @@ and code/carrier phase and Doppler frequency tracking.
 """
 function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                include_noise=true, include_databits=true, simulatedata=true,
-               saveto=missing, T="short", G=0.2, showplot=true, f_d=800.,
+               saveto=missing, T="short", showplot=true, f_d=800.,
                fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
                fd_range=5000., dll_b=5., state_num=2, dynamickf=true,
                covMult=1., q_a=100., figsize=missing, CN0=45.)
@@ -121,7 +121,12 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
     # Get course peak index location in time
     n0_est = max_idx[2]
-    println("Done")
+    pk_val = corr_result[max_idx]
+    noise_val = sum(corr_result[max_idx[1],:])
+    PN = noise_val - 2*pk_val/(size(corr_result)[2]-2)
+    PS = 2*pk_val
+    SNR_est = 10*log10(PS/PN)
+    println("Done ($(SNR_est)dB)")
     # Perform FFT based fine acquisition
     # Returns structure containing the fine, course,
     # and estimated Doppler frequency
@@ -132,7 +137,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     # using results from fine acquisition as the intial conditions
     trackresults = trackprn(data, replica, prn, results.phi_init,
                             results.fd_est, results.n0_idx_course,
-                            results.P, results.R; G=G, DLL_B=dll_b,
+                            results.P, results.R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
                             covMult=covMult, qₐ=q_a)
     # Plot results and save if `saveto` is a string
@@ -170,7 +175,7 @@ function courseacquisitiontest(;prns="all", sigtype="l1ca", include_carrier=true
                                include_databits=true, simulatedata=true,
                                T="short", f_d=800., fd_rate=0., n0=1000.,
                                t_length=1e-3, M=4000, fd_range=5000.,
-                               sim_prn=26)
+                               sim_prn=26, CN0=45.)
     # Correlation parameters
     if prns == "all"
         prns = Array(1:32)
@@ -197,7 +202,6 @@ function courseacquisitiontest(;prns="all", sigtype="l1ca", include_carrier=true
         f_s = 25e6  # Hz
         f_if = 0.  # Hz
         Tsys = 535.  # K
-        CN0 = 45.  # dB*Hz
         phi = π/4  # rad
         nADC = 4  # bits
         B = 2.046e7  # Hz
@@ -209,7 +213,6 @@ function courseacquisitiontest(;prns="all", sigtype="l1ca", include_carrier=true
         f_s = 25e6  # Hz
         f_if = 0.  # Hz
         Tsys = 535.  # K
-        CN0 = 45.  # dB*Hz
         phi = π/4  # rad
         nADC = 4  # bits
         B = 2.046e7  # Hz
@@ -222,7 +225,6 @@ function courseacquisitiontest(;prns="all", sigtype="l1ca", include_carrier=true
         # f_if = 1.25e6  # Hz
         f_if = 0.  # Hz
         Tsys = 535.  # K
-        CN0 = 45.  # dB*Hz
         phi = π/4  # rad
         nADC = 4  # bits
         B = 2.046e6  # Hz
