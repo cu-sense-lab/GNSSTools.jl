@@ -1,12 +1,21 @@
-function calcdoppler(sat_tle, gps_tle, julian_date, eop,
-                     obs_ecef)
-    """
-        Use `svECItoECEF` to convert satellite state vector
-        (r and v) from ECI to ECEF.
-    """
-    # Initialize orbits for TLEs
-    gps_orb = init_orbit_propagator(Val{:sgp4}, gps_tle)
-    sat_orb = init_orbit_propagator(Val{:sgp4}, sat_tle)
+"""
+    calcdoppler(orb::Array, gps_tle, julian_date, eop,
+                obs_ecef, sig_freq)
+
+Use `svECItoECEF` to convert satellite state vector
+(r and v) from ECI to ECEF. `orb` is a list of
+orbit objects initialized using `SatelliteToolbox`.
+The first orbit object is the source, `gps_orb`, and
+the second is object the signal is reflected off of,
+`sat_orb`. Only two objects are used. Anything after
+the second index of `orb` is ignored.
+"""
+function calcdoppler(orb::Array, gps_tle, julian_date, eop,
+                     obs_ecef, sig_freq)
+    gps_orb = orb[1]
+    sat_orb = orb[2]
+    # gps_orb = init_orbit_propagator(Val{:sgp4}, gps_tle)
+    # sat_orb = init_orbit_propagator(Val{:sgp4}, sat_tle)
     # Propagate orbits to "julian_date"
     gps_orb, rg, vg = propagate_to_epoch!(gps_orb, julian_date)
     sat_orb, rs, vs = propagate_to_epoch!(sat_orb, julian_date)
@@ -29,6 +38,31 @@ function calcdoppler(sat_tle, gps_tle, julian_date, eop,
     # Radial velocity of GPS satellite relative to satellite
     v_s2g = transpose((rg-rs)/norm(rg-rs))*vg
     # Calculate observed Doppler frequency by observer
-    fd_obs = -L5_freq*(v_obs + v_g2s + v_s2g)/c  # Hz
+    fd_obs = -sig_freq*(v_obs + v_g2s + v_s2g)/c  # Hz
     return fd_obs
+end
+
+
+"""
+    calcdoppler(orb::OrbitPropagatorSGP4, gps_tle, julian_date, eop,
+                obs_ecef, sig_freq)
+
+Calculates the Doppler frequency for the direct signal case.
+"""
+function calcdoppler(orb::OrbitPropagator, gps_tle, julian_date, eop,
+                     obs_ecef, sig_freq)
+    # Propagate orbits to "julian_date"
+    orb, rg, vg = propagate_to_epoch!(orb, julian_date)
+    # Convert orbits to state vectors
+    orb_teme = kepler_to_sv(orb)
+    # Transform TEME to ECEF frame
+    orb_ecef = svECItoECEF(orb_teme, TEME(), ITRF(), julian_date, eop)
+    # Get velocities and positions
+    r = orb_ecef.r
+    v = orb_ecef.v
+    # Direct signal case
+    v_obs = transpose((r-obs_ecef)/norm(r-obs_ecef))*v
+    # Calculate observed Doppler frequency by observer
+    fd_obs = -sig_freq*(v_obs + v_g2s + v_s2g)/c  # Hz
+    return v_obs
 end
