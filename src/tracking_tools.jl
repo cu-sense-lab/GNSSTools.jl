@@ -161,6 +161,21 @@ end
 
 
 """
+	shiftandcheck(i, offset, N)
+"""
+function shiftandcheck(i, offset, N)
+	j = i + offset
+	if j > N
+		j -= N
+	end
+	if j < 1
+		j  += N
+	end
+	return j
+end
+
+
+"""
     getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 
 Calculate the early, prompt, and late correlator ouputs. Note that
@@ -168,14 +183,19 @@ replica already containts the prompt correlator. Be sure to set
 the parameters to `replica` and run `generatesignal!(replica)` before
 calling this method.
 """
-function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
+function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d,
+	                         bin_width=1)
     # Initialize correlator results
     ze = 0. + 0im
     zp = 0. + 0im
     zl = 0. + 0im
+	noise_correlator_pos = d .* Array(8:15)
+	noise_corr_size = size(noise_correlator_pos)[1]
+	noise_correlator_vals = zeros(Complex{Float64}, noise_corr_size)
     datasegment = view(data.data, (i-1)*N+1:i*N)
     ts = view(data.t, 1:N)
 	ZP_array = Array{Complex{Float64}}(undef, N)
+	Δf = 1/replica.t_length
     # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
     for j in 1:N
 		# Perform carrier wipeoff
@@ -185,19 +205,18 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 		ZP = conj(replica.data[j]) * wipeoff
         @inbounds zp += ZP
 		# Get the index of the ZE and ZL correlators at given t
-        zeidx = j + d
-        if zeidx > N
-            zeidx -= N
-        end
-        zlidx = j - d
-        if zlidx < 1
-            zlidx  += N
-        end
+		zeidx = shiftandcheck(j, d, N)
+		zlidx = shiftandcheck(j, -d, N)
 		# Calculate early and late correlator outputs
         @inbounds ze += conj(replica.data[zeidx]) * wipeoff
         @inbounds zl += conj(replica.data[zlidx]) * wipeoff
 		# Store ZP result at `j` in `jᵗʰ` index in `ZP_array`
 		ZP_array[j] = ZP
+		# # Repeat above for noise correlators
+		# for pos in 1:noise_corr_size
+		# 	idx = shiftandcheck(j, noise_correlator_pos[pos], N)
+		# 	@inbounds noise_correlator_vals[pos] += conj(replica.data[idx]) * wipeoff
+		# end
     end
 	ze = ze/N
     zp = zp/N
@@ -207,17 +226,43 @@ function getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
 	# Find peak of FFT result and sum
 	zp_abs_sqrd_max = 0.
 	zp_abs_sqrd = 0.
+	zp_max_idx = 1
 	for j in 1:N
 		ZP_abs_sqrd = abs2(ZP_array[j])
 		if ZP_abs_sqrd > zp_abs_sqrd_max
 			zp_abs_sqrd_max = ZP_abs_sqrd
+			zp_max_idx = j
 		end
 		zp_abs_sqrd += ZP_abs_sqrd
 	end
 	# Calculate SNR
-	PS = 2*zp_abs_sqrd_max
-	PN = zp_abs_sqrd - PS/(N-2)
-	SNR = 10*log10(PS/PN)
+	max_low = shiftandcheck(zp_max_idx, -bin_width, N)
+	max_high = shiftandcheck(zp_max_idx, bin_width, N)
+	# PS = zp_abs_sqrd_max
+	PS = abs2(ZP_array[1]) + abs2(ZP_array[N])
+	# PS = sum(abs2.(ZP_array[max_low:N])) + sum(abs2.(ZP_array[1:max_high]))
+	PN = (zp_abs_sqrd - PS)/(N-1)
+	SNR = 0.
+	try
+		SNR = 10*log10(sqrt(PS/PN))
+	catch
+		# println(PS)
+		# println(zp_abs_sqrd)
+		# println(PN)
+		SNR = NaN
+	end
+	#
+	# PS = abs(zp*N)
+	# PN = sqrt(mean(abs2.(noise_correlator_vals))/(N-1))
+	# SNR = 10*log10(PS/PN)
+	# println(zp)
+	# println(noise_correlator_vals)
+	# println(PS)
+	# println(PN)
+	# println(SNR)
+	# plt.figure()
+	# plot(abs2.(ZP_array))
+	# error("Halt")
     return (ze, zp, zl, SNR)
 end
 
@@ -400,11 +445,12 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		end
 		if dynamickf
 			KF_gain = Kᵢ
-			x⁺ᵢ = x⁻ᵢ + KF_gain.*dϕ_meas
+			correction = KF_gain.*dϕ_meas
 		else
 			KF_gain = Kfixed
-			x⁺ᵢ = x⁻ᵢ + KF_gain.*state
+			correction =  KF_gain.*state
 		end
+		x⁺ᵢ = x⁻ᵢ + correction
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
@@ -417,9 +463,9 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         code_phase_meas[i] = (n0 + n0_err)%code_length
         code_phase_filt[i] = (n0 + n0_err_filtered)%code_length
         n0s[i] = n0
-        dphi_measured[i] = dϕ_meas
+        dphi_measured[i] = correction[1]
         phi[i] = x⁺ᵢ[1]
-        delta_fd[i] = G*dfd/2π
+        delta_fd[i] = correction[2]/2π
         fds[i] = x⁺ᵢ[2]/2π - f_if
         ZP[i] = zp
 		SNR[i] = snr

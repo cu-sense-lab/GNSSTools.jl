@@ -22,8 +22,12 @@ module GNSSTools
     using SatelliteToolbox
     print("Done\nImporting ODE...")
     using ODE
+    print("Done\nImporting PyCall...")
+    using PyCall
+    numpy = pyimport("numpy")
     print("Done\nImporting PyPlot...")
     using PyPlot
+    Axes3D = pyimport("mpl_toolkits.mplot3d").Axes3D
     pygui(true)
     println("Done")
 
