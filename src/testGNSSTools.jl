@@ -4,7 +4,8 @@
           saveto=missing, T="short", showplot=true, f_d=800.,
           fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
           fd_range=5000., dll_b=5., state_num=2, dynamickf=true,
-          covMult=1., q_a=100., figsize=missing, CN0=45.)
+          covMult=1., q_a=100., figsize=missing, CN0=45., plot3d=true,
+          show_acq_plot=true)
 
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking.
@@ -146,7 +147,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                             covMult=covMult, qₐ=q_a)
     # Plot results and save if `saveto` is a string
     if showplot
-        print("Generating figures...")
+        # print("Generating figures...")
         # Course Acquisition Results
         if (sigtype == "l1ca") & show_acq_plot
             if ~plot3d
@@ -158,14 +159,15 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                         facecolor="none")
             else
                 fig = figure()
+                ax = Axes3D(fig)
                 fd_bins = Array(-fd_range:1/replica.t_length:fd_range)
-                x, y = numpy.meshgrid(Array(1:replica.sample_num), fd_bins./1000.)
-                ax = subplot(1, 1, 1, projection="3d")
+                x, y = meshgrid(Array(1:replica.sample_num), fd_bins./1000.)
                 surf(x, y, corr_result)
                 max_val_idx = argmax(collect(Iterators.flatten(corr_result)))
                 scatter3D(collect(Iterators.flatten(x))[max_val_idx],
                           collect(Iterators.flatten(y))[max_val_idx],
-                          collect(Iterators.flatten(corr_result))[max_val_idx], c="r")
+                          collect(Iterators.flatten(corr_result))[max_val_idx],
+                          c="r")
             end
             xlabel("Samples")
             ylabel("Doppler (Hz)")

@@ -145,3 +145,23 @@ function calctvector(N, f_s)
     end
     return t
 end
+
+
+"""
+    meshgrid(x, y)
+
+Generate a meshgrid the way Python would in Numpy.
+"""
+function meshgrid(x, y)
+    xsize = length(x)
+    ysize = length(y)
+    X = Array{eltype(x)}(undef, ysize, xsize)
+    Y = Array{eltype(y)}(undef, ysize, xsize)
+    for i in 1:ysize
+        for j in 1:xsize
+            X[i,j] = x[j]
+            Y[i,j] = y[i]
+        end
+    end
+    return (X, Y)
+end

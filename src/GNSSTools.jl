@@ -22,12 +22,11 @@ module GNSSTools
     using SatelliteToolbox
     print("Done\nImporting ODE...")
     using ODE
-    print("Done\nImporting PyCall...")
-    using PyCall
-    numpy = pyimport("numpy")
+    # print("Done\nImporting PyCall...")
+    # using PyCall
     print("Done\nImporting PyPlot...")
     using PyPlot
-    Axes3D = pyimport("mpl_toolkits.mplot3d").Axes3D
+    Axes3D = PyPlot.Axes3D
     pygui(true)
     println("Done")
 
@@ -93,6 +92,7 @@ module GNSSTools
     export dkalman
     export demo
     export courseacquisitiontest
+    export meshgrid
 
     println("Done")
 
