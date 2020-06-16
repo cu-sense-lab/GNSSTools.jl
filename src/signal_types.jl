@@ -1,21 +1,4 @@
 """
-    OrbitInfo
-
-Struct containing orbit, start time,
-and observer location info.
-"""
-mutable struct OrbitInfo{T1,T2,T3,T4,T5,T6,T7}
-    start_time::T1
-    start_time_julian_date::T2
-    site_loc_lla::T3
-    site_loc_ecef::T4
-    tle_file_name::T5
-    tle::T6
-    orb::T7
-end
-
-
-"""
     GNSSSignal
 
 The most general type of

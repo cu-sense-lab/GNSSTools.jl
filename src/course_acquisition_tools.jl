@@ -76,7 +76,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
                       nADC=nADC, isreplica=true,
                       noexp=false)
         # Generate signal
-        generatesignal!(replica)
+        generatesignal!(replica, replica.isreplica)
         # Perform in place FFT on replica
         pfft*replica.data
         # Take conjugate of FFT(replica) and multiply with FFT of

@@ -421,7 +421,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
                       code_start_idx=code_start_idx,
                       isreplica=true, noexp=true)
         # Generate prompt correlator
-        generatesignal!(replica)
+        generatesignal!(replica, replica.isreplica)
         # Calculate early, prompt, and late correlator outputs
         ze, zp, zl, snr = getcorrelatoroutput(data, replica, i, N, f_if, f_d, fd_rate, ϕ, d)
         # Estimate code phase error

@@ -25,7 +25,7 @@ const Rₑ = 6371.000e3  # meters
 
 
 """
-L1 frequency (Hz)
+    L1 frequency (Hz)
 """
 const L1_freq = 1575.42e6  # Hz
 

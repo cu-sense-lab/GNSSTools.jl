@@ -46,7 +46,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
                   isreplica=true,
                   noexp=true)
     # Generate signal
-    generatesignal!(replica)
+    generatesignal!(replica, replica.isreplica)
     # Wipeoff IF and course Doppler from data and multiply by replica
     # sig = data.data.*exp.(-2π.*(data.f_if+fd_course).*data.t.*1im).*replica.data
     @threads for i in 1:replica.sample_num

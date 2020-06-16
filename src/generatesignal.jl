@@ -18,7 +18,7 @@ array will still be the same size. You will need to keep track
 of the `t_length` you passed to `generatesignal!`.
 """
 function generatesignal!(signal::ReplicaSignal,
-                         isreplica::Val{false}=Val(signal.isreplica::Bool);
+                         # isreplica::Val{false}=Val(signal.isreplica::Bool);
                          t_length=signal.t_length)
     # Common parmeters used for entire signal
     prn = signal.prn
@@ -86,7 +86,8 @@ in `signal` and ignores all the `include_*` flags in `signal`.
 Exponential without the amplitude is included automatically.
 """
 function generatesignal!(signal::ReplicaSignal,
-                         isreplica::Val{true}=Val(signal.isreplica::Bool))
+                         # isreplica::Val{true}=Val(signal.isreplica::Bool))
+                         isreplica::Bool)
     # Common parmeters used for entire signal
     prn = signal.prn
     f_d = signal.f_d

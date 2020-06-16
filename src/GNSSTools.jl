@@ -22,15 +22,13 @@ module GNSSTools
     using SatelliteToolbox
     print("Done\nImporting ODE...")
     using ODE
-    # print("Done\nImporting PyCall...")
-    # using PyCall
     print("Done\nImporting PyPlot...")
     using PyPlot
     Axes3D = PyPlot.Axes3D
     pygui(true)
     println("Done")
 
-    println("Importing module files...")
+    print("Importing module files...")
 
     include("constants.jl")
     include("general_tools.jl")
@@ -49,7 +47,7 @@ module GNSSTools
     include("dkalman.jl")
     include("testGNSSTools.jl")
 
-    print("Exporting vars...")
+    print("Done\nExporting vars...")
 
     export c
     export k
@@ -85,7 +83,7 @@ module GNSSTools
     export calctvector
     export calcsnr
     export loadrinex
-    export calcdoppler
+    # export calcdoppler
     export trackprn
     export calcA, calcC, calcQ
     export plotresults

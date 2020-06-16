@@ -149,7 +149,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     if showplot
         # print("Generating figures...")
         # Course Acquisition Results
-        if (sigtype == "l1ca") & show_acq_plot
+        if (sigtype == "l1ca") && show_acq_plot
             if ~plot3d
                 fig, ax = subplots(1, 1)
                 img = ax.imshow(corr_result, interpolation="none", aspect="auto",
