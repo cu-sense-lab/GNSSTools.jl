@@ -83,7 +83,6 @@ module GNSSTools
     export calctvector
     export calcsnr
     export loadrinex
-    # export calcdoppler
     export trackprn
     export calcA, calcC, calcQ
     export plotresults

@@ -147,7 +147,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                             covMult=covMult, qₐ=q_a)
     # Plot results and save if `saveto` is a string
     if showplot
-        # print("Generating figures...")
+        print("Generating figures...")
         # Course Acquisition Results
         if (sigtype == "l1ca") && show_acq_plot
             if ~plot3d
