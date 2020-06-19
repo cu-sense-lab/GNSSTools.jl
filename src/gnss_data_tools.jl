@@ -98,3 +98,30 @@ function bytetocomplex(byte::UInt8)
 	# Compute the complex number
 	return (-1)^(Isign)*Imag + (-1)^(Qsign)*Qmag*1im
 end
+
+
+"""
+	data_info_from_name(file_name)
+
+Determine the IF and sampling frequency of the data
+from the file name. Looks for the following strings
+inside the file name:
+
+- `g1b1`: 25 Msps, centered at 1.57 GHz which contains GPS L1/Galileo E1bc/Beidou B1i
+- `g2r2`: 25 Msps, centered at 1.2375 GHz which contains GPS L2 and GLONASS L2
+	* `NOTE SUPPORTED`
+- `g5`: 25 Msps, centered at 1.17645 GHz which contains GPS L5/Galileo E5a
+
+Returns the IF and sampling frequency in Hz in the order of (f_if, f_s, f_center).
+"""
+function data_info_from_name(file_name)
+	if occursin("g1b1", file_name)
+		return g1b1()
+	elseif occursin("g2r2", file_name)
+		error("L2 band nav signals not supported. Use either L1 (g1b1) or L5 (g5) instead.")
+	elseif occursin("g5", file_name)
+		return g5()
+	else
+		error("Cannot determine f_s, f_if, & f_center. Manual specify f_s and f_if.")
+	end
+end

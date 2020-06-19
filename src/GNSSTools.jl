@@ -2,6 +2,11 @@ __precompile__()
 
 module GNSSTools
 
+    include("greeting.jl")
+    export logo, greeting
+    printstyled(logo, color=:default, bold=false)
+    println(greeting)
+
     using Reexport
 
     print("Importing Random...")
@@ -47,7 +52,7 @@ module GNSSTools
     include("dkalman.jl")
     include("testGNSSTools.jl")
 
-    print("Done\nExporting vars...")
+    print("Done\nExporting variables and methods...")
 
     export c
     export k

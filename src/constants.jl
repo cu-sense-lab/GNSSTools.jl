@@ -34,3 +34,29 @@ const L1_freq = 1575.42e6  # Hz
     L5 Frequency (Hz)
 """
 const L5_freq = 1176.45e6  # Hz
+
+
+"""
+    g1b1()
+
+Returns the IF and sampling frequency for L1 frequency range.
+"""
+function g1b1()
+    f_s = 25e6  # samples-per-second
+    f_center = 1.57e9  # Hz
+    f_if = abs(L1_freq-f_center)
+    return (f_s, f_if, f_center)
+end
+
+
+"""
+    g5()
+
+Returns the IF and sampling frequency for L5 frequency range.
+"""
+function g5()
+    f_s = 25e6  # samples-per-second
+    f_center = 1.17645e9  # Hz
+    f_if = abs(L5_freq-f_center)
+    return (f_s, f_if, f_center)
+end
