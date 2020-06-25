@@ -54,8 +54,6 @@ module GNSSTools
 
     print("Done\nExporting variables and methods...")
 
-    export c
-    export k
     export Rₑ
     export L1_freq
     export l1ca_code_length
@@ -95,6 +93,10 @@ module GNSSTools
     export demo
     export courseacquisitiontest
     export meshgrid
+    export data_info_from_name
+    export initorbitinfo
+    export calcdoppler
+
 
     println("Done")
 

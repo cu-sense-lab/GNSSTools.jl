@@ -108,6 +108,48 @@ end
 
 
 """
+    courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
+                      prn; fd_center=0., fd_range=5000.,
+                      fd_rate=0., Δfd=1/replica.t_length,
+                      threads=nthreads(), message="Correlating...",
+                      operation="replace", start_idx=1,
+                      showprogressbar=true)
+
+Initializes `corr_result` array and runs `courseacquisition!` method.
+Returns `corr_result` and the course acquired code phase, Doppler
+frequency and SNR.
+"""
+function courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
+                           prn; fd_center=0., fd_range=5000.,
+                           fd_rate=0., Δfd=1/replica.t_length,
+                           threads=nthreads(), message="Correlating...",
+                           operation="replace", start_idx=1,
+                           showprogressbar=true)
+    # Allocate space for correlation result
+    corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
+    # Perform course acquisition
+    courseacquisition!(corr_result, data, replica, prn;
+                       fd_center=fd_center, fd_range=fd_range,
+                       fd_rate=fd_rate, Δfd=Δfd, threads=threads)
+    # Get peak maximum index location
+    max_idx = argmax(corr_result)
+    # Calculate course Doppler frequency
+    fd_est = (fd_center-fd_range) + (max_idx[1]-1)*Δfd
+    # Get course peak index location in time
+    n0_est = max_idx[2]
+    pk_val = corr_result[max_idx]
+    # Compute course acquisition SNR
+    noise_val = sum(corr_result[max_idx[1],:])
+    PS = pk_val
+    N, M = size(corr_result)
+    PN = (noise_val - pk_val)/(M - 1)
+    # PN = (noise_val - PS)/size(corr_result)[2]
+    SNR_est = 10*log10(sqrt(PS/PN))
+    return (corr_result, fd_est, n0_est, SNR_est)
+end
+
+
+"""
     courseacquisition!(corr_result::Array{Float64,2},
                             data::GNSSSignal, replica::ReplicaSignal,
                             prn, N; fd_center=0., fd_range=5000.,

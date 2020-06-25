@@ -112,16 +112,27 @@ inside the file name:
 	* `NOTE SUPPORTED`
 - `g5`: 25 Msps, centered at 1.17645 GHz which contains GPS L5/Galileo E5a
 
-Returns the IF and sampling frequency in Hz in the order of (f_if, f_s, f_center).
+Returns the IF and sampling frequency in Hz in the order of (f_if, f_s, f_center,
+data_type). `data_type` is either `Val(:sc8)` or `Val(:sc4)`.
 """
 function data_info_from_name(file_name)
+	# Get file type (8- or 4-bit complex)
+	if occursin("sc8", file_name)
+		data_type = Val(:sc8)
+	elseif occursin("sc8", file_name)
+		data_type = Val(:sc8)
+	else
+		error("File type not supported. Only sc8 and sc4 files are supported.")
+	end
+	# Determine sampling and IF frequency and frequency center
 	if occursin("g1b1", file_name)
-		return g1b1()
+		f_s, f_if, f_center, sigtype = g1b1()
 	elseif occursin("g2r2", file_name)
 		error("L2 band nav signals not supported. Use either L1 (g1b1) or L5 (g5) instead.")
 	elseif occursin("g5", file_name)
-		return g5()
+		f_s, f_if, f_center, sigtype = g5()
 	else
 		error("Cannot determine f_s, f_if, & f_center. Manual specify f_s and f_if.")
 	end
+	return (f_s, f_if, f_center, sigtype, data_type)
 end
