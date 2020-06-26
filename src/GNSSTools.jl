@@ -47,10 +47,12 @@ module GNSSTools
     include("course_acquisition_tools.jl")
     include("fine_acquisition_tools.jl")
     include("rinex_tools.jl")
-    include("tle_tools.jl")
     include("tracking_tools.jl")
     include("dkalman.jl")
     include("testGNSSTools.jl")
+    include("tle_tools.jl")
+    include("data_process.jl")
+
 
     print("Done\nExporting variables and methods...")
 

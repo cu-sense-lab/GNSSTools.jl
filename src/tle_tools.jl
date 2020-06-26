@@ -191,8 +191,15 @@ end
     getCurrentGPSNORADIDS()
 """
 function getCurrentGPSNORADIDS()
-    if ~isfile("GPS_NORAD_IDs.txt")
-        run(`curl -o src/gps_currernt_tles.txt http://celestrak.com/NORAD/elements/gps-ops.txt`)
-        tles = read_tle("src/gps_currernt_tles.txt")
+    directory = string(homedir(), "/.GNSSTools")
+    if ~isdir(directory)
+        mkpath(directory)
     end
+    ids_file = string(directory, "/GPSData.txt")
+    if ~isfile(ids_file)
+        run(`curl -o $(ids_file) ftp://ftp.agi.com/pub/Catalog/Almanacs/SEM/GPSData.txt`);
+    end
+    
 end
+
+getCurrentGPSNORADIDS()
