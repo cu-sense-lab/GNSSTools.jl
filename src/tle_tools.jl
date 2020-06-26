@@ -185,21 +185,3 @@ function calcelevation(sat_tle, julian_date_range, eop, obs_lla;
                         obs_lla, obs_ecef, Δt, ts, sat_ranges,
                         azs, els, sat_ecefs)
 end
-
-
-"""
-    getCurrentGPSNORADIDS()
-"""
-function getCurrentGPSNORADIDS()
-    directory = string(homedir(), "/.GNSSTools")
-    if ~isdir(directory)
-        mkpath(directory)
-    end
-    ids_file = string(directory, "/GPSData.txt")
-    if ~isfile(ids_file)
-        run(`curl -o $(ids_file) ftp://ftp.agi.com/pub/Catalog/Almanacs/SEM/GPSData.txt`);
-    end
-    
-end
-
-getCurrentGPSNORADIDS()

@@ -62,3 +62,93 @@ function g5()
     sigtype = Val(:l5q)
     return (f_s, f_if, f_center, sigtype)
 end
+
+
+
+"""
+    parseGPSData(data_file)
+
+Parse the GPS data file from AGI.
+Dictionary stored as `Dict(PRN, Dict(SV, Dict(other_fields...)))`.
+"""
+function parseGPSData(data_file)
+    file = open(data_file, "r")
+    lines = readlines(file)
+    close(file)
+    N = size(lines)[1]
+    GPSData = Dict{Int,Dict{Int,Dict{String,Any}}}()
+    for i in 23:N
+        line = lines[i]
+        if length(line) > 1
+            prn = parse(Int, line[3:4])
+            sv = parse(Int, line[7:8])
+            satnum = parse(Int, line[11:15])
+            block = line[18:20]
+            start_week = parse(Int, line[27:30])
+            start_toa = parse(Int, line[32:37])
+            start_year = parse(Int, line[39:42])
+            start_month = parse(Int, line[44:45])
+            start_day = parse(Int, line[47:48])
+            start_date = (start_year, start_month, start_day)
+            start_julian_date = DatetoJD(start_date..., 0, 0, 0)
+            active = occursin("Active", line)
+            notes = line[77:end]
+            if active
+                end_week = missing
+                end_toa = missing
+                end_date = missing
+                end_julian_date = missing
+            else
+                end_week = parse(Int, line[53:56])
+                end_toa = parse(Int, line[58:63])
+                end_year = parse(Int, line[65:68])
+                end_month = parse(Int, line[70:71])
+                end_day = parse(Int, line[73:74])
+                end_date = (end_year, end_month, end_day)
+                end_julian_date = DatetoJD(end_date..., 0, 0, 0)
+            end
+            sv_info = Dict("satnum"=>satnum,
+                           "block"=>block,
+                           "start_week"=>start_week,
+                           "start_toa"=>start_toa,
+                           "start_date"=>start_date,
+                           "start_julian_date"=>start_julian_date,
+                           "end_week"=>end_week,
+                           "end_toa"=>end_toa,
+                           "end_date"=>end_date,
+                           "end_julian_date"=>end_julian_date,
+                           "active"=>active,
+                           "status"=>notes)
+            try
+                GPSData[prn][sv] = sv_info
+            catch
+                GPSData[prn] = Dict(sv=>sv_info)
+            end
+        end
+    end
+    return GPSData
+end
+
+
+"""
+    getCurrentGPSNORADIDS()
+
+Download GPS SV data from AGI and parse.
+Returns a dictionary with historical SVs
+for each PRN.
+"""
+function getCurrentGPSNORADIDS()
+    directory = string(homedir(), "/.GNSSTools")
+    if ~isdir(directory)
+        mkpath(directory)
+    end
+    ids_file = string(directory, "/GPSData.txt")
+    if ~isfile(ids_file)
+        run(`curl -o $(ids_file) ftp://ftp.agi.com/pub/Catalog/Almanacs/SEM/GPSData.txt`);
+    end
+    GPSData = parseGPSData(ids_file)
+    return GPSData
+end
+
+
+const GPSData = getCurrentGPSNORADIDS()

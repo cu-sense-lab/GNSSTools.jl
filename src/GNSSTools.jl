@@ -27,6 +27,8 @@ module GNSSTools
     using SatelliteToolbox
     print("Done\nImporting ODE...")
     using ODE
+    print("Done\nImporting MAT...")
+    using MAT
     print("Done\nImporting PyPlot...")
     using PyPlot
     Axes3D = PyPlot.Axes3D
