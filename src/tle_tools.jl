@@ -185,3 +185,51 @@ function calcelevation(sat_tle, julian_date_range, eop, obs_lla;
                         obs_lla, obs_ecef, Δt, ts, sat_ranges,
                         azs, els, sat_ecefs)
 end
+
+
+"""
+    getTLEs(obs_time_JD, satnums)
+
+Query Space-Track.org for TLEs matching time and satnum
+criteria. Parse and determine TLEs for eac satnum that
+is closest but before the observation time.
+"""
+function getTLEs(obs_time_JD, satnums; Δdays=2)
+    obs_time_JD_begin = obs_time_JD - Δdays
+    obs_time_begin = JDtoDate(obs_time_JD_begin)
+    obs_time = JDtoDate(obs_time_JD)
+    satnum_list = string(satnums[1])
+    for i in 2:length(satnums)
+        satnum_list = string(satnum_list, ",", string(satnums[i]))
+    end
+    tle_file = string(homedir(), "/.GNSSTools/tles.txt")
+    date_range = string(string(obs_time_begin[1], pad=4), "-",
+                        string(obs_time_begin[2], pad=2), "-",
+                        string(obs_time_begin[3], pad=2), "--",
+                        string(obs_time[1], pad=4), "-",
+                        string(obs_time[2], pad=2), "-",
+                        string(obs_time[3], pad=2))
+    login_url = "https://www.space-track.org/ajaxauth/login"
+    base_query = "query=https://www.space-track.org/basicspacedata/query/class/tle/EPOCH/"
+    query_tail = "/orderby/NORAD_CAT_ID/format/3le"
+    norad_cat_id = "/NORAD_CAT_ID/"
+    # Get username from user
+    print("Provide Space-Track.org username: ")
+    username = readline(stdin)
+    password = getpass.getpass("Provide Space-Track.org username password: ")
+    println(`curl -o $tle_file $login_url -d identity=$username""&"""password=$password""&"""$base_query$date_range$norad_cat_id$satnum_list$query_tail`)
+    run(`curl -o $tle_file $login_url -d identity=$username""&"""password=$password""&"""$base_query$date_range$norad_cat_id$satnum_list$query_tail`)
+    tles = read_tle(tle_file)
+    return tles
+end
+
+
+# TODO: Use `https://www.space-track.org/basicspacedata/query/class/tle/EPOCH/2020-06-12--2020-06-13/NORAD_CAT_ID/25544,41328,29486/orderby/NORAD_CAT_ID/format/3le`
+# to query specific satellite TLE between times and return a list of TLE with
+# line zero for names.
+#
+# EXAMPLE:
+#
+# run(`curl -o tles.tle https://www.space-track.org/ajaxauth/login -u sergei.bilardi@colorado.edu -d query=https://www.space-track.org/basicspacedata/query/class/tle/EPOCH/2020-06-12--2020-06-13/NORAD_CAT_ID/25544,41328,29486/orderby/NORAD_CAT_ID/format/3le`)
+# Place username into above string. cURL will ask for user password.
+# run(`curl -o C:\\Users\\sjbil/.GNSSTools/tles.txt https://www.space-track.org/ajaxauth/login -d identity=sergei.bilardi@colorado.edu"&"passeword=5mpVZ1o1YxY5gcQ"&"query=https://www.space-track.org/basicspacedata/qouery/class/tle/EPOCH/2020-06-11--2020-06-13/NORAD_CAT_ID/25544,41328,2948r6/orderby/NORAD_CAT_ID/format/3le`)

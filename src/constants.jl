@@ -137,18 +137,21 @@ Download GPS SV data from AGI and parse.
 Returns a dictionary with historical SVs
 for each PRN.
 """
-function getCurrentGPSNORADIDS()
+function getCurrentGPSNORADIDS(GPS_data_file_url)
     directory = string(homedir(), "/.GNSSTools")
     if ~isdir(directory)
         mkpath(directory)
     end
     ids_file = string(directory, "/GPSData.txt")
     if ~isfile(ids_file)
-        run(`curl -o $(ids_file) ftp://ftp.agi.com/pub/Catalog/Almanacs/SEM/GPSData.txt`);
+        run(`curl -o $(ids_file) $(GPS_data_file_url)`);
     end
     GPSData = parseGPSData(ids_file)
     return GPSData
 end
 
 
-const GPSData = getCurrentGPSNORADIDS()
+const GPS_data_file_url = "ftp://ftp.agi.com/pub/Catalog/Almanacs/SEM/GPSData.txt"
+
+
+const GPSData = getCurrentGPSNORADIDS(GPS_data_file_url)
