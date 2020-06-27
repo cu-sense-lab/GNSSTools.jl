@@ -29,9 +29,6 @@ module GNSSTools
     using ODE
     print("Done\nImporting MAT...")
     using MAT
-    print("Done\nImporting PyCall...")
-    using PyCall
-    getpass = pyimport("getpass")
     print("Done\nImporting PyPlot...")
     using PyPlot
     Axes3D = PyPlot.Axes3D

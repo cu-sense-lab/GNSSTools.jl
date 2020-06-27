@@ -216,9 +216,10 @@ function getTLEs(obs_time_JD, satnums; Δdays=2)
     # Get username from user
     print("Provide Space-Track.org username: ")
     username = readline(stdin)
-    password = getpass.getpass("Provide Space-Track.org username password: ")
-    println(`curl -o $tle_file $login_url -d identity=$username""&"""password=$password""&"""$base_query$date_range$norad_cat_id$satnum_list$query_tail`)
-    run(`curl -o $tle_file $login_url -d identity=$username""&"""password=$password""&"""$base_query$date_range$norad_cat_id$satnum_list$query_tail`)
+    secret_pass = Base.getpass("Provide Space-Track.org username password")
+    password = read(secret_pass, String)
+    run(`curl -o $tle_file $login_url -d identity=$username"""&"""password=$password"""&"""$base_query$date_range$norad_cat_id$satnum_list$query_tail`);
+    Base.shred!(secret_pass)
     tles = read_tle(tle_file)
     return tles
 end
