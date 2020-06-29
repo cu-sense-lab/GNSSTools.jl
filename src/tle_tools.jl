@@ -135,7 +135,6 @@ function calcenumatrix(obs_lla)
 end
 
 
-
 """
     calcelevation(sat_tle, julian_date_range, eop, obs_ecef)
 
@@ -188,21 +187,49 @@ end
 
 
 """
+    getGPSSatnums(obs_time_JD, prns)
+
+Get the NORAD ID for each PRN for a given
+observationn time in Julian Days. Read
+from `GPSData` dictionary. Returns
+dictionary with keys being the prns
+"""
+function getGPSSatnums(obs_time_JD, prns)
+    gps_satnums = Dict{Int,Int}()
+    for prn in prns
+        for sv in collect(keys(GPSData[prn]))
+            if GPSData[prn][sv]["active"]
+                if obs_time_JD >= GPSData[prn][sv]["start_julian_date"]
+                    gps_satnums[prn] = GPSData[prn][sv]["satnum"]
+                end
+            else
+                if ((obs_time_JD > GPSData[prn][sv]["start_julian_date"]) &&
+                   (obs_time_JD < GPSData[prn][sv]["end_julian_date"]))
+                    gps_satnums[prn] = GPSData[prn][sv]["satnum"]
+                end
+            end
+        end
+    end
+    return gps_satnums
+end
+
+
+"""
     getTLEs(obs_time_JD, satnums)
 
 Query Space-Track.org for TLEs matching time and satnum
 criteria. Parse and determine TLEs for eac satnum that
 is closest but before the observation time.
 """
-function getTLEs(obs_time_JD, satnums; Δdays=2)
+function getTLEs(obs_time_JD, satnums; Δdays=3)
     obs_time_JD_begin = obs_time_JD - Δdays
     obs_time_begin = JDtoDate(obs_time_JD_begin)
-    obs_time = JDtoDate(obs_time_JD)
+    obs_time = JDtoDate(obs_time_JD+1)
     satnum_list = string(satnums[1])
     for i in 2:length(satnums)
         satnum_list = string(satnum_list, ",", string(satnums[i]))
     end
-    tle_file = string(homedir(), "/.GNSSTools/tles.txt")
+    tle_file = string(homedir(), "/.GNSSTools/tles.tle")
     date_range = string(string(obs_time_begin[1], pad=4), "-",
                         string(obs_time_begin[2], pad=2), "-",
                         string(obs_time_begin[3], pad=2), "--",
@@ -218,19 +245,27 @@ function getTLEs(obs_time_JD, satnums; Δdays=2)
     username = readline(stdin)
     secret_pass = Base.getpass("Provide Space-Track.org username password")
     password = read(secret_pass, String)
-    run(`curl -o $tle_file $login_url -d identity=$username"""&"""password=$password"""&"""$base_query$date_range$norad_cat_id$satnum_list$query_tail`);
+    run(`curl -o $tle_file $login_url -d identity=$username"""&"""password=$password"""&"""$base_query$date_range$norad_cat_id$satnum_list$query_tail`;
+        wait=false);
     Base.shred!(secret_pass)
     tles = read_tle(tle_file)
-    return tles
+    filtered_tles = Dict{Int,TLE}()
+    for satnum in satnums
+        Δts = []
+        idxs = []
+        for i in 1:length(tles)
+            tle = tles[i]
+            if tle.sat_num == satnum
+                append!(Δts, abs(tle.epoch-obs_time_JD))
+                append!(idxs, i)
+            end
+        end
+        if ~isempty(Δts)
+            min_Δt_idx = argmin(Δts)
+            filtered_tles[satnum] = tles[idxs[min_Δt_idx]]
+        else
+            @warn "$satnum had no TLE results. Increase Δdays (currently set to $Δdays)."
+        end
+    end
+    return filtered_tles
 end
-
-
-# TODO: Use `https://www.space-track.org/basicspacedata/query/class/tle/EPOCH/2020-06-12--2020-06-13/NORAD_CAT_ID/25544,41328,29486/orderby/NORAD_CAT_ID/format/3le`
-# to query specific satellite TLE between times and return a list of TLE with
-# line zero for names.
-#
-# EXAMPLE:
-#
-# run(`curl -o tles.tle https://www.space-track.org/ajaxauth/login -u sergei.bilardi@colorado.edu -d query=https://www.space-track.org/basicspacedata/query/class/tle/EPOCH/2020-06-12--2020-06-13/NORAD_CAT_ID/25544,41328,29486/orderby/NORAD_CAT_ID/format/3le`)
-# Place username into above string. cURL will ask for user password.
-# run(`curl -o C:\\Users\\sjbil/.GNSSTools/tles.txt https://www.space-track.org/ajaxauth/login -d identity=sergei.bilardi@colorado.edu"&"passeword=5mpVZ1o1YxY5gcQ"&"query=https://www.space-track.org/basicspacedata/qouery/class/tle/EPOCH/2020-06-11--2020-06-13/NORAD_CAT_ID/25544,41328,2948r6/orderby/NORAD_CAT_ID/format/3le`)

@@ -100,6 +100,9 @@ module GNSSTools
     export data_info_from_name
     export initorbitinfo
     export calcdoppler
+    export getGPSSatnums
+    export getTLEs
+    export GPSData
 
 
     println("Done")
