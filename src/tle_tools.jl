@@ -26,7 +26,10 @@ the file names of the individual TLE files.
 function initorbitinfo(source_tle::String, target_tle::String, start_time,
                        site_loc_lla)
     start_time_julian_date = DatetoJD(start_time...)
-    site_loc_ecef = GeodetictoECEF(site_loc_lla...)
+    lat = deg2rad(site_loc_ecef[1])
+    lon = deg2rad(site_loc_ecef[2])
+    height = site_loc_ecef[3]
+    site_loc_ecef = GeodetictoECEF(lat, lon, height)
     tle = [read_tle(source_tle)[1], read_tle(target_tle)[1]]
     orb = [init_orbit_propagator(Val(:sgp4), tle[1], sgp4_gc_wgs84),
            init_orbit_propagator(Val(:sgp4), tle[2], sgp4_gc_wgs84)]

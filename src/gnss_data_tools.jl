@@ -37,6 +37,26 @@ end
 
 
 """
+	reloaddata!(gnss_data::GNSSData, start_data_idx, sample_num)
+
+Reloads portion of data up to the length of the data array inside
+`gnss_data`.
+"""
+function reloaddata!(gnss_data::GNSSData, start_data_idx, sample_num)
+	file_name = gnss_data.file_name
+	data_type = gnss_data.data_type
+	data = gnss_data.data
+	if sample_num <= gnss_data.sample_num
+		data, end_idx, dtype = readdatafile!(data, data_type, file_name,
+	                                         sample_num, start_data_idx)
+	else
+		error("`sample_num` is greater than data sample size!")
+	end
+	return gnss_data
+end
+
+
+"""
     readdatafile(data_type::Val{:sc8}, file_name, sample_num,
                  start_idx=0, message="Loading data...")
 
@@ -44,7 +64,7 @@ Loads sc8 data files. First 8-bit number is real, second is
 imaginary.
 """
 function readdatafile!(data, data_type::Val{:sc8}, file_name, sample_num,
-                       start_idx=0, message="Loading data...")
+                       start_idx=1, message="Loading data...")
 	# Open file
 	f = open(file_name, "r")
 	# Go to start location
@@ -66,7 +86,7 @@ Loads sc8 data files. For each UInt8 number,
 the LSB is real and MSB is imaginary.
 """
 function readdatafile!(data, data_type::Val{:sc4}, file_name, sample_num,
-                       start_idx=0, message="Loading data...")
+                       start_idx=1, message="Loading data...")
 	# Open file
 	f = open(file_name, "r")
 	# Go to start location
@@ -97,6 +117,20 @@ function bytetocomplex(byte::UInt8)
 	Qmag = xor(Qsign*0x07, Quns&0x07)
 	# Compute the complex number
 	return (-1)^(Isign)*Imag + (-1)^(Qsign)*Qmag*1im
+end
+
+
+"""
+	FileInfo
+"""
+struct FileInfo{T1,T2,T3}
+	f_s::Float64
+	f_if::Float64
+	f_center::Float64
+	sigtype::T1
+	data_type::T2
+	timestamp::T3
+	timestamp_JD::Float64
 end
 
 
@@ -134,5 +168,14 @@ function data_info_from_name(file_name)
 	else
 		error("Cannot determine f_s, f_if, & f_center. Manual specify f_s and f_if.")
 	end
-	return (f_s, f_if, f_center, sigtype, data_type)
+	year = parse(Int, file_name[1:4])
+	month = parse(Int, file_name[5:6])
+	day = parse(Int, file_name[7:8])
+	hour = parse(Int, file_name[10:11])
+	minute = parse(Int, file_name[12:13])
+	second = parse(Int, file_name[14:15])
+	timestamp = (year, month, day, hour, minute, second)
+	timestamp_JD = DatetoJD(timestamp...)
+	return FileInfo(f_s, f_if, f_center, sigtype, data_type,
+	                timestamp, timestamp_JD)
 end
