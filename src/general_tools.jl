@@ -212,7 +212,6 @@ function find_and_get_timestamp(file_name)
     	timestamp_JD = DatetoJD(timestamp...)
         return (timestamp, timestamp_JD)
     else
-        @warn "Data timestamp not found. Please supply it manually."
-        return (missing, missing)
+        error("Data timestamp not found. Please supply it manually.")
     end
 end
