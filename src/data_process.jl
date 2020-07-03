@@ -2,13 +2,13 @@
     dataprocess(data_file; target_satnum=missing, T=10e-3, t_length=4.,
                 output_dir=missing, prns=:all, data_start_t=5e-3,
                 fd_range=5000., fd_center=0., Δdays=3, showplot=true,
-                site_lla=(40.01, -105.2437, 1655))
+                site_lla=(40.01, -105.2437, 1655), figsize=missing)
 
 Perform course acquisition and/or tracking over entire data file using
 coherent integration `T` with length of data to be processed being defined
 by `t_length`.
 """
-function dataprocess(data_file; target_satnum=missing, T=10e-3, t_length=4.,
+function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
                      output_dir=missing, prns=:all, data_start_t=5e-3,
                      fd_range=5000., fd_center=0., Δdays=3, showplot=true,
                      site_lla=(40.01, -105.2437, 1655), figsize=missing)
@@ -57,7 +57,7 @@ function dataprocess(data_file; target_satnum=missing, T=10e-3, t_length=4.,
     results = Dict{Int,Dict{String,Array{Float64}}}()
     for prn in prns
         results[prn] = Dict("n0_est"=>Array{Float64}(undef, N),
-                            "fd_est"=>Array{Float64}(undef, N)
+                            "fd_est"=>Array{Float64}(undef, N),
                             "SNR_est"=>Array{Float64}(undef, N))
     end
     # Perform course acquisition on data at every Nᵗʰ T segment for each
@@ -102,7 +102,7 @@ function dataprocess(data_file; target_satnum=missing, T=10e-3, t_length=4.,
     # Plot results for only 1 PRN. More than 1 are not plotted.
     if showplot && (length(prns) == 1)
         if t[end] > 60
-            t .=* 1/60
+            t .*= 1/60
             t_label = "Minutes"
         else
             t_label = "Seconds"
