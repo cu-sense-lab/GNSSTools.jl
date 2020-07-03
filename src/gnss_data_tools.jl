@@ -170,14 +170,7 @@ function data_info_from_name(file_name)
 	else
 		error("Cannot determine f_s, f_if, & f_center. Manual specify f_s and f_if.")
 	end
-	year = parse(Int, file_name[1:4])
-	month = parse(Int, file_name[5:6])
-	day = parse(Int, file_name[7:8])
-	hour = parse(Int, file_name[10:11])
-	minute = parse(Int, file_name[12:13])
-	second = parse(Int, file_name[14:15])
-	timestamp = (year, month, day, hour, minute, second)
-	timestamp_JD = DatetoJD(timestamp...)
+	timestamp, timestamp_JD = find_and_get_timestamp(file_name)
 	return FileInfo(f_s, f_if, f_center, sig_freq, sigtype, data_type,
 	                timestamp, timestamp_JD)
 end

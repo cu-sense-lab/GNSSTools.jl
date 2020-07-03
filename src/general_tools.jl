@@ -165,3 +165,54 @@ function meshgrid(x, y)
     end
     return (X, Y)
 end
+
+
+"""
+    find_and_get_timestamp(file_name)
+
+Find a sequency of 8 digits with `_` separating it from a sequence
+of 6 digits. Return the timestamp tuple.
+"""
+function find_and_get_timestamp(file_name)
+    sequence_found = false
+    sequence_counter = 0
+    sequence_start = 1
+    sequence_stop = 1
+    for i in 1:length(file_name)
+        if isdigit(file_name[i])
+            if sequence_found == false
+                sequence_start = i
+            end
+            sequence_found = true
+            sequence_counter += 1
+            if sequence_counter == 14
+                sequence_stop = i
+                break
+            end
+        else
+            if (file_name[i] == '_') && sequence_found && (sequence_counter == 8)
+                # Do nothing
+            else
+                sequence_found = false
+                sequence_counter = 0
+                sequence_idx_start = 1
+                sequence_idx_stop = 1
+            end
+        end
+    end
+    if sequence_found
+        timestamp_string = file_name[sequence_start:sequence_stop]
+        year = parse(Int, timestamp_string[1:4])
+    	month = parse(Int, timestamp_string[5:6])
+    	day = parse(Int, timestamp_string[7:8])
+    	hour = parse(Int, timestamp_string[10:11])
+    	minute = parse(Int, timestamp_string[12:13])
+    	second = parse(Int, timestamp_string[14:15])
+    	timestamp = (year, month, day, hour, minute, second)
+    	timestamp_JD = DatetoJD(timestamp...)
+        return (timestamp, timestamp_JD)
+    else
+        @warn "Data timestamp not found. Please supply it manually."
+        return (missing, missing)
+    end
+end
