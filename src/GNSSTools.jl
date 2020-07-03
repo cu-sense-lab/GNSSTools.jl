@@ -103,6 +103,7 @@ module GNSSTools
     export getGPSSatnums
     export getTLEs
     export GPSData
+    export dataprocess
 
 
     println("Done")

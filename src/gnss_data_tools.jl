@@ -42,7 +42,8 @@ end
 Reloads portion of data up to the length of the data array inside
 `gnss_data`.
 """
-function reloaddata!(gnss_data::GNSSData, start_data_idx, sample_num)
+function reloaddata!(gnss_data::GNSSData, start_data_idx,
+	                 sample_num=gnss_data.sample_num)
 	file_name = gnss_data.file_name
 	data_type = gnss_data.data_type
 	data = gnss_data.data
@@ -127,6 +128,7 @@ struct FileInfo{T1,T2,T3}
 	f_s::Float64
 	f_if::Float64
 	f_center::Float64
+	sig_freq::Float64
 	sigtype::T1
 	data_type::T2
 	timestamp::T3
@@ -160,11 +162,11 @@ function data_info_from_name(file_name)
 	end
 	# Determine sampling and IF frequency and frequency center
 	if occursin("g1b1", file_name)
-		f_s, f_if, f_center, sigtype = g1b1()
+		f_s, f_if, f_center, sig_freq, sigtype = g1b1()
 	elseif occursin("g2r2", file_name)
 		error("L2 band nav signals not supported. Use either L1 (g1b1) or L5 (g5) instead.")
 	elseif occursin("g5", file_name)
-		f_s, f_if, f_center, sigtype = g5()
+		f_s, f_if, f_center, sig_freq, sigtype = g5()
 	else
 		error("Cannot determine f_s, f_if, & f_center. Manual specify f_s and f_if.")
 	end
@@ -176,6 +178,6 @@ function data_info_from_name(file_name)
 	second = parse(Int, file_name[14:15])
 	timestamp = (year, month, day, hour, minute, second)
 	timestamp_JD = DatetoJD(timestamp...)
-	return FileInfo(f_s, f_if, f_center, sigtype, data_type,
+	return FileInfo(f_s, f_if, f_center, sig_freq, sigtype, data_type,
 	                timestamp, timestamp_JD)
 end

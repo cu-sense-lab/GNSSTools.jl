@@ -46,7 +46,7 @@ function g1b1()
     f_center = 1.57e9  # Hz
     f_if = abs(L1_freq-f_center)
     sigtype = Val(:l1ca)
-    return (f_s, f_if, f_center, sigtype)
+    return (f_s, f_if, f_center, L1_freq, sigtype)
 end
 
 
@@ -60,7 +60,7 @@ function g5()
     f_center = 1.17645e9  # Hz
     f_if = abs(L5_freq-f_center)
     sigtype = Val(:l5q)
-    return (f_s, f_if, f_center, sigtype)
+    return (f_s, f_if, f_center, L5_freq, sigtype)
 end
 
 
