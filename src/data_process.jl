@@ -1,6 +1,8 @@
 """
-    dataprocess(data_file, tle_source, tle_target=missing,
-                T=1e-3, t_length=4.)
+    dataprocess(data_file; target_satnum=missing, T=10e-3, t_length=4.,
+                output_dir=missing, prns=:all, data_start_t=5e-3,
+                fd_range=5000., fd_center=0., Δdays=3, showplot=true,
+                site_lla=(40.01, -105.2437, 1655))
 
 Perform course acquisition and/or tracking over entire data file using
 coherent integration `T` with length of data to be processed being defined
@@ -9,7 +11,7 @@ by `t_length`.
 function dataprocess(data_file; target_satnum=missing, T=10e-3, t_length=4.,
                      output_dir=missing, prns=:all, data_start_t=5e-3,
                      fd_range=5000., fd_center=0., Δdays=3, showplot=true,
-                     site_lla=(40.01, -105.2437, 1655))
+                     site_lla=(40.01, -105.2437, 1655), figsize=missing)
     # Load data & infer f_s, f_if, and data type from file name
     file_info = data_info_from_name(data_file)
     start_data_idx = Int(file_info.f_s * start_t)+1
@@ -97,8 +99,31 @@ function dataprocess(data_file; target_satnum=missing, T=10e-3, t_length=4.,
             end
         end
     end
-    # Plot results for only 1 PRN only
+    # Plot results for only 1 PRN. More than 1 are not plotted.
     if showplot && (length(prns) == 1)
-
+        if t[end] > 60
+            t .=* 1/60
+            t_label = "Minutes"
+        else
+            t_label = "Seconds"
+        end
+        if figsize
+            fig = figure(figsize=figsize)
+        else
+            fig = figure()
+        end
+        ax1 = subplot(3, 1, 1)
+        plot(t, results[prns]["n0_est"], "k.")
+        xlabel("Time ($t_label)")
+        ylabel("n₀ (Samples)")
+        ax2 = subplot(3, 1, 2)
+        plot(t, results[prns]["fd_est"]./1000, "k.")
+        xlabel("Time ($t_label)")
+        ylabel("Doppler Frequency (kHz)")
+        ax3 = subplot(3, 1, 3)
+        plot(t, results[prns]["SNR_est"], "k.")
+        xlabel("Time ($t_label)")
+        ylabel("Correlation Peak SNR (dB)")
+        suptitle("PRN $prns")
     end
 end
