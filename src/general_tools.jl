@@ -230,13 +230,8 @@ Find a sequency of 8 digits with `_` separating it from a sequence
 of 6 digits. Return the timestamp tuple.
 """
 function find_and_get_timestamp(file_name)
-	timestamp_string = find_sequence(file_name, [8, 6], separators="_")
-    sequence_found = false
-    sequence_counter = 0
-    sequence_start = 1
-    sequence_stop = 1
-    if sequence_found
-        timestamp_string = file_name[sequence_start:sequence_stop]
+	timestamp_string = find_sequence(file_name, [8, 6], "_")
+    if ~ismissing(timestamp_string)
         year = parse(Int, timestamp_string[1:4])
     	month = parse(Int, timestamp_string[5:6])
     	day = parse(Int, timestamp_string[7:8])
