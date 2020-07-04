@@ -70,7 +70,6 @@ function g5()
 end
 
 
-
 """
     parseGPSData(data_file)
 
