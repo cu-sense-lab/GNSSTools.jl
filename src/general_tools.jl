@@ -270,7 +270,10 @@ function get_signal_type(file_name)
 	else
 		# Must check for information on center frequency and sampling rate
 		# in file name. If not present, user must specify manually.
-		data_freq_string =  find_sequence(file_name, [4,2,2], separators="._M")
+		data_freq_string =  find_sequence(file_name, [4,2,2], "._M")
+		if ismissing(data_freq_string)
+			data_freq_string =  find_sequence(file_name, [4,2,1], "._M")
+		end
 		if ismissing(data_freq_string)
 			error("Cannot determine f_s, f_if, & f_center. Manually specify f_s and f_if.")
 		else
@@ -278,19 +281,18 @@ function get_signal_type(file_name)
 			data_freq_string = split(data_freq_string, "_")
 			f_center = parse(Float64, data_freq_string[1]) * 1e6  # Hz
 			f_s = parse(Float64, data_freq_string[2]) * 1e6  # Hz
-			Δf = f_center .- [L1_freq, L2_freq, L5_freq]
+			Δf = abs.(f_center .- [L1_freq, L2_freq, L5_freq])
 			idx = argmin(Δf)
 			if idx == 1
 				sigtype = Val(:l1ca)
-				f_if = abs(L1_freq-f_center)
 				sig_freq = L1_freq
 			elseif idx == 3
 				sigtype = Val(:l5q)
-				f_if = abs(L5_freq-f_center)
-				sig_freq = L5
+				sig_freq = L5_freq
 			else
-				error("L2 signals not supported. Supported signals are L1 and L5.")
+				error("L2 signals are not supported. Supported signals are L1 and L5.")
 			end
+			f_if = abs(sig_freq-f_center)
 		end
 	end
 	return (f_s, f_if, f_center, sig_freq, sigtype)
