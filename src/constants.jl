@@ -31,6 +31,12 @@ const L1_freq = 1575.42e6  # Hz
 
 
 """
+    L2 frequency (Hz)
+"""
+const L2_freq = 1227.60e6  # Hz
+
+
+"""
     L5 Frequency (Hz)
 """
 const L5_freq = 1176.45e6  # Hz

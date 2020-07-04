@@ -168,38 +168,73 @@ end
 
 
 """
-    find_and_get_timestamp(file_name)
+	find_sequence(file_name, digit_nums, separators=missing)
 
-Find a sequency of 8 digits with `_` separating it from a sequence
-of 6 digits. Return the timestamp tuple.
+Find a number sequence in a file name. `digit_nums` can
+be a number or array.`separators` can also be either a
+number or array containing the characters such as `_` and `.`
+that may be between the numbers. Returns the string containing
+the sequence if found. Returns `missing` if not found.
 """
-function find_and_get_timestamp(file_name)
-    sequence_found = false
+function find_sequence(file_name, digit_nums, separators=missing)
+	total_digits = sum(digit_nums)
+	section_num = length(digit_nums)
+	current_section = 1
+	sequence_found = false
+	sequence_complete = false
+	between_sections = false
     sequence_counter = 0
-    sequence_start = 1
+	sequence_start = 1
     sequence_stop = 1
-    for i in 1:length(file_name)
+	for i in 1:length(file_name)
         if isdigit(file_name[i])
             if sequence_found == false
                 sequence_start = i
             end
             sequence_found = true
             sequence_counter += 1
-            if sequence_counter == 14
-                sequence_stop = i
-                break
-            end
+			if between_sections
+				current_section += 1
+				between_sections = false
+			end
         else
-            if (file_name[i] == '_') && sequence_found && (sequence_counter == 8)
-                # Do nothing
+            if sequence_found && (sequence_counter == sum(digit_nums[1:current_section])) && occursin(file_name[i], separators)
+				between_sections = true
             else
                 sequence_found = false
                 sequence_counter = 0
                 sequence_idx_start = 1
                 sequence_idx_stop = 1
+				current_section = 1
+				between_sections = false
             end
         end
+		if (sequence_counter == total_digits) && (current_section == section_num)
+			sequence_stop = i
+			sequence_complete = true
+			break
+		end
     end
+	if sequence_complete
+		return file_name[sequence_start:sequence_stop]
+	else
+		return missing
+	end
+end
+
+
+"""
+    find_and_get_timestamp(file_name)
+
+Find a sequency of 8 digits with `_` separating it from a sequence
+of 6 digits. Return the timestamp tuple.
+"""
+function find_and_get_timestamp(file_name)
+	timestamp_string = find_sequence(file_name, [8, 6], separators="_")
+    sequence_found = false
+    sequence_counter = 0
+    sequence_start = 1
+    sequence_stop = 1
     if sequence_found
         timestamp_string = file_name[sequence_start:sequence_stop]
         year = parse(Int, timestamp_string[1:4])
@@ -212,6 +247,31 @@ function find_and_get_timestamp(file_name)
     	timestamp_JD = DatetoJD(timestamp...)
         return (timestamp, timestamp_JD)
     else
-        error("Data timestamp not found. Please supply it manually.")
+        error("Data timestamp not found in file name. Please supply it manually.")
     end
+end
+
+
+"""
+    get_signal_type(file_name)
+
+Find the signal type of the data based off its file name.
+Only checks if signal type is L1 or L5 signal. L2 is not
+supported.
+"""
+function get_signal_type(file_name)
+    # Determine sampling and IF frequency and frequency center
+	if occursin("g1b1", file_name)
+		f_s, f_if, f_center, sig_freq, sigtype = g1b1()
+	elseif occursin("g2r2", file_name)
+		error("L2 band signals not supported. Use either L1 (g1b1) or L5 (g5) files instead.")
+	elseif occursin("g5", file_name)
+		f_s, f_if, f_center, sig_freq, sigtype = g5()
+	else
+		# Must check for information on center frequency and sampling rate
+		# in file name. If not present, user must specify manually.
+
+		error("Cannot determine f_s, f_if, & f_center. Manually specify f_s and f_if.")
+	end
+	return (f_s, f_if, f_center, sig_freq, sigtype)
 end

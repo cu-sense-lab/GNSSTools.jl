@@ -123,6 +123,8 @@ end
 
 """
 	FileInfo
+
+Struct holding file name information.
 """
 struct FileInfo{T1,T2,T3}
 	f_s::Float64
@@ -155,8 +157,8 @@ function data_info_from_name(file_name)
 	# Get file type (8- or 4-bit complex)
 	if occursin("sc8", file_name)
 		data_type = Val(:sc8)
-	elseif occursin("sc8", file_name)
-		data_type = Val(:sc8)
+	elseif occursin("sc4", file_name)
+		data_type = Val(:sc4)
 	else
 		error("File type not supported. Only sc8 and sc4 files are supported.")
 	end
@@ -164,11 +166,11 @@ function data_info_from_name(file_name)
 	if occursin("g1b1", file_name)
 		f_s, f_if, f_center, sig_freq, sigtype = g1b1()
 	elseif occursin("g2r2", file_name)
-		error("L2 band nav signals not supported. Use either L1 (g1b1) or L5 (g5) instead.")
+		error("L2 band signals not supported. Use either L1 (g1b1) or L5 (g5) files instead.")
 	elseif occursin("g5", file_name)
 		f_s, f_if, f_center, sig_freq, sigtype = g5()
 	else
-		error("Cannot determine f_s, f_if, & f_center. Manual specify f_s and f_if.")
+		error("Cannot determine f_s, f_if, & f_center. Manually specify f_s and f_if.")
 	end
 	timestamp, timestamp_JD = find_and_get_timestamp(file_name)
 	return FileInfo(f_s, f_if, f_center, sig_freq, sigtype, data_type,
