@@ -163,15 +163,7 @@ function data_info_from_name(file_name)
 		error("File type not supported. Only sc8 and sc4 files are supported.")
 	end
 	# Determine sampling and IF frequency and frequency center
-	if occursin("g1b1", file_name)
-		f_s, f_if, f_center, sig_freq, sigtype = g1b1()
-	elseif occursin("g2r2", file_name)
-		error("L2 band signals not supported. Use either L1 (g1b1) or L5 (g5) files instead.")
-	elseif occursin("g5", file_name)
-		f_s, f_if, f_center, sig_freq, sigtype = g5()
-	else
-		error("Cannot determine f_s, f_if, & f_center. Manually specify f_s and f_if.")
-	end
+	f_s, f_if, f_center, sig_freq, sigtype = get_signal_type(file_name)
 	timestamp, timestamp_JD = find_and_get_timestamp(file_name)
 	return FileInfo(f_s, f_if, f_center, sig_freq, sigtype, data_type,
 	                timestamp, timestamp_JD)
