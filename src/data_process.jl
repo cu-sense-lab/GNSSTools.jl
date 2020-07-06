@@ -16,6 +16,16 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
                      use_gps_orbit_only=false)
     # Load data & infer f_s, f_if, and data type from file name
     file_info = data_info_from_name(data_file)
+    println("-----------------------------------------------------")
+    println("                      File Info")
+    println("-----------------------------------------------------")
+    println("Timestamp:                  $(file_info.timestamp)")
+    println("Sampling frequency (Hz):    $(file_info.f_s)")
+    println("Signal type:                $(uppercase(gnsstypes[file_info.sigtype]))")
+    println("Data center frequency (Hz): $(file_info.sig_freq)")
+    println("IF frequency (Hz):          $(file_info.f_if)")
+    println("Data type:                  $(uppercase(gnsstypes[file_info.data_type]))")
+    println("-----------------------------------------------------")
     start_data_idx = Int(file_info.f_s * data_start_t)+1
     data = loaddata(file_info.data_type, data_file, file_info.f_s,
                     file_info.f_if, t_length;
@@ -71,7 +81,8 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
     for prn in prns
         results[prn] = Dict("n0_est"=>Array{Float64}(undef, N),
                             "fd_est"=>Array{Float64}(undef, N),
-                            "SNR_est"=>Array{Float64}(undef, N))
+                            "SNR_est"=>Array{Float64}(undef, N),
+                            "fd_exp"=>Array{Float64}(undef, N))
     end
     # Perform course acquisition on data at every Nᵗʰ T segment for each
     # `prn` in `prns`
@@ -106,9 +117,10 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
                                showprogressbar=false)
             # Estimate n₀_est, fd_est, and SNR_est from course acquisition
             # result
-            n₀, f_d, snr = course_acq_est(corr_result, fd_center, fd_range, Δfd)
+            n₀, f_d, snr = course_acq_est(corr_result, fd_exp, fd_range, Δfd)
             results[prn]["n0_est"][n] = n₀
             results[prn]["fd_est"][n] = f_d
+            results[prn]["fd_exp"][n] = fd_exp
             results[prn]["SNR_est"][n] = snr
         end
         reloaddata!(data, start_data_idx+n*N+1)
