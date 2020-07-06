@@ -112,7 +112,7 @@ end
 
 Calculate n₀_est, fd_esst, and SNR of the course acquisition peak.
 """
-function course_acq_est(corr_result)
+function course_acq_est(corr_result, fd_center, fd_range, Δfd)
     # Get peak maximum index location
     max_idx = argmax(corr_result)
     # Calculate course Doppler frequency

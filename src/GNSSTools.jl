@@ -52,6 +52,7 @@ module GNSSTools
     include("tracking_tools.jl")
     include("dkalman.jl")
     include("testGNSSTools.jl")
+    include("calcdoppler.jl")
     include("tle_tools.jl")
     include("data_process.jl")
 

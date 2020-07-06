@@ -1,8 +1,9 @@
 """
     dataprocess(data_file; target_satnum=missing, T=10e-3, t_length=4.,
                 output_dir=missing, prns=:all, data_start_t=5e-3,
-                fd_range=5000., fd_center=0., Δdays=3, showplot=true,
-                site_lla=(40.01, -105.2437, 1655), figsize=missing)
+                fd_range=5000., fd_center=0., Δdays=5, showplot=true,
+                site_lla=(40.01, -105.2437, 1655), figsize=missing,
+                use_gps_orbit_only=false)
 
 Perform course acquisition and/or tracking over entire data file using
 coherent integration `T` with length of data to be processed being defined
@@ -10,16 +11,17 @@ by `t_length`.
 """
 function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
                      output_dir=missing, prns=:all, data_start_t=5e-3,
-                     fd_range=5000., fd_center=0., Δdays=3, showplot=true,
-                     site_lla=(40.01, -105.2437, 1655), figsize=missing)
+                     fd_range=5000., fd_center=0., Δdays=5, showplot=true,
+                     site_lla=(40.01, -105.2437, 1655), figsize=missing,
+                     use_gps_orbit_only=false)
     # Load data & infer f_s, f_if, and data type from file name
     file_info = data_info_from_name(data_file)
-    start_data_idx = Int(file_info.f_s * start_t)+1
+    start_data_idx = Int(file_info.f_s * data_start_t)+1
     data = loaddata(file_info.data_type, data_file, file_info.f_s,
                     file_info.f_if, t_length;
                     start_data_idx=start_data_idx)
     # Initialize replica struct
-    replica = definesignal(file_info.sigtype, file_info.f_s, replica_t_length)
+    replica = definesignal(file_info.sigtype, file_info.f_s, T)
     # Calculate Doppler bin spacing for course acquisition
     Δfd = 1/replica.t_length  # Hz
     # Allocate space for correlation result
@@ -35,25 +37,36 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
     gps_satnums = getGPSSatnums(file_info.timestamp_JD, prns)
     prns = collect(keys(gps_satnums))
     # Initialize orbit struct if target object TLE given
-    if ismissing(tle_target)
+    if ismissing(target_satnum) && ~use_gps_orbit_only
         use_orbitinfo = false
     else
         use_orbitinfo = true
+        if use_gps_orbit_only
+            satnum_list = collect(values(gps_satnums))
+        else
+            satnum_list = [collect(values(gps_satnums)); target_satnum]
+        end
         # Get TLEs for each PRN and target satnum
         tles = getTLEs(file_info.timestamp_JD,
-                       [collect(values(gps_satnums)); target_satnum],
+                       satnum_list,
                        Δdays=Δdays)
         orbitinfo = Dict{Int,OrbitInfo}()
         for prn in prns
-            orbitinfo[prn] = initorbitinfo(tles[gps_satnums[prn]],
-                                           tles[target_satnum],
-                                           file_info.timestamp_JD,
-                                           site_lla)
+            if use_gps_orbit_only
+                orbitinfo[prn] = initorbitinfo(tles[gps_satnums[prn]],
+                                               file_info.timestamp,
+                                               site_lla)
+            else
+                orbitinfo[prn] = initorbitinfo(tles[gps_satnums[prn]],
+                                               tles[target_satnum],
+                                               file_info.timestamp,
+                                               site_lla)
+            end
         end
     end
     # Allocate space for t, fd_est, n₀_est, and SNR_est arrays
     N = Int(floor(t_length/T))
-    t = calctvector(N, T)
+    t = calctvector(N, 1/T)
     results = Dict{Int,Dict{String,Array{Float64}}}()
     for prn in prns
         results[prn] = Dict("n0_est"=>Array{Float64}(undef, N),
@@ -62,32 +75,44 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
     end
     # Perform course acquisition on data at every Nᵗʰ T segment for each
     # `prn` in `prns`
+    p = Progress(N, 1, "Processing...")
     for n in 1:N
         Δt_JD = (t[n] + T/2)/60/60/24  # Days
         for prn in prns
             # Calculate Doppler at (t + T/2), the middle of the replica signal
             # Assume that the Doppler is constant
             if use_orbitinfo
-                fd_exp = calcdoppler(orbitinfo[prn].orb[1],
-                                     orbitinfo[prn].orb[2],
-                                     orbitinfo[prn].start_time_julian_date+Δt_JD,
-                                     orbitinfo[prn].eop,
-                                     orbitinfo[prn].obs_ecef,
-                                     file_info.sig_freq)
+                if use_gps_orbit_only
+                    fd_exp = calcdoppler(orbitinfo[prn].orb,
+                                         orbitinfo[prn].start_time_julian_date+Δt_JD,
+                                         orbitinfo[prn].eop,
+                                         orbitinfo[prn].site_loc_ecef,
+                                         file_info.sig_freq)
+                else
+                    fd_exp = calcdoppler(orbitinfo[prn].orb[1],
+                                         orbitinfo[prn].orb[2],
+                                         orbitinfo[prn].start_time_julian_date+Δt_JD,
+                                         orbitinfo[prn].eop,
+                                         orbitinfo[prn].site_loc_ecef,
+                                         file_info.sig_freq)
+                end
             else
                 fd_exp = fd_center
             end
             # Perform course acquisition
             courseacquisition!(corr_result, data, replica, prn;
-                               fd_center=fd_center, fd_range=fd_range,
-                               fd_rate=0., Δfd=Δfd, threads=nthreads())
+                               fd_center=fd_exp, fd_range=fd_range,
+                               fd_rate=0., Δfd=Δfd, threads=nthreads(),
+                               showprogressbar=false)
             # Estimate n₀_est, fd_est, and SNR_est from course acquisition
             # result
-            n₀, f_d, snr = course_acq_est(corr_result)
+            n₀, f_d, snr = course_acq_est(corr_result, fd_center, fd_range, Δfd)
             results[prn]["n0_est"][n] = n₀
             results[prn]["fd_est"][n] = f_d
             results[prn]["SNR_est"][n] = snr
         end
+        reloaddata!(data, start_data_idx+n*N+1)
+        next!(p)
     end
     # Save results to HDF5 file
     if ~ismissing(output_dir)
@@ -101,29 +126,31 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
     end
     # Plot results for only 1 PRN. More than 1 are not plotted.
     if showplot && (length(prns) == 1)
-        if t[end] > 60
+        if t_length > 60
             t .*= 1/60
             t_label = "Minutes"
         else
             t_label = "Seconds"
         end
-        if figsize
+        if ~ismissing(figsize)
             fig = figure(figsize=figsize)
         else
             fig = figure()
         end
         ax1 = subplot(3, 1, 1)
-        plot(t, results[prns]["n0_est"], "k.")
+        plot(t, results[prns[1]]["n0_est"], "k.")
         xlabel("Time ($t_label)")
         ylabel("n₀ (Samples)")
         ax2 = subplot(3, 1, 2)
-        plot(t, results[prns]["fd_est"]./1000, "k.")
+        plot(t, results[prns[1]]["fd_est"]./1000, "k.")
         xlabel("Time ($t_label)")
         ylabel("Doppler Frequency (kHz)")
         ax3 = subplot(3, 1, 3)
-        plot(t, results[prns]["SNR_est"], "k.")
+        plot(t, results[prns[1]]["SNR_est"], "k.")
         xlabel("Time ($t_label)")
         ylabel("Correlation Peak SNR (dB)")
-        suptitle("PRN $prns")
+        suptitle("PRN $(prns[1])")
+        show()
     end
+    return results
 end

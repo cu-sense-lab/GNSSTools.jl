@@ -65,6 +65,6 @@ function calcdoppler(orb::OrbitPropagator, julian_date, eop,
     # Direct signal case
     v_obs = transpose((r-obs_ecef)/norm(r-obs_ecef))*v
     # Calculate observed Doppler frequency by observer
-    fd_obs = -sig_freq*(v_obs + v_g2s + v_s2g)/c  # Hz
+    fd_obs = -sig_freq*v_obs/c  # Hz
     return v_obs
 end

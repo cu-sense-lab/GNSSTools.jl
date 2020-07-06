@@ -117,7 +117,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     courseacquisition!(corr_result, data, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,
                        fd_rate=fd_rate, Δfd=Δfd, threads=threads)
-    n0_est, fd_est, SNR_est = course_acq_est(corr_result)
+    n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range, Δfd)
     println("Done ($(SNR_est)dB)")
     # Perform FFT based fine acquisition
     # Returns structure containing the fine, course,

@@ -26,9 +26,9 @@ the file names of the individual TLE files.
 function initorbitinfo(source_tle::String, target_tle::String, start_time,
                        site_loc_lla)
     start_time_julian_date = DatetoJD(start_time...)
-    lat = deg2rad(site_loc_ecef[1])
-    lon = deg2rad(site_loc_ecef[2])
-    height = site_loc_ecef[3]
+    lat = deg2rad(site_loc_lla[1])
+    lon = deg2rad(site_loc_lla[2])
+    height = site_loc_lla[3]
     site_loc_ecef = GeodetictoECEF(lat, lon, height)
     tle = [read_tle(source_tle)[1], read_tle(target_tle)[1]]
     orb = [init_orbit_propagator(Val(:sgp4), tle[1], sgp4_gc_wgs84),
@@ -51,9 +51,9 @@ the already loaded TLE files as `SatelliteToolbox` `TLE` structs.
 function initorbitinfo(source_tle::TLE, target_tle::TLE, start_time,
                        site_loc_lla)
     start_time_julian_date = DatetoJD(start_time...)
-    lat = deg2rad(site_loc_ecef[1])
-    lon = deg2rad(site_loc_ecef[2])
-    height = site_loc_ecef[3]
+    lat = deg2rad(site_loc_lla[1])
+    lon = deg2rad(site_loc_lla[2])
+    height = site_loc_lla[3]
     site_loc_ecef = GeodetictoECEF(lat, lon, height)
     tle = [source_tle, target_tle]
     orb = [init_orbit_propagator(Val(:sgp4), tle[1], sgp4_gc_wgs84),
@@ -74,9 +74,9 @@ the file name of the individual TLE file.
 """
 function initorbitinfo(source_tle::String, start_time, site_loc_lla)
     start_time_julian_date = DatetoJD(start_time...)
-    lat = deg2rad(site_loc_ecef[1])
-    lon = deg2rad(site_loc_ecef[2])
-    height = site_loc_ecef[3]
+    lat = deg2rad(site_loc_lla[1])
+    lon = deg2rad(site_loc_lla[2])
+    height = site_loc_lla[3]
     site_loc_ecef = GeodetictoECEF(lat, lon, height)
     tle = read_tle(source_tle)[1]
     orb = init_orbit_propagator(Val(:sgp4), tle, sgp4_gc_wgs84)
@@ -95,9 +95,9 @@ the already loaded TLE file as a `SatelliteToolbox` `TLE` struct.
 """
 function initorbitinfo(source_tle::TLE, start_time, site_loc_lla)
     start_time_julian_date = DatetoJD(start_time...)
-    lat = deg2rad(site_loc_ecef[1])
-    lon = deg2rad(site_loc_ecef[2])
-    height = site_loc_ecef[3]
+    lat = deg2rad(site_loc_lla[1])
+    lon = deg2rad(site_loc_lla[2])
+    height = site_loc_lla[3]
     site_loc_ecef = GeodetictoECEF(lat, lon, height)
     tle = source_tle
     orb = init_orbit_propagator(Val(:sgp4), tle, sgp4_gc_wgs84)
