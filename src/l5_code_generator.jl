@@ -46,7 +46,7 @@ const nh_chipping_rate = 1000.  # Hz
 """
    L5_db_chipping_rate
 
-The chipping rate of the databits for L5I. 
+The chipping rate of the databits for L5I.
 """
 const L5_db_chipping_rate = 100.  # Hz
 

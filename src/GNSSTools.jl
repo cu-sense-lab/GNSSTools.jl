@@ -7,7 +7,7 @@ module GNSSTools
     printstyled(logo, color=:default, bold=false)
     println(greeting)
 
-    using Reexport
+    # using Reexport
 
     print("Importing Random...")
     using Random

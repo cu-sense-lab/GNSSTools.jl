@@ -233,7 +233,7 @@ Query Space-Track.org for TLEs matching time and satnum
 criteria. Parse and determine TLEs for eac satnum that
 is closest but before the observation time.
 """
-function getTLEs(obs_time_JD, satnums; Δdays=3)
+function getTLEs(obs_time_JD, satnums; Δdays=5)
     obs_time_JD_begin = obs_time_JD - Δdays
     obs_time_begin = JDtoDate(obs_time_JD_begin)
     obs_time = JDtoDate(obs_time_JD+1)

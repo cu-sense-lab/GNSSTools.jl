@@ -19,11 +19,11 @@ function calcdoppler(gps_orb::OrbitPropagator,
     # gps_orb = init_orbit_propagator(Val{:sgp4}, gps_tle)
     # sat_orb = init_orbit_propagator(Val{:sgp4}, sat_tle)
     # Propagate orbits to "julian_date"
-    gps_orb, rg, vg = propagate_to_epoch!(gps_orb, julian_date)
-    sat_orb, rs, vs = propagate_to_epoch!(sat_orb, julian_date)
+    gps_orbit, rg, vg = propagate_to_epoch!(gps_orb, julian_date)
+    sat_orbit, rs, vs = propagate_to_epoch!(sat_orb, julian_date)
     # Convert orbits to state vectors
-    gps_teme = kepler_to_sv(gps_orb)
-    sat_teme = kepler_to_sv(sat_orb)
+    gps_teme = kepler_to_sv(gps_orbit)
+    sat_teme = kepler_to_sv(sat_orbit)
     # Transform TEME to ECEF frame
     gps_ecef = svECItoECEF(gps_teme, TEME(), ITRF(), julian_date, eop)
     sat_ecef = svECItoECEF(sat_teme, TEME(), ITRF(), julian_date, eop)
@@ -40,8 +40,8 @@ function calcdoppler(gps_orb::OrbitPropagator,
     # Radial velocity of GPS satellite relative to satellite
     v_s2g = transpose((rg-rs)/norm(rg-rs))*vg
     # Calculate observed Doppler frequency by observer
-    fd_obs = -sig_freq*(v_obs + v_g2s + v_s2g)/c  # Hz
-    return fd_obs
+    fd_obs = sig_freq*(v_obs + v_g2s + v_s2g)/c  # Hz
+    return -fd_obs
 end
 
 
@@ -54,9 +54,9 @@ Calculates the Doppler frequency for the direct signal case.
 function calcdoppler(orb::OrbitPropagator, julian_date, eop,
                      obs_ecef, sig_freq)
     # Propagate orbits to "julian_date"
-    orb, rg, vg = propagate_to_epoch!(orb, julian_date)
+    orbit, rg, vg = propagate_to_epoch!(orb, julian_date)
     # Convert orbits to state vectors
-    orb_teme = kepler_to_sv(orb)
+    orb_teme = kepler_to_sv(orbit)
     # Transform TEME to ECEF frame
     orb_ecef = svECItoECEF(orb_teme, TEME(), ITRF(), julian_date, eop)
     # Get velocities and positions
@@ -65,6 +65,6 @@ function calcdoppler(orb::OrbitPropagator, julian_date, eop,
     # Direct signal case
     v_obs = transpose((r-obs_ecef)/norm(r-obs_ecef))*v
     # Calculate observed Doppler frequency by observer
-    fd_obs = -sig_freq*v_obs/c  # Hz
-    return v_obs
+    fd_obs = sig_freq*v_obs/c  # Hz
+    return -fd_obs
 end

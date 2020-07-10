@@ -21,14 +21,14 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
     println("-----------------------------------------------------")
     println("Timestamp:                  $(file_info.timestamp)")
     println("Sampling frequency (Hz):    $(file_info.f_s)")
-    println("Signal type:                $(uppercase(gnsstypes[file_info.sigtype]))")
+    println("Signal type:                $(gnsstypes[file_info.sigtype])")
     println("Data center frequency (Hz): $(file_info.sig_freq)")
     println("IF frequency (Hz):          $(file_info.f_if)")
-    println("Data type:                  $(uppercase(gnsstypes[file_info.data_type]))")
+    println("Data type:                  $(gnsstypes[file_info.data_type])")
     println("-----------------------------------------------------")
     start_data_idx = Int(file_info.f_s * data_start_t)+1
     data = loaddata(file_info.data_type, data_file, file_info.f_s,
-                    file_info.f_if, t_length;
+                    file_info.f_if, T;
                     start_data_idx=start_data_idx)
     # Initialize replica struct
     replica = definesignal(file_info.sigtype, file_info.f_s, T)
