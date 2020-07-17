@@ -71,6 +71,33 @@ end
 
 
 """
+    WGS84
+
+Struct containing the WGS84 constants.
+"""
+struct WGS84
+    a::Float64
+    f::Float64
+    ω::Float64
+    μ::Float64
+end
+
+
+"""
+    initWGS84()
+"""
+function initWGS84()
+    return WGS84(6378137.0,  # meters
+                 1/298.257223563,
+                 7.2921151467e-5,  # rad/s
+                 3.986005e14)  # m³/s²
+end
+
+
+const wgs84 = initWGS84()
+
+
+"""
     parseGPSData(data_file)
 
 Parse the GPS data file from AGI.
