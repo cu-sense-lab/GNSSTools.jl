@@ -88,39 +88,54 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
     # `prn` in `prns`
     p = Progress(N, 1, "Processing...")
     for n in 1:N
-        Δt_JD = (t[n] + T/2)/60/60/24  # Days
+        Δt_JD_low = t[n]/60/60/24  # Days
+        Δt_JD_cen = (t[n] + T/2)/60/60/24  # Days
+        Δt_JD_high = (t[n] + T)/60/60/24  # Days
         for prn in prns
             # Calculate Doppler at (t + T/2), the middle of the replica signal
             # Assume that the Doppler is constant
             if use_orbitinfo
                 if use_gps_orbit_only
-                    fd_exp = calcdoppler(orbitinfo[prn].orb,
-                                         orbitinfo[prn].start_time_julian_date+Δt_JD,
-                                         orbitinfo[prn].eop,
-                                         orbitinfo[prn].site_loc_ecef,
-                                         file_info.sig_freq)
+                    fd_exp_low = calcdoppler(orbitinfo[prn].orb,
+                                             orbitinfo[prn].start_time_julian_date+Δt_JD_low,
+                                             orbitinfo[prn].eop,
+                                             orbitinfo[prn].site_loc_ecef,
+                                             file_info.sig_freq)
+                    fd_exp_high = calcdoppler(orbitinfo[prn].orb,
+                                              orbitinfo[prn].start_time_julian_date+Δt_JD_high,
+                                              orbitinfo[prn].eop,
+                                              orbitinfo[prn].site_loc_ecef,
+                                              file_info.sig_freq)
                 else
-                    fd_exp = calcdoppler(orbitinfo[prn].orb[1],
-                                         orbitinfo[prn].orb[2],
-                                         orbitinfo[prn].start_time_julian_date+Δt_JD,
-                                         orbitinfo[prn].eop,
-                                         orbitinfo[prn].site_loc_ecef,
-                                         file_info.sig_freq)
+                    fd_exp_low = calcdoppler(orbitinfo[prn].orb[1],
+                                             orbitinfo[prn].orb[2],
+                                             orbitinfo[prn].start_time_julian_date+Δt_JD_low,
+                                             orbitinfo[prn].eop,
+                                             orbitinfo[prn].site_loc_ecef,
+                                             file_info.sig_freq)
+                    fd_exp_high = calcdoppler(orbitinfo[prn].orb[1],
+                                              orbitinfo[prn].orb[2],
+                                              orbitinfo[prn].start_time_julian_date+Δt_JD_high,
+                                              orbitinfo[prn].eop,
+                                              orbitinfo[prn].site_loc_ecef,
+                                              file_info.sig_freq)
                 end
+                fd_rate = (fd_exp_high - fd_exp_low)/T
             else
-                fd_exp = fd_center
+                fd_exp_low = fd_center
+                fd_rate = 0.
             end
             # Perform course acquisition
             courseacquisition!(corr_result, data, replica, prn;
-                               fd_center=fd_exp, fd_range=fd_range,
-                               fd_rate=0., Δfd=Δfd, threads=nthreads(),
+                               fd_center=fd_exp_low, fd_range=fd_range,
+                               fd_rate=fd_rate, Δfd=Δfd, threads=nthreads(),
                                showprogressbar=false)
             # Estimate n₀_est, fd_est, and SNR_est from course acquisition
             # result
             n₀, f_d, snr = course_acq_est(corr_result, fd_exp, fd_range, Δfd)
             results[prn]["n0_est"][n] = n₀
             results[prn]["fd_est"][n] = f_d
-            results[prn]["fd_exp"][n] = fd_exp
+            results[prn]["fd_exp_low"][n] = fd_exp_low
             results[prn]["SNR_est"][n] = snr
         end
         reloaddata!(data, start_data_idx+n*N+1)
@@ -133,6 +148,7 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
                 write(file, "$prn/n0_est", results[prn]["n0_est"])
                 write(file, "$prn/fd_est", results[prn]["fd_est"])
                 write(file, "$prn/SNR_est", results[prn]["SNR_est"])
+                write(file, "$prn/fd_exp", results[prn]["fd_exp"])
             end
         end
     end
