@@ -51,6 +51,10 @@ function reloaddata!(gnss_data::GNSSData, start_data_idx,
 		data, end_idx, dtype = readdatafile!(data, Val(Symbol(data_type)),
 		                                     file_name, sample_num,
 											 start_data_idx)
+        f = open(file_name, "r")
+		seek(f, 2*(start_data_idx-1))
+		read!(f, data)
+		close(f)
 	else
 		error("`sample_num` is greater than data sample size!")
 	end
