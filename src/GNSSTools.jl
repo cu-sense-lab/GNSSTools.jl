@@ -25,8 +25,10 @@ module GNSSTools
     using CPUTime
     print("Done\nImporting SatelliteToolbox...")
     using SatelliteToolbox
-    print("Done\nImporting ODE...")
-    using ODE
+    print("Done\nImporting Interpolations...")
+    using Interpolations
+    print("Done\nImporting QuadGK...")
+    using QuadGK
     print("Done\nImporting HDF5...")
     using HDF5
     print("Done\nImporting PyPlot...")
@@ -55,6 +57,9 @@ module GNSSTools
     include("calcdoppler.jl")
     include("tle_tools.jl")
     include("data_process.jl")
+    include("orbit_tools.jl")
+    include("doppler_tools.jl")
+
 
 
     print("Done\nExporting variables and methods...")
@@ -105,6 +110,8 @@ module GNSSTools
     export getTLEs
     export GPSData
     export dataprocess
+    export doppler2chips, get_chips_and_ϕ
+    export define_constellation
 
 
     println("Done")

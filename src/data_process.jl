@@ -86,7 +86,7 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
     end
     # Perform course acquisition on data at every Nᵗʰ T segment for each
     # `prn` in `prns`
-    p = Progress(N, 1, "Processing...")
+    p = Progress(N*length(prns), 1, "Processing...")
     for n in 1:N
         Δt_JD_low = t[n]/60/60/24  # Days
         Δt_JD_cen = (t[n] + T/2)/60/60/24  # Days
@@ -137,12 +137,12 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
             results[prn]["fd_est"][n] = f_d
             results[prn]["fd_exp"][n] = fd_exp_low
             results[prn]["SNR_est"][n] = snr
+            next!(p)
         end
         # reloaddata!(data, start_data_idx+n*N+1)
         data = loaddata(file_info.data_type, data_file, file_info.f_s,
                         file_info.f_if, T;
                         start_data_idx=start_data_idx+n*N+1)
-        next!(p)
     end
     # Save results to HDF5 file
     if ~ismissing(output_dir)

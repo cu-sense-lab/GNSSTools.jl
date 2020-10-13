@@ -19,16 +19,27 @@ of the `t_length` you passed to `generatesignal!`.
 """
 function generatesignal!(signal::ReplicaSignal,
                          # isreplica::Val{false}=Val(signal.isreplica::Bool);
-                         t_length=signal.t_length)
+                         t_length=signal.t_length;
+                         doppler_curve=missing, doppler_t=signal.t)
     # Common parmeters used for entire signal
     prn = signal.prn
     Tsys = signal.Tsys
     CN0 = signal.CN0
     f_s = signal.f_s
-    f_d = signal.f_d
     f_if = signal.f_if
+    f_d = signal.f_d
     fd_rate = signal.fd_rate
-    ϕ = signal.ϕ
+    ϕ_init = signal.ϕ
+    if ismissing(doppler_curve)
+        f_d = signal.f_d
+        fd_rate = signal.fd_rate
+        ϕ_init = signal.ϕ
+        get_ϕ(t) = 2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ_init
+        get_code_val(t) = calc_code_val(signal, t)
+    else
+        get_code_val, get_ϕ = get_chips_and_ϕ(signal, doppler_curve;
+                                              doppler_t=doppler_t)
+    end
     B = signal.B
     nADC = signal.nADC
     include_carrier = signal.include_carrier
@@ -41,20 +52,26 @@ function generatesignal!(signal::ReplicaSignal,
     @threads for i in 1:Int64(float(t_length*f_s))
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
-        code_val = calc_code_val(signal, t)
+        # code_val = calc_code_val(signal, t)
+        code_val = get_code_val(t)
+        ϕ = get_ϕ(t)
+        # ϕ = ϕ_init
         if include_carrier & include_noise
             # Calculate code value with carrier and noise
-            @inbounds signal.data[i] = code_val * carrier_amp *
-                                       cis(2π*(f_if + f_d + fd_rate*t)*t + ϕ) +
+            # @inbounds signal.data[i] = code_val * carrier_amp *
+            #                            cis(2π*(f_if + f_d + fd_rate*t)*t + ϕ) +
+            #                            noise_amp * randn(sigtype)
+            @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
                                        noise_amp * randn(sigtype)
         elseif include_carrier & ~include_noise
             # Calculate code value with carrier and no noise
-            @inbounds signal.data[i] = code_val * carrier_amp *
-                                       cis(2π*(f_if + f_d + fd_rate*t)*t + ϕ)
+            # @inbounds signal.data[i] = code_val * carrier_amp *
+            #                            cis(2π*(f_if + f_d + fd_rate*t)*t + ϕ)
+            @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
+                                       noise_amp * randn(sigtype)
         elseif ~include_carrier & include_noise
             # Calculate code value with noise and no carrier
-            @inbounds signal.data[i] = code_val +
-                                       noise_amp * randn(sigtype)
+            @inbounds signal.data[i] = code_val + noise_amp * randn(sigtype)
         else
             # Calculate code value only
             @inbounds signal.data[i] = complex(float(code_val))
@@ -103,7 +120,7 @@ function generatesignal!(signal::ReplicaSignal,
             @inbounds signal.data[i] = complex(float(code_val))
         else
             @inbounds signal.data[i] = (code_val *
-                                        exp((2π*(f_if + f_d + fd_rate*t)*t + ϕ)*1im))
+                                        exp((2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ)*1im))
         end
     end
     return signal

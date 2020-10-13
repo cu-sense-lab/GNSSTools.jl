@@ -14,9 +14,10 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                include_noise=true, include_databits=true, simulatedata=true,
                saveto=missing, T="short", showplot=true, f_d=800.,
                fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
-               fd_range=5000., dll_b=5., state_num=2, dynamickf=true,
+               fd_range=5000., dll_b=8., state_num=3, dynamickf=true,
                covMult=1., q_a=100., figsize=missing, CN0=45., plot3d=true,
-               show_acq_plot=true)
+               show_acq_plot=true, doppler_curve=missing, doppler_t=missing,
+               fd_center=missing)
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
@@ -76,7 +77,10 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
             data.include_databits = include_databits
         end
-        generatesignal!(data)
+        if ismissing(doppler_t)
+            doppler_t = data.t
+        end
+        generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
         println("Done")
     else
         # Load data
@@ -109,8 +113,10 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     replicalong = definesignal(type, f_s, RLM*t_length)
     # Calculate Doppler bin spacing for course acquisition
     Δfd = 1/replica.t_length  # Hz
-    # fd_center = round(f_d/Δfd)*Δfd  # Hz
-    fd_center = 0.  # Hz
+    if ismissing(fd_center)
+        fd_center = round(f_d/Δfd)*Δfd  # Hz
+    end
+    # fd_center = 0.  # Hz
     # Allocate space for correlation result
     corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
     # Perform course acquisition
@@ -147,7 +153,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
             else
                 fig = figure()
                 ax = Axes3D(fig)
-                fd_bins = Array(-fd_range:1/replica.t_length:fd_range)
+                fd_bins = Array(-fd_range+fd_center:1/replica.t_length:fd_range+fd_center)
                 x, y = meshgrid(Array(1:replica.sample_num), fd_bins./1000.)
                 surf(x, y, corr_result)
                 max_val_idx = argmax(collect(Iterators.flatten(corr_result)))
