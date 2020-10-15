@@ -148,17 +148,16 @@ end
 
 
 """
-    calcelevation(sat_tle, julian_date_range, eop, obs_ecef)
+    calcelevation(sat_tle::TLE, julian_date_range, eop, obs_ecef)
 
 Calculates the elevation of a given satellite relative to the
 observer for every second between the range specified in
 `julian_date_range`.
 """
-function calcelevation(sat_tle, julian_date_range, eop, obs_lla;
-                       name="Satellite")
+function calcelevation(sat_tle::TLE, julian_date_range, eop, obs_lla;
+                       name="Satellite"; Δt=1/60/60/24)
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
     sat_orb = init_orbit_propagator(Val{:sgp4}, sat_tle)
-    Δt = 1/60/60/24  # days (1 second)
     ts = Array(julian_date_range[1]:Δt:julian_date_range[2])
     # Propagate orbit to ts
     sat_orb, rs, vs = propagate_to_epoch!(sat_orb, ts)
@@ -166,7 +165,7 @@ function calcelevation(sat_tle, julian_date_range, eop, obs_lla;
     sat_ranges = Array{Float64}(undef, length(ts))
     azs = Array{Float64}(undef, length(ts))
     els = Array{Float64}(undef, length(ts))
-    sat_ecefs = Array{Float64}(undef, 3, length(ts))
+    sat_ecefs = Array{Float64}(undef, length(ts), 3)
     # Calculate ENU transformation matrix
     R_ENU = calcenumatrix(obs_lla)
     for i in 1:length(ts)
@@ -190,11 +189,53 @@ function calcelevation(sat_tle, julian_date_range, eop, obs_lla;
         sat_ranges[i] = sat_range
         azs[i] = rad2deg(az)
         els[i] = rad2deg(el)
-        sat_ecefs[:,i] = sat_ecef
+        sat_ecefs[i,:] = sat_ecef
     end
     return SatelliteRAE(name, sat_tle, julian_date_range,
                         obs_lla, obs_ecef, Δt, ts, sat_ranges,
                         azs, els, sat_ecefs)
+end
+
+
+"""
+    calcelevation(sat_tle, julian_date_range, eop, obs_ecef)
+
+Calculates the elevation of a given satellite relative to the
+observer for every second between the range specified in
+`julian_date_range`.
+"""
+function calcelevation(satellite::Satellite, obs_lla; name="Satellite")
+    obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+    ts = satellite.t
+    Δt = ts[2] - ts[1]
+    # Allocate space for storage
+    sat_ranges = Array{Float64}(undef, length(ts))
+    azs = Array{Float64}(undef, length(ts))
+    els = Array{Float64}(undef, length(ts))
+    # Calculate ENU transformation matrix
+    R_ENU = calcenumatrix(obs_lla)
+    for i in 1:length(ts)
+        sat_ecef = satellite.r_ecef[i]
+        # Calculate user-to-sat vector
+        user_to_sat = sat_ecef - obs_ecef
+        # Caluclate satellite range
+        sat_range = norm(user_to_sat)
+        # Normalize `user_to_sat`
+        user_to_sat_norm = user_to_sat./sat_range
+        # Transform normalized user-to-sat vector to ENU
+        enu = R_ENU*user_to_sat_norm  # [East, North, South]
+        # Calculate satellite azimuth
+        az = atan(enu[1], enu[2])
+        # Calculate satellite elevation
+        el = asin(enu[3]/norm(enu))
+        # Save values
+        sat_ranges[i] = sat_range
+        azs[i] = rad2deg(az)
+        els[i] = rad2deg(el)
+    end
+    return SatelliteRAE(name, sat_tle, julian_date_range,
+                        obs_lla, obs_ecef, Δt, ts, sat_ranges,
+                        azs, els, satellite.r_ecef)
 end
 
 

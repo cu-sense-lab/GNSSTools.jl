@@ -17,7 +17,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                fd_range=5000., dll_b=8., state_num=3, dynamickf=true,
                covMult=1., q_a=100., figsize=missing, CN0=45., plot3d=true,
                show_acq_plot=true, doppler_curve=missing, doppler_t=missing,
-               fd_center=missing, constellation=missing)
+               fd_center=missing)
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
