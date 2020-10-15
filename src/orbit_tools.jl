@@ -77,13 +77,15 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
             k += 1
             if show_plot
                 scatter3D(r_ecef[1,1], r_ecef[1,2], r_ecef[1,3], s=50)
+                plot3D(satellites[k-1].r_ecef[:,1], satellites[k-1].r_ecef[:,2],
+                       satellites[k-1].r_ecef[:,3], "k")
             end
             next!(p)
         end
-        if show_plot
-            plot3D(satellites[k-1].r_ecef[:,1], satellites[k-1].r_ecef[:,2],
-                   satellites[k-1].r_ecef[:,3], "k")
-        end
+        # if show_plot
+        #     plot3D(satellites[k-1].r_ecef[:,1], satellites[k-1].r_ecef[:,2],
+        #            satellites[k-1].r_ecef[:,3], "k")
+        # end
     end
     if show_plot
         axis("off")
