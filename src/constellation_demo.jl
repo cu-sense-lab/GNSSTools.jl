@@ -13,7 +13,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
               dynamickf=true, covMult=1., q_a=100., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=true, saveto=missing, inclination=90.,
               sig_freq=missing)
-    #
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
@@ -71,13 +70,14 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
 
     # Simulate data
     print("Setting signal parameters and generating constellation...")
-    data = definesignal(type, f_s, M*T; prn=prn,
-                        f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+    data = definesignal(type, f_s, M*t_length; prn=prn,
+                        f_if=f_if, f_d=0., fd_rate=0., Tsys=Tsys,
                         CN0=CN0, ϕ=phi, nADC=nADC, B=B,
                         include_carrier=include_carrier,
                         include_adc=include_adc,
                         include_noise=include_noise,
-                        code_start_idx=n0)
+                        code_start_idx=n0,
+                        sig_freq=sig_freq)
     if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
         data.include_databits = include_databits
     end
