@@ -81,7 +81,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     println("Done")
     eop = get_iers_eop(:IAU1980)
     constellation_t = Array(data.t[1]:1:data.t[end])
-    doppler_t = Array(data.t[1]:0.001:data.t[end])
+    doppler_t = Array(data.t[1]:0.001:data.t[end]+0.001)
     constellation = define_constellation(a, plane_num, satellite_per_plane,
                                          inclination*pi/180, constellation_t;
                                          show_plot=true, obs_lla=user_lla,
