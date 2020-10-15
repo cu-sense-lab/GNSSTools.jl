@@ -36,7 +36,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
         nADC = 4  # bits
         B = 2.046e7  # Hz
         RLM = 20
-        file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
     end
 
     if typeof(type) == Val{:l5i}
@@ -50,7 +49,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
         nADC = 4  # bits
         B = 2.046e7  # Hz
         RLM = 10
-        file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
     end
 
     if typeof(type) == Val{:l1ca}
@@ -65,7 +63,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
         nADC = 4  # bits
         B = 2.046e6  # Hz
         RLM = 10
-        file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
     end
 
     # Simulate data
@@ -101,8 +98,8 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     eop = get_iers_eop(:IAU1980)
     for i in 1:length(doppler_curve)
         julian_date = doppler_t[i]/60/60/24
-        doppler_curve = calcdoppler(constellation.satellites[max_idx].init_orbit,
-                                    julian_date, eop, user_ecef, sig_freq)
+        doppler_curve[i] = calcdoppler(constellation.satellites[max_idx].init_orbit,
+                                       julian_date, eop, user_ecef, sig_freq)
     end
     print("Generating PRN $(prn) $(sigtype) signal...")
     generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)

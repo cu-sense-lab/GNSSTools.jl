@@ -111,6 +111,7 @@ module GNSSTools
     export dataprocess
     export doppler2chips, get_chips_and_ϕ
     export define_constellation
+    export calcelevation
 
     println("Done")
 
