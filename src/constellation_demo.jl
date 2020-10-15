@@ -9,7 +9,7 @@
 function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
               include_carrier=true, include_adc=true, include_noise=true,
               include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
-              T=1e-3, M=4000, fd_range=5000., dll_b=8., state_num=3,
+              t_length=1e-3, M=4000, fd_range=5000., dll_b=8., state_num=3,
               dynamickf=true, covMult=1., q_a=100., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=true, saveto=missing, inclination=90.,
               sig_freq=missing)
