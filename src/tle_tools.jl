@@ -216,7 +216,7 @@ function calcelevation(satellite::Satellite, obs_lla; name="Satellite")
     # Calculate ENU transformation matrix
     R_ENU = calcenumatrix(obs_lla)
     for i in 1:length(ts)
-        sat_ecef = satellite.r_ecef[i]
+        sat_ecef = satellite.r_ecef[i,:]
         # Calculate user-to-sat vector
         user_to_sat = sat_ecef - obs_ecef
         # Caluclate satellite range
