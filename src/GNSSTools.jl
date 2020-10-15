@@ -55,9 +55,9 @@ module GNSSTools
     include("dkalman.jl")
     include("testGNSSTools.jl")
     include("calcdoppler.jl")
+    include("orbit_tools.jl")
     include("tle_tools.jl")
     include("data_process.jl")
-    include("orbit_tools.jl")
     include("doppler_tools.jl")
     include("constellation_demo.jl")
 
