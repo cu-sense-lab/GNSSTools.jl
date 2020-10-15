@@ -208,6 +208,7 @@ function calcelevation(satellite::Satellite, obs_lla; name="Satellite")
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
     ts = satellite.t
     Δt = ts[2] - ts[1]
+    julian_date_range = (ts[1], ts[end])
     # Allocate space for storage
     sat_ranges = Array{Float64}(undef, length(ts))
     azs = Array{Float64}(undef, length(ts))
