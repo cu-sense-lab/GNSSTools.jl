@@ -113,6 +113,7 @@ module GNSSTools
     export define_constellation
     export calcelevation
     export course_acq_est
+    export plot_satellite_orbit
 
     println("Done")
 

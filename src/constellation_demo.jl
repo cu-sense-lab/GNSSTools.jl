@@ -1,18 +1,18 @@
 """
-    demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
-         include_carrier=true, include_adc=true, include_noise=true,
+    demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 1655);
+         sigtype="l1ca", include_carrier=true, include_adc=true, include_noise=true,
          include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
          t_length=1e-3, M=4000, fd_range=5000., dll_b=8., state_num=3,
          dynamickf=true, covMult=1., q_a=100., figsize=missing, CN0=45.,
          plot3d=true, show_acq_plot=true, saveto=missing)
 """
-function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
-              include_carrier=true, include_adc=true, include_noise=true,
+function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 1655);
+              sigtype="l1ca", include_carrier=true, include_adc=true, include_noise=true,
               include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
               t_length=1e-3, M=4000, fd_range=5000., dll_b=8., state_num=3,
               dynamickf=true, covMult=1., q_a=100., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=true, saveto=missing, inclination=90.,
-              sig_freq=missing)
+              sig_freq=missing, t_start=3/60/24)
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
@@ -66,6 +66,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     end
 
     # Simulate data
+    eop = get_iers_eop(:IAU1980)
     print("Setting signal parameters and generating constellation...")
     data = definesignal(type, f_s, M*t_length; prn=prn,
                         f_if=f_if, f_d=0., fd_rate=0., Tsys=Tsys,
@@ -78,13 +79,12 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
         data.include_databits = include_databits
     end
-    eop = get_iers_eop(:IAU1980)
     constellation_t = Array(data.t[1]:1:data.t[end])
     doppler_t = Array(data.t[1]:0.001:data.t[end]+0.001)
     constellation = define_constellation(a, plane_num, satellite_per_plane,
                                          inclination*pi/180, constellation_t;
                                          show_plot=true, obs_lla=user_lla,
-                                         eop=eop)
+                                         eop=eop, t_start=t_start)
     elevations = []
     max_elevations = []
     for satellite in constellation.satellites
@@ -97,7 +97,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     user_ecef = GeodetictoECEF(user_lla[1], user_lla[2], user_lla[3])
     doppler_curve = zeros(length(doppler_t))
     for i in 1:length(doppler_curve)
-        julian_date = doppler_t[i]/60/60/24
+        julian_date = doppler_t[i]/60/60/24 .+ t_start
         doppler_curve[i] = calcdoppler(constellation.satellites[max_idx].init_orbit,
                                        julian_date, eop, user_ecef, sig_freq)
     end
@@ -173,12 +173,13 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
                           c="r")
             end
             xlabel("Samples")
-            ylabel("Doppler (Hz)")
+            ylabel("Doppler (kHz)")
             suptitle("PRN $(prn)\nfd course: $(fd_est)Hz; n₀ course: $(n0_est)")
         end
         # Tracking results
-        plotresults(trackresults; saveto=saveto, figsize=figsize)
+        plotresults(trackresults; saveto=saveto, figsize=figsize,
+                    doppler_curve=doppler_curve, doppler_t=doppler_t, CN0=CN0)
         println("Done")
     end
-    return trackresults
+    return (trackresults, data)
 end

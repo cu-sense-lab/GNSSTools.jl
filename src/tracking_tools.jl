@@ -522,7 +522,8 @@ end
 Plots the tracking results from the `trackprn` method.
 """
 function plotresults(results::TrackResults; saveto=missing,
-	                 figsize=missing)
+	                 figsize=missing, doppler_curve=missing,
+					 doppler_t=missing, CN0=missing)
 	if ismissing(figsize)
 		figure()
 	else
@@ -539,20 +540,33 @@ function plotresults(results::TrackResults; saveto=missing,
     legend()
     # Plot filtered and measured phase errors
     subplot2grid((3,2), (0,1), colspan=1, rowspan=1)
-    plot(results.t, results.dphi_meas.*180 ./π, "k.", label="Measured ϕ")
+    plot(results.t, results.dphi_meas.*180 ./π, "k.", label="Measured Δϕ")
     xlabel("Time (s)")
     ylabel("ϕ (degrees)")
     title("PLL Tracking")
     legend()
 	# Doppler frequency estimate
     subplot2grid((3,2), (1,0), colspan=1, rowspan=1)
-    plot(results.t, results.fds, "k.")
+	if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
+		plot(results.t, results.fds, "k.", label="Estimate")
+		plot(doppler_t, doppler_curve, "b-", label="Truth")
+		legend()
+	else
+    	plot(results.t, results.fds, "k.")
+	end
     xlabel("Time (s)")
     ylabel("Doppler (Hz)")
     title("Doppler Frequency Estimate")
 	# SNR estimate
 	subplot2grid((3,2), (1,1), colspan=2, rowspan=1)
-    plot(results.t, results.SNR, "k.")
+	if ~ismissing(CN0)
+		plot(results.t, results.SNR, "k.", label="Estimate")
+		axhline(y=CN0+10*log10(results.T), color="b",
+		        label="Truth")
+		legend()
+	else
+    	plot(results.t, results.SNR, "k.")
+	end
     xlabel("Time (s)")
     ylabel("SNR (dB)")
     title("SNR Estimate")
