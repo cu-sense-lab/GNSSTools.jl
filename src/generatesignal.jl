@@ -49,6 +49,7 @@ function generatesignal!(signal::ReplicaSignal,
     adc_scale = 2^(nADC-1)-1
     carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
     noise_amp = sqrt(k*B*Tsys)
+    p = Progress(signal.sample_num, 1, "Generating signal...")
     @threads for i in 1:Int64(float(t_length*f_s))
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
@@ -76,6 +77,7 @@ function generatesignal!(signal::ReplicaSignal,
             # Calculate code value only
             @inbounds signal.data[i] = complex(float(code_val))
         end
+        next!(p)
     end
     # Quantize signal
     if include_adc
