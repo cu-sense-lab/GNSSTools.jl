@@ -61,9 +61,6 @@ module GNSSTools
     include("doppler_tools.jl")
     include("constellation_demo.jl")
 
-
-
-
     print("Done\nExporting variables and methods...")
 
     export Rₑ
@@ -114,7 +111,6 @@ module GNSSTools
     export dataprocess
     export doppler2chips, get_chips_and_ϕ
     export define_constellation
-
 
     println("Done")
 
