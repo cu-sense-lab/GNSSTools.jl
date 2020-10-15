@@ -81,7 +81,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     println("Done")
     eop = get_iers_eop(:IAU1980)
     constellation_t = Array(data.t[1]:1:data.t[end])
-    doppler_t = Array(data.t[1]-1:0.001:data.t[end]+1)
+    doppler_t = Array(data.t[1]:0.001:data.t[end])
     constellation = define_constellation(a, plane_num, satellite_per_plane,
                                          inclination*pi/180, constellation_t;
                                          show_plot=true, obs_lla=user_lla,
@@ -102,6 +102,8 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
         doppler_curve[i] = calcdoppler(constellation.satellites[max_idx].init_orbit,
                                        julian_date, eop, user_ecef, sig_freq)
     end
+    fd_rate = (doppler_curve[2]-doppler_curve[1])/0.001
+    definesignal!(data; f_d=doppler_curve[1], fd_rate=fd_rate)
     generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t,
                     message="Generating PRN $(prn) $(sigtype) signal...")
     println("Done")
@@ -128,7 +130,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     # fd_center = 0.  # Hz
     # Allocate space for correlation result
     corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
-    fd_rate = (doppler_curve[2]-doppler_curve[1])/0.001
     # Perform course acquisition
     courseacquisition!(corr_result, data, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,

@@ -246,7 +246,6 @@ function courseacquisitiontest(;prns="all", sigtype="l1ca", include_carrier=true
 
     if simulatedata
         # Simulate data
-        print("Generating PRN $(sim_prn) $(sigtype) signal...")
         data = definesignal(type, f_s, M*t_length; prn=sim_prn,
                             f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                             CN0=CN0, ϕ=phi, nADC=nADC, B=B,
@@ -257,8 +256,8 @@ function courseacquisitiontest(;prns="all", sigtype="l1ca", include_carrier=true
         if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
             data.include_databits = include_databits
         end
-        generatesignal!(data)
-        println("Done")
+        generatesignal!(data;
+                        message="Generating PRN $(sim_prn) $(sigtype) signal...")
     else
         # Load data
         print("Loading $(sigtype) data...")
