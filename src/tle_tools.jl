@@ -155,7 +155,7 @@ observer for every second between the range specified in
 `julian_date_range`.
 """
 function calcelevation(sat_tle::TLE, julian_date_range, eop, obs_lla;
-                       name="Satellite"; Δt=1/60/60/24)
+                       name="Satellite", Δt=1/60/60/24)
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
     sat_orb = init_orbit_propagator(Val{:sgp4}, sat_tle)
     ts = Array(julian_date_range[1]:Δt:julian_date_range[2])
