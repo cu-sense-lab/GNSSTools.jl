@@ -124,7 +124,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     replicalong = definesignal(type, f_s, RLM*t_length)
     # Calculate Doppler bin spacing for course acquisition
     Δfd = 1/replica.t_length  # Hz
-    fd_center = round(f_d/Δfd)*Δfd  # Hz
+    fd_center = round(doppler_curve[1]/Δfd)*Δfd  # Hz
     # fd_center = 0.  # Hz
     # Allocate space for correlation result
     corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
