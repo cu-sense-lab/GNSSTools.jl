@@ -54,16 +54,15 @@ function generatesignal!(signal::ReplicaSignal,
     @threads for i in 1:Int64(float(t_length*f_s))
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
-        # code_val = calc_code_val(signal, t)
         code_val = get_code_val(t)
-        ϕ = get_ϕ(t)
-        # ϕ = ϕ_init
         if include_carrier & include_noise
             # Calculate code value with carrier and noise
+            ϕ = get_ϕ(t)
             @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
                                        noise_amp * randn(sigtype)
         elseif include_carrier & ~include_noise
             # Calculate code value with carrier and no noise
+            ϕ = get_ϕ(t)
             @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
                                        noise_amp * randn(sigtype)
         elseif ~include_carrier & include_noise

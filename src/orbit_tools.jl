@@ -90,8 +90,15 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
     if show_plot
         axis("off")
         if ~ismissing(obs_lla)
+            u = Array(range(0, 2π, length=100))
+            v = Array(range(0, 1π, length=100))
+            u, v = meshgrid(u, v)
+            x = Rₑ.*cos.(u).*sin.(v)
+            y = Rₑ.*sin.(u).*sin.(v)
+            z = Rₑ.*cos.(v)
+            plot_wireframe(x, y, z, color="grey", linestyle=":", rcount=20, ccount=30)
             obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
-            scatter3D(obs_ecef[1], obs_ecef[2], obs_ecef[3], s=50, c="k")
+            scatter3D(obs_ecef[1], obs_ecef[2], obs_ecef[3], s=300, c="r", marker="*", facecolor="white")
         end
     end
     return Constellation(epoch, plane_num, satellite_per_plane, Ω₀, f₀, ω, e, i,

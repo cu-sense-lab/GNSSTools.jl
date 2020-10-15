@@ -78,7 +78,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
         data.include_databits = include_databits
     end
-    println("Done")
     eop = get_iers_eop(:IAU1980)
     constellation_t = Array(data.t[1]:1:data.t[end])
     doppler_t = Array(data.t[1]:0.001:data.t[end]+0.001)
@@ -104,9 +103,9 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     end
     fd_rate = (doppler_curve[2]-doppler_curve[1])/0.001
     definesignal!(data; f_d=doppler_curve[1], fd_rate=fd_rate)
+    println("Done")
     generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t,
                     message="Generating PRN $(prn) $(sigtype) signal...")
-    println("Done")
     print("Performing course acquisition...")
     if T == "long"
         # Use 20ms coherent integration for L5Q signal and 10ms
