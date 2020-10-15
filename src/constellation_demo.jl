@@ -102,8 +102,8 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
         doppler_curve[i] = calcdoppler(constellation.satellites[max_idx].init_orbit,
                                        julian_date, eop, user_ecef, sig_freq)
     end
-    print("Generating PRN $(prn) $(sigtype) signal...")
-    generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
+    generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t,
+                    message="Generating PRN $(prn) $(sigtype) signal...")
     println("Done")
     print("Performing course acquisition...")
     if T == "long"
