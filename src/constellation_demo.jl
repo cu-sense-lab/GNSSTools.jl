@@ -83,7 +83,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     doppler_t = Array(data.t[1]-1:t_length:data.t[end]+1)
     constellation = define_constellation(a, plane_num, satellite_per_plane,
                                          inclination*pi/180, constellation_t;
-                                         show_plot=true)
+                                         show_plot=true, obs_lla=user_lla)
     elevations = []
     max_elevations = []
     for satellite in constellation.satellites

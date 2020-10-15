@@ -36,7 +36,7 @@ end
 """
 function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
                               eop=get_iers_eop(:IAU1980), show_plot=false,
-                              Ω₀=0., f₀=0., ω=0., e=0., epoch=0.)
+                              Ω₀=0., f₀=0., ω=0., e=0., epoch=0., obs_lla=missing)
     a = float(a)
     i = float(i)
     t_range = float.(t_range) ./ (60*60*24) .+ epoch
@@ -87,6 +87,10 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
     end
     if show_plot
         axis("off")
+        if ~ismissing(obs_lla)
+            obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+            scatter3D(obs_ecef[1], obs_ecef[2], obs_ecef[3], s=50, c="k")
+        end
     end
     return Constellation(epoch, plane_num, satellite_per_plane, Ω₀, f₀, ω, e, i,
                          t_range, ΔΩ, Δf, satellites)
