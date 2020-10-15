@@ -79,11 +79,13 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
         data.include_databits = include_databits
     end
     println("Done")
+    eop = get_iers_eop(:IAU1980)
     constellation_t = Array(data.t[1]:1:data.t[end])
     doppler_t = Array(data.t[1]-1:t_length:data.t[end]+1)
     constellation = define_constellation(a, plane_num, satellite_per_plane,
                                          inclination*pi/180, constellation_t;
-                                         show_plot=true, obs_lla=user_lla)
+                                         show_plot=true, obs_lla=user_lla,
+                                         eop=eop)
     elevations = []
     max_elevations = []
     for satellite in constellation.satellites
@@ -95,7 +97,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     max_idx = argmax(max_elevations)
     user_ecef = GeodetictoECEF(user_lla[1], user_lla[2], user_lla[3])
     doppler_curve = zeros(length(doppler_t))
-    eop = get_iers_eop(:IAU1980)
     for i in 1:length(doppler_curve)
         julian_date = doppler_t[i]/60/60/24
         doppler_curve[i] = calcdoppler(constellation.satellites[max_idx].init_orbit,
