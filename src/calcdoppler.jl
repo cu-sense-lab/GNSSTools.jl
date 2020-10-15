@@ -46,7 +46,7 @@ end
 
 
 """
-    calcdoppler(orb::OrbitPropagatorSGP4, julian_date, eop,
+    calcdoppler(orb::OrbitPropagator, julian_date, eop,
                 obs_ecef, sig_freq)
 
 Calculates the Doppler frequency for the direct signal case.
