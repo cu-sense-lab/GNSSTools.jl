@@ -233,7 +233,7 @@ function calcelevation(satellite::Satellite, obs_lla; name="Satellite")
         azs[i] = rad2deg(az)
         els[i] = rad2deg(el)
     end
-    return SatelliteRAE(name, sat_tle, julian_date_range,
+    return SatelliteRAE(name, satellite, julian_date_range,
                         obs_lla, obs_ecef, Δt, ts, sat_ranges,
                         azs, els, satellite.r_ecef)
 end

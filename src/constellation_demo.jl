@@ -90,7 +90,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     elevations = []
     max_elevations = []
     for satellite in constellation.satellites
-        elevation = calcelevation(satellite::Satellite, user_lla;
+        elevation = calcelevation(satellite, user_lla;
                                   name=string(satellite.id))
         push!(max_elevations, maximum(elevation.sat_elevation))
         push!(elevations, elevation)
