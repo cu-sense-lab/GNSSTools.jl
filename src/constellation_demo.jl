@@ -101,7 +101,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla; sigtype="l1ca",
     eop = get_iers_eop(:IAU1980)
     for i in 1:length(doppler_curve)
         julian_date = doppler_t[i]/60/60/24
-        doppler_curve = calcdoppler(constellation.satellites[max_idx].orbit,
+        doppler_curve = calcdoppler(constellation.satellites[max_idx].init_orbit,
                                     julian_date, eop, user_ecef, sig_freq)
     end
     print("Generating PRN $(prn) $(sigtype) signal...")
