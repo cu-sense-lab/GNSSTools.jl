@@ -184,7 +184,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         plotresults(trackresults; saveto=saveto, figsize=figsize)
         println("Done")
     end
-    return trackresults
+    return (trackresults, data)
 end
 
 

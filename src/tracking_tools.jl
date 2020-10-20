@@ -396,7 +396,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 	P⁺ᵢ = covMult .* P⁺ᵢ
 	Kᵢ = zeros(size(x⁻ᵢ))
 	Kfixed = dkalman(A, C, Q, Diagonal(R))
-    p = Progress(M, 1, message)
+    # p = Progress(M, 1, message)
     # Perform code, carrier phase, and Doppler frequency tracking
     for i in 1:M
 		if state_num == 3
@@ -482,7 +482,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         end
 		# Propagate x⁺ᵢ to next time step
 		x⁻ᵢ = A*x⁺ᵢ
-        next!(p)
+        # next!(p)
     end
     # Return `TrackResults` struct
     # Specify what to store if `data` is a simulated signal struct
