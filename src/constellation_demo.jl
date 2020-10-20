@@ -104,8 +104,9 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     fd_rate = (doppler_curve[2]-doppler_curve[1])/0.001
     definesignal!(data; f_d=doppler_curve[1], fd_rate=fd_rate)
     println("Done")
-    generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t,
-                    message="Generating PRN $(prn) $(sigtype) signal...")
+    print("Generating PRN $(prn) $(sigtype) signal...")
+    generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
+    println("Done")
     print("Performing course acquisition...")
     if T == "long"
         # Use 20ms coherent integration for L5Q signal and 10ms
