@@ -21,7 +21,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
                fd_range=5000., dll_b=8., state_num=3, dynamickf=true,
                covMult=1., q_a=100., figsize=missing, CN0=45., plot3d=true,
-               show_acq_plot=true, doppler_curve=missing, doppler_t=missing,
+               show_acq_plot=false, doppler_curve=missing, doppler_t=missing,
                fd_center=missing, sig_freq=missing)
     println("Running GNSSTools Signal Simulation and Data Processing Demo")
     # Select signal type
@@ -217,7 +217,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
               t_length=1e-3, M=4000, fd_range=5000., dll_b=8., state_num=3,
               dynamickf=true, covMult=1., q_a=100., figsize=missing, CN0=45.,
-              plot3d=true, show_acq_plot=true, saveto=missing, inclination=90.,
+              plot3d=true, show_acq_plot=false, saveto=missing, inclination=90.,
               sig_freq=missing, t_start=3/60/24)
     println("Running GNSSTools Constellation Demo")
     # Select signal type
