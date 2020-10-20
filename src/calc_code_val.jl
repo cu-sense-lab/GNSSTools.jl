@@ -29,8 +29,9 @@ parameters defined by `signal` at a time
 specified by `t` in seconds. Returns an
 Int64 value that is either -1 or 1.
 """
-function calc_code_val(signal::L1CASignal, t, code_chips)
-    primary_code_idx = Int(floor(code_chips[1](t)%l1ca_code_length)) + 1
+function calc_code_val(signal::L1CASignal, t, code_chips::Vector{T}) where T
+    primary_code_chip = code_chips[1](t)
+    primary_code_idx = Int(floor(primary_code_chip%l1ca_code_length)) + 1
     l1ca_code = l1ca_codes[signal.prn][primary_code_idx]
     if signal.include_databits && ~signal.isreplica
         databit_idx = Int(floor(code_chips[2](t)%signal.db_code_length)) + 1
@@ -71,7 +72,7 @@ parameters defined by `signal` at a time
 specified by `t` in seconds. Returns an
 Int64 value that is either -1 or 1.
 """
-function calc_code_val(signal::L5QSignal, t, code_chips)
+function calc_code_val(signal::L5QSignal, t, code_chips::Vector{T}) where T
     primary_code_idx = Int(floor(code_chips[1](t)%L5_code_length)) + 1
     secondary_code_idx = Int(floor(code_chips[2](t)%nh20_code_length)) + 1
     # Get L5Q code value at t
@@ -118,7 +119,7 @@ parameters defined by `signal` at a time
 specified by `t` in seconds. Returns an
 Int64 value that is either -1 or 1.
 """
-function calc_code_val(signal::L5ISignal, t, code_chips)
+function calc_code_val(signal::L5ISignal, t,  code_chips::Vector{T}) where T
     primary_code_idx = Int(floor(code_chips[1](t)%L5_code_length)) + 1
     secondary_code_idx = Int(floor(code_chips[2](t)%nh10_code_length)) + 1
     # Get L5I code value at t

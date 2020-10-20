@@ -20,7 +20,7 @@ of the `t_length` you passed to `generatesignal!`.
 function generatesignal!(signal::ReplicaSignal,
                          # isreplica::Val{false}=Val(signal.isreplica::Bool);
                          t_length=signal.t_length;
-                         doppler_curve=missing, doppler_t=signal.t,
+                         doppler_curve=missing, doppler_t=missing,
                          message="Generating signal...")
     # Common parmeters used for entire signal
     prn = signal.prn
@@ -32,15 +32,14 @@ function generatesignal!(signal::ReplicaSignal,
     fd_rate = signal.fd_rate
     ϕ_init = signal.ϕ
     if ismissing(doppler_curve)
-        f_d = signal.f_d
-        fd_rate = signal.fd_rate
-        ϕ_init = signal.ϕ
-        get_ϕ(t) = 2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ_init
-        get_code_val(t) = calc_code_val(signal, t)
+        get_ϕ2(t) = 2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ_init
+        get_code_val2(t) = calc_code_val(signal, t)
     else
-        get_code_val, get_ϕ = get_chips_and_ϕ(signal, doppler_curve;
+        get_code_val2, get_ϕ2 = get_chips_and_ϕ(signal, doppler_curve;
                                               doppler_t=doppler_t)
     end
+    get_ϕ = FunctionWrapper{Float64,Tuple{Float64}}(get_ϕ2)
+    get_code_val = FunctionWrapper{Float64,Tuple{Float64}}(get_code_val2)
     B = signal.B
     nADC = signal.nADC
     include_carrier = signal.include_carrier
@@ -50,48 +49,10 @@ function generatesignal!(signal::ReplicaSignal,
     adc_scale = 2^(nADC-1)-1
     carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
     noise_amp = sqrt(k*B*Tsys)
-    p = Progress(signal.sample_num, 1, message)
-    # if include_carrier & include_noise
-    #     @threads for i in 1:Int64(float(t_length*f_s))
-    #         @inbounds t = signal.t[i]
-    #         # Generate code value for given signal type
-    #         code_val = get_code_val(t)
-    #         ϕ = get_ϕ(t)
-    #         # Calculate code value with carrier and noise
-    #         @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
-    #                                    noise_amp * randn(sigtype)
-    #         next!(p)
-    #     end
-    # elseif include_carrier & ~include_noise
-    #     @threads for i in 1:Int64(float(t_length*f_s))
-    #         @inbounds t = signal.t[i]
-    #         # Generate code value for given signal type
-    #         code_val = get_code_val(t)
-    #         ϕ = get_ϕ(t)
-    #         # Calculate code value with carrier and no noise
-    #         @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ)
-    #         next!(p)
-    #     end
-    # elseif ~include_carrier & include_noise
-    #     @threads for i in 1:Int64(float(t_length*f_s))
-    #         @inbounds t = signal.t[i]
-    #         # Generate code value for given signal type
-    #         code_val = get_code_val(t)
-    #         # Calculate code value with noise and no carrier
-    #         @inbounds signal.data[i] = code_val + noise_amp * randn(sigtype)
-    #         next!(p)
-    #     end
-    # else
-    #     @threads for i in 1:Int64(float(t_length*f_s))
-    #         @inbounds t = signal.t[i]
-    #         # Generate code value for given signal type
-    #         code_val = get_code_val(t)
-    #         # Calculate code value only
-    #         @inbounds signal.data[i] = complex(float(code_val))
-    #         next!(p)
-    #     end
-    # end
-    @threads for i in 1:Int64(float(t_length*f_s))
+    N = floor(Int, t_length*f_s)
+    thermal_noise = randn(sigtype, N)
+    # p = Progress(N, 15, message)
+    @threads for i in 1:N
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
         code_val = get_code_val(t)
@@ -99,19 +60,19 @@ function generatesignal!(signal::ReplicaSignal,
             # Calculate code value with carrier and noise
             ϕ = get_ϕ(t)
             @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
-                                       noise_amp * randn(sigtype)
+                                       noise_amp * thermal_noise[i]
         elseif include_carrier & ~include_noise
             # Calculate code value with carrier and no noise
             ϕ = get_ϕ(t)
             @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ)
         elseif ~include_carrier & include_noise
             # Calculate code value with noise and no carrier
-            @inbounds signal.data[i] = code_val + noise_amp * randn(sigtype)
+            @inbounds signal.data[i] = code_val + noise_amp * thermal_noise[i]
         else
             # Calculate code value only
             @inbounds signal.data[i] = complex(float(code_val))
         end
-        next!(p)
+        # next!(p)
     end
     # Quantize signal
     if include_adc

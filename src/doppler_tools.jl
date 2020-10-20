@@ -71,9 +71,9 @@ function doppler2chips(doppler_curve, chipping_rates, sig_freq, f_if, t;
           end
           ϕs[i] = ϕs[i-1] + quadgk(doppler_sitp, (i-2)*Δt+t[1], (i-1)*Δt+t[1])[1]
       end
-      code_chip_sitp = []
+      code_chip_sitp = Array{typeof(doppler_sitp)}(undef, length(chipping_rates))
       for i in 1:length(chipping_rates)
-          push!(code_chip_sitp, CubicSplineInterpolation(t_range, view(code_chips, :, i)))
+          code_chip_sitp[i] = CubicSplineInterpolation(t_range, view(code_chips, :, i))
       end
       ϕs_sitp = CubicSplineInterpolation(t_range, ϕs)
       return (code_chip_sitp, ϕs_sitp)
