@@ -16,7 +16,10 @@ function definesignal(type::Val{:l1ca}, f_s, t_length; prn=1,
                       CN0=45., ϕ=0., nADC=4, B=2.046e6,
                       include_carrier=true, include_adc=true,
                       include_noise=true, code_start_idx=1,
-                      include_databits=true, sig_freq=L1_freq)
+                      include_databits=true, sig_freq=missing)
+    if ismissing(sig_freq)
+        sig_freq = L1_freq
+    end
     sample_num = Int(f_s * t_length)
     # Generate time vector
     t = calctvector(sample_num, f_s)
@@ -151,7 +154,10 @@ function definesignal(type::Val{:l5q}, f_s, t_length; prn=1,
                       CN0=45., ϕ=0., nADC=4, B=2.046e7,
                       include_carrier=true, include_adc=true,
                       include_noise=true, code_start_idx=1,
-                      sig_freq=L5_freq)
+                      sig_freq=missing)
+    if ismissing(sig_freq)
+        sig_freq = L5_freq
+    end
     sample_num = Int(f_s * t_length)
     # Generate time vector
     t = calctvector(sample_num, f_s)
@@ -280,7 +286,10 @@ function definesignal(type::Val{:l5i}, f_s, t_length; prn=1,
                       CN0=45., ϕ=0., nADC=4, B=2.046e7,
                       include_carrier=true, include_adc=true,
                       include_noise=true, code_start_idx=1,
-                      include_databits=true, sig_freq=L5_freq)
+                      include_databits=true, sig_freq=missing)
+    if ismissing(sig_freq)
+        sig_freq = L5_freq
+    end
     sample_num = Int(f_s * t_length)
     # Generate time vector
     t = calctvector(sample_num, f_s)
