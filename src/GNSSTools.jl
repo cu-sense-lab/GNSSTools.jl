@@ -55,13 +55,13 @@ module GNSSTools
     include("rinex_tools.jl")
     include("tracking_tools.jl")
     include("dkalman.jl")
-    include("testGNSSTools.jl")
     include("calcdoppler.jl")
     include("orbit_tools.jl")
     include("tle_tools.jl")
     include("data_process.jl")
     include("doppler_tools.jl")
-    include("constellation_demo.jl")
+    include("demos.jl")
+
 
     print("Done\nExporting variables and methods...")
 
