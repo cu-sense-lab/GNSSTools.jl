@@ -73,6 +73,12 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     if simulatedata
         # Simulate data
         print("Generating PRN $(prn) $(sigtype) signal...")
+        if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
+            zero_idx = findfirst(t -> t == 0, doppler_t)
+            f_d = round(doppler_curve[zero_idx]/Δfd)*Δfd  # Hz
+            fd_rate = (doppler_curve[zero_idx+1]-doppler_curve[zero_idx]) /
+                      (doppler_t[zero_idx+1]-doppler_t[zero_idx])
+        end
         data = definesignal(type, f_s, M*t_length; prn=prn,
                             f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                             CN0=CN0, ϕ=phi, nADC=nADC, B=B,
@@ -121,14 +127,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     # Calculate Doppler bin spacing for course acquisition
     Δfd = 1/replica.t_length  # Hz
     if ismissing(fd_center)
-        if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
-            zero_idx = findfirst(t -> t == 0, doppler_t)
-            fd_center = round(doppler_curve[zero_idx]/Δfd)*Δfd  # Hz
-            fd_rate = (doppler_curve[zero_idx+1]-doppler_curve[zero_idx]) /
-                      (doppler_t[zero_idx+1]-doppler_t[zero_idx])
-        else
-            fd_center = round(f_d/Δfd)*Δfd  # Hz
-        end
+        fd_center = round(f_d/Δfd)*Δfd  # Hz
     end
     # fd_center = 0.  # Hz
     # Allocate space for correlation result
@@ -145,13 +144,16 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     println("Performing FFT based fine acquisition...")
     results = fineacquisition(data, replicalong, prn, fd_est,
                               n0_est, Val(:fft))
+    println("Done")
     # Perform code/carrier phase, and Doppler frequency tracking on signal
     # using results from fine acquisition as the intial conditions
+    println("Performing signal tracking...")
     trackresults = trackprn(data, replica, prn, results.phi_init,
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
                             covMult=covMult, qₐ=q_a)
+    println("Done")
     # Plot results and save if `saveto` is a string
     if showplot
         print("Generating figures...")
