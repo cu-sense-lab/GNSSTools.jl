@@ -141,13 +141,13 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     # Perform FFT based fine acquisition
     # Returns structure containing the fine, course,
     # and estimated Doppler frequency
-    println("Performing FFT based fine acquisition...")
+    print("Performing FFT based fine acquisition...")
     results = fineacquisition(data, replicalong, prn, fd_est,
                               n0_est, Val(:fft))
     println("Done")
     # Perform code/carrier phase, and Doppler frequency tracking on signal
     # using results from fine acquisition as the intial conditions
-    println("Performing signal tracking...")
+    print("Performing signal tracking...")
     trackresults = trackprn(data, replica, prn, results.phi_init,
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; DLL_B=dll_b,
@@ -346,16 +346,19 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     # Perform FFT based fine acquisition
     # Returns structure containing the fine, course,
     # and estimated Doppler frequency
-    println("Performing FFT based fine acquisition...")
+    print("Performing FFT based fine acquisition...")
     results = fineacquisition(data, replicalong, prn, fd_est,
                               n0_est, Val(:fft))
+    println("Done")
     # Perform code/carrier phase, and Doppler frequency tracking on signal
     # using results from fine acquisition as the intial conditions
+    print("Performing signal tracking...")
     trackresults = trackprn(data, replica, prn, results.phi_init,
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
                             covMult=covMult, qₐ=q_a)
+    println("Done")
     # Plot results and save if `saveto` is a string
     if showplot
         print("Generating figures...")
