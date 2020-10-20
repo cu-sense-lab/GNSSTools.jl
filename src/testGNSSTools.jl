@@ -295,6 +295,8 @@ function courseacquisitiontest(;prns="all", sigtype="l1ca", include_carrier=true
         if ismissing(fd_center)
             if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
                 fd_center = round(doppler_curve[1]/Δfd)*Δfd  # Hz
+                fd_rate = (doppler_curve[2]-doppler_curve[1]) /
+                          (doppler_t[2]-doppler_t[1])
             else
                 fd_center = round(f_d/Δfd)*Δfd  # Hz
             end
