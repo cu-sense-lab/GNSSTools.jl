@@ -115,7 +115,14 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     # Calculate Doppler bin spacing for course acquisition
     Δfd = 1/replica.t_length  # Hz
     if ismissing(fd_center)
-        fd_center = round(f_d/Δfd)*Δfd  # Hz
+        if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
+            zero_idx = findfirst(t -> t == 0, doppler_t)
+            fd_center = round(doppler_curve[zero_idx]/Δfd)*Δfd  # Hz
+            fd_rate = (doppler_curve[zero_idx+1]-doppler_curve[zero_idx]) /
+                      (doppler_t[zero_idx+1]-doppler_t[zero_idx])
+        else
+            fd_center = round(f_d/Δfd)*Δfd  # Hz
+        end
     end
     # fd_center = 0.  # Hz
     # Allocate space for correlation result
@@ -292,15 +299,7 @@ function courseacquisitiontest(;prns="all", sigtype="l1ca", include_carrier=true
         replicalong = definesignal(type, f_s, RLM*t_length)
         # Calculate Doppler bin spacing for course acquisition
         Δfd = 1/replica.t_length  # Hz
-        if ismissing(fd_center)
-            if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
-                fd_center = round(doppler_curve[1]/Δfd)*Δfd  # Hz
-                fd_rate = (doppler_curve[2]-doppler_curve[1]) /
-                          (doppler_t[2]-doppler_t[1])
-            else
-                fd_center = round(f_d/Δfd)*Δfd  # Hz
-            end
-        end
+        fd_center = 0.  # Hz
         # Allocate space for correlation result
         corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
         # Perform course acquisition
