@@ -75,7 +75,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         print("Generating PRN $(prn) $(sigtype) signal...")
         if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
             zero_idx = findfirst(t -> t == 0, doppler_t)
-            f_d = round(doppler_curve[zero_idx]/Δfd)*Δfd  # Hz
+            f_d = doppler_curve[zero_idx]
             fd_rate = (doppler_curve[zero_idx+1]-doppler_curve[zero_idx]) /
                       (doppler_t[zero_idx+1]-doppler_t[zero_idx])
         end
