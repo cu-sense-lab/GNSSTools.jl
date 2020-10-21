@@ -2,11 +2,12 @@
 ######################### L1 C/A Signal ##########################
 ##################################################################
 """
-    definesignal(type::Val{:l1ca}, prn, f_s, t_length;
+    definesignal(type::Val{:l1ca}, f_s, t_length; prn=1,
                  f_if=0., f_d=0., fd_rate=0., Tsys=535.,
                  CN0=45., ϕ=0., nADC=4, B=2.046e6,
                  include_carrier=true, include_adc=true,
-                 include_noise=true, code_start_idx=1)
+                 include_noise=true, code_start_idx=1,
+                 include_databits=true, sig_freq=missing)
 
 Define properties of locally generated L1 C/A signal
 based off its type, PRN, etc.
@@ -69,7 +70,9 @@ end
                   include_noise=signal.include_noise,
                   code_start_idx=signal.code_start_idx,
                   isreplica=signal.isreplica,
-                  include_databits=signal.include_databits)
+                  noexp=signal.noexp,
+                  include_databits=signal.include_databits,
+                  sig_freq=signal.sig_freq)
 
 Redefine properties of locally generated L5Q signal
 based off its type, PRN, etc.
@@ -140,11 +143,12 @@ end
 ########################### L5Q Signal ###########################
 ##################################################################
 """
-    definesignal(type::Val{:l5q}, prn, f_s, t_length;
+    definesignal(type::Val{:l5q}, f_s, t_length; prn=1,
                  f_if=0., f_d=0., fd_rate=0., Tsys=535.,
                  CN0=45., ϕ=0., nADC=4, B=2.046e7,
                  include_carrier=true, include_adc=true,
-                 include_noise=true, code_start_idx=1)
+                 include_noise=true, code_start_idx=1,
+                 sig_freq=missing)
 
 Define properties of locally generated L5Q signal
 based off its type, PRN, etc.
@@ -202,7 +206,9 @@ end
                   include_adc=signal.include_adc,
                   include_noise=signal.include_noise,
                   code_start_idx=signal.code_start_idx,
-                  isreplica=signal.isreplica)
+                  isreplica=signal.isreplica,
+                  noexp=signal.noexp,
+                  sig_freq=signal.sig_freq)
 
 Redefine properties of locally generated L5Q signal
 based off its type, PRN, etc.
@@ -271,12 +277,12 @@ end
 ########################### L5I Signal ###########################
 ##################################################################
 """
-    definesignal(type::Val{:l5i}, prn, f_s, t_length;
+    definesignal(type::Val{:l5i}, f_s, t_length; prn=1,
                  f_if=0., f_d=0., fd_rate=0., Tsys=535.,
                  CN0=45., ϕ=0., nADC=4, B=2.046e7,
                  include_carrier=true, include_adc=true,
                  include_noise=true, code_start_idx=1,
-                 include_databits=true)
+                 include_databits=true, sig_freq=missing)
 
 Define properties of locally generated L5I signal
 based off its type, PRN, etc.
@@ -345,7 +351,9 @@ end
                   include_noise=signal.include_noise,
                   code_start_idx=signal.code_start_idx,
                   isreplica=signal.isreplica,
-                  include_databits=signal.include_databits)
+                  noexp=signal.noexp,
+                  include_databits=signal.include_databits,
+                  sig_freq=signal.sig_freq)
 
 Redefine properties of locally generated L5Q signal
 based off its type, PRN, etc.
