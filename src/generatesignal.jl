@@ -76,7 +76,7 @@ function generatesignal!(signal::ReplicaSignal,
     end
     # Quantize signal
     if include_adc
-        sigmax = sqrt(maximum(abs2.(signal.data)))
+        sigmax = sqrt(maximum(abs2, signal.data))
         @threads for i in 1:signal.sample_num
             @inbounds signal.data[i] = round(signal.data[i]*adc_scale/sigmax)
         end
