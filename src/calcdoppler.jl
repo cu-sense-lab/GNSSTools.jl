@@ -68,3 +68,20 @@ function calcdoppler(orb::OrbitPropagator, julian_date, eop,
     fd_obs = sig_freq*v_obs/c  # Hz
     return -fd_obs
 end
+
+
+"""
+    calcdoppler(r::Vector{Float64}, v::Vector{Float64}, obs_ecef, sig_freq)
+
+Calculates the Doppler frequency for the direct signal case.
+"""
+function calcdoppler(r::Vector{Float64}, v::Vector{Float64}, obs_ecef, sig_freq)
+    # Get velocities and positions
+    r = orb_ecef.r
+    v = orb_ecef.v
+    # Direct signal case
+    v_obs = transpose((r-obs_ecef)/norm(r-obs_ecef))*v
+    # Calculate observed Doppler frequency by observer
+    fd_obs = sig_freq*v_obs/c  # Hz
+    return -fd_obs
+end

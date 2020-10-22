@@ -112,10 +112,33 @@ end
 
 
 """
-    doppler_distribution(a, plane_num, satellite_per_plane, i, t_range, obs_lla;
-                                  eop=get_iers_eop(:IAU1980), Ω₀=0., f₀=0.,
-                                  ω=0., e=0., t_start=0.)
+    doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
+                         obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
+                         Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
+                         t_start=0., ΔΩ=360/plane_num, min_elevation=5.)
 """
+function doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
+                              obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
+                              Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
+                              t_start=0., ΔΩ=360/plane_num, min_elevation=5.)
+    constellation = define_constellation(a, plane_num, satellite_per_plane, i,
+                                         t_range; eop=eop, show_plot=show_plot,
+                                         Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
+                                         obs_lla=missing, ΔΩ=ΔΩ)
+    #
+    obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+    N = length(t_range)*plane_num*satellite_per_plane
+    dopplers = Array{Float64}(undef, N)
+    k = 1
+    for satellite in constellation.satellites
+        for i in length(satellite.t)
+            r = view(satellite.r_ecef[i,:])
+            v = view(satellite.v_ecef[i,:])
+            dopplers[k] = calcdoppler(r, v, obs_ecef, sig_freq)
+            k += 1
+        end
+    end
+ end
 
 
 
