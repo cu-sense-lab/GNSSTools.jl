@@ -172,9 +172,9 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         # title("Incination: $(round(i*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
         ax1 = subplot(1, 2, 2)
         hist(doppler_rates, bins=bins, density=true)
-        xlabel("Doppler (Hz)")
+        xlabel("Doppler (Hz/sec)")
         ylabel("Prob")
-        suptitle("Incination: $(round(incl, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
+        suptitle("Incination: $(round(incl, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane); User loc: ($(round(obs_lla[1], digits=3))ᵒ, $(round(obs_lla[2], digits=3))ᵒ, $(round(obs_lla[3], digits=3))m")
 
     end
     return (dopplers, elevations, ts, ids, doppler_rates, doppler_rate_ts)
