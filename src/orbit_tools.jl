@@ -49,7 +49,6 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
     if f₀ == 0.
         f₀ += Δf/satellite_per_plane
     end
-    satellites = []
     k = 1
     p = Progress(Int(plane_num*satellite_per_plane), 1,
                  "Generating constellation...")
@@ -57,6 +56,7 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
         fig = figure()
         ax = subplot()
     end
+    satellites = Array{Satellite}(undef, plane_num*satellite_per_plane)
     for plane in 1:plane_num
         for sat in 1:satellite_per_plane
             id = k
@@ -65,20 +65,29 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
             init_orbit = init_orbit_propagator(Val(:twobody), 0., a, e, i,
                                                Ω, ω, f)
             orbit, r, v = propagate_to_epoch!(init_orbit, t_range)
-            orbit_teme = [kepler_to_sv(orbit[i]) for i in 1:length(orbit)]
-            orbit_ecef = [svECItoECEF(orbit_teme[i], TEME(), ITRF(), 0., eop)
-                          for i in 1:length(orbit_teme)]
-            r_ecef = [orbit_ecef[1].r[1] orbit_ecef[1].r[2] orbit_ecef[1].r[3]]
-            v_ecef = [orbit_ecef[1].v[1] orbit_ecef[1].v[2] orbit_ecef[1].v[3]]
-            a_ecef = [orbit_ecef[1].a[1] orbit_ecef[1].a[2] orbit_ecef[1].a[3]]
-            for i in 2:length(orbit_ecef)
-                r_ecef = [r_ecef; [orbit_ecef[i].r[1] orbit_ecef[i].r[2] orbit_ecef[i].r[3]]]
-                v_ecef = [v_ecef; [orbit_ecef[i].v[1] orbit_ecef[i].v[2] orbit_ecef[i].v[3]]]
-                a_ecef = [a_ecef; [orbit_ecef[i].a[1] orbit_ecef[i].a[2] orbit_ecef[i].a[3]]]
+            r_ecef = Array{Float64,2}(undef, length(orbit), 3)
+            v_ecef = Array{Float64,2}(undef, length(orbit), 3)
+            a_ecef = Array{Float64,2}(undef, length(orbit), 3)
+            for i in 1:length(orbit)
+                orbit_teme = kepler_to_sv(orbit[i])
+                orbit_ecef = svECItoECEF(orbit_teme, TEME(), ITRF(), t_start, eop)
+                r_ecef[i,:] = [orbit_ecef.r[1], orbit_ecef.r[2], orbit_ecef.r[3]]
+                v_ecef[i,:] = [orbit_ecef.v[1], orbit_ecef.v[2], orbit_ecef.v[3]]
+                a_ecef[i,:] = [orbit_ecef.a[1], orbit_ecef.a[2], orbit_ecef.a[3]]
             end
-            satellite = Satellite(id, init_orbit, t_range, orbit, r_ecef, v_ecef,
-                                  a_ecef)
-            push!(satellites, satellite)
+            # orbit_teme = [kepler_to_sv(orbit[i]) for i in 1:length(orbit)]
+            # orbit_ecef = [svECItoECEF(orbit_teme[i], TEME(), ITRF(), 0., eop)
+            #               for i in 1:length(orbit_teme)]
+            # r_ecef = [orbit_ecef[1].r[1] orbit_ecef[1].r[2] orbit_ecef[1].r[3]]
+            # v_ecef = [orbit_ecef[1].v[1] orbit_ecef[1].v[2] orbit_ecef[1].v[3]]
+            # a_ecef = [orbit_ecef[1].a[1] orbit_ecef[1].a[2] orbit_ecef[1].a[3]]
+            # for i in 2:length(orbit_ecef)
+            #     r_ecef = [r_ecef; [orbit_ecef[i].r[1] orbit_ecef[i].r[2] orbit_ecef[i].r[3]]]
+            #     v_ecef = [v_ecef; [orbit_ecef[i].v[1] orbit_ecef[i].v[2] orbit_ecef[i].v[3]]]
+            #     a_ecef = [a_ecef; [orbit_ecef[i].a[1] orbit_ecef[i].a[2] orbit_ecef[i].a[3]]]
+            # end
+            satellites[k] = Satellite(id, init_orbit, t_range, orbit, r_ecef,
+                                      v_ecef, a_ecef)
             k += 1
             if show_plot
                 scatter3D(r_ecef[1,1], r_ecef[1,2], r_ecef[1,3], s=50)
