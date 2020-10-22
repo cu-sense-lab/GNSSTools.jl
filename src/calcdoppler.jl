@@ -75,10 +75,7 @@ end
 
 Calculates the Doppler frequency for the direct signal case.
 """
-function calcdoppler(r::Vector{Float64}, v::Vector{Float64}, obs_ecef, sig_freq)
-    # Get velocities and positions
-    r = orb_ecef.r
-    v = orb_ecef.v
+function calcdoppler(r, v, obs_ecef, sig_freq)
     # Direct signal case
     v_obs = transpose((r-obs_ecef)/norm(r-obs_ecef))*v
     # Calculate observed Doppler frequency by observer

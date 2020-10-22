@@ -247,7 +247,7 @@ Calculates the elevation of an object at a given ECEF coordinate specified
 by `sat_ecef`. Returns only `(sat_range, az, el)` instead of `SatelliteRAE`
 struct. Format is `(meters, deg, deg)`.
 """
-function calcelevation(sat_ecef::Vector{Float64}, obs_lla)
+function calcelevation(sat_ecef, obs_lla)
     # Calculate ENU transformation matrix
     R_ENU = calcenumatrix(obs_lla)
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])

@@ -116,6 +116,7 @@ module GNSSTools
     export calcelevation
     export course_acq_est
     export plot_satellite_orbit
+    export doppler_distribution
 
     println("Done")
 

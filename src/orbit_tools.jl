@@ -125,7 +125,6 @@ function doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
                                          t_range; eop=eop, show_plot=show_plot,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
                                          obs_lla=missing, ΔΩ=ΔΩ)
-    #
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
     N = length(t_range)*plane_num*satellite_per_plane
     dopplers = Array{Float64}(undef, N)
@@ -133,16 +132,17 @@ function doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
     k = 1
     for satellite in constellation.satellites
         for i in length(satellite.t)
-            elevation = calcelevation(satellite, user_lla;
-                                      name=string(satellite.id))
-            r = view(satellite.r_ecef[i,:])
-            v = view(satellite.v_ecef[i,:])
-            dopplers[k] = calcdoppler(r, v, obs_ecef, sig_freq)
-            elevations[k] = elevation
-            k += 1
+            r = view(satellite.r_ecef, i, :)
+            sat_range, azimuth, elevation = calcelevation(r, obs_lla)
+            if elevation >= min_elevation
+                v = view(satellite.v_ecef, i, :)
+                dopplers[k] = calcdoppler(r, v, obs_ecef, sig_freq)
+                elevations[k] = elevation
+                k += 1
+            end
         end
     end
-
+    return (dopplers[1:k-1], elevations[1:k-1])
  end
 
 
