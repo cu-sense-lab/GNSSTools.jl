@@ -37,12 +37,12 @@ end
 Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, otherwise,
 `ΔΩ` will default to `360/plane_num`.
 """
-function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
+function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_iers_eop(:IAU1980), show_plot=false,
                               Ω₀=0., f₀=0., ω=0., e=0., t_start=0., obs_lla=missing,
                               ΔΩ=360/plane_num)
     a = float(a)
-    i = i*π/180
+    incl = incl*π/180
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
     ΔΩ = ΔΩ*π/180
     Δf = 2π/satellite_per_plane
@@ -62,7 +62,7 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
             id = k
             Ω = Ω₀ + (plane-1)*ΔΩ
             f = f₀ + (sat-1)*Δf
-            init_orbit = init_orbit_propagator(Val(:twobody), 0., a, e, i,
+            init_orbit = init_orbit_propagator(Val(:twobody), 0., a, e, incl,
                                                Ω, ω, f)
             orbit, r, v = propagate_to_epoch!(init_orbit, t_range)
             r_ecef = Array{Float64,2}(undef, length(orbit), 3)
@@ -107,17 +107,17 @@ end
 
 
 """
-    doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
+    doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                          obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
                          Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                          t_start=0., ΔΩ=360/plane_num, min_elevation=5.)
 """
-function doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
+function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                               show_hist=true)
-    constellation = define_constellation(a, plane_num, satellite_per_plane, i,
+    constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
                                          t_range; eop=eop, show_plot=show_plot,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
                                          obs_lla=missing, ΔΩ=ΔΩ)
@@ -173,7 +173,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
         hist(doppler_rates, bins=100, density=true)
         xlabel("Doppler (Hz)")
         ylabel("Prob")
-        suptitle("Incination: $(round(i*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
+        suptitle("Incination: $(round(incl*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
 
     end
     return (dopplers, elevations, ts, ids, doppler_rates, doppler_rate_ts)
