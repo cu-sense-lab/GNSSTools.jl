@@ -90,7 +90,8 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
         axis("off")
         if ~ismissing(obs_lla)
             obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
-            scatter3D(obs_ecef[1], obs_ecef[2], obs_ecef[3], s=300, c="r", marker="*", facecolor="white")
+            scatter3D(obs_ecef[1], obs_ecef[2], obs_ecef[3], s=300, c="r",
+                      marker="*", facecolor="white")
         end
         u = Array(range(0, 2π, length=100))
         v = Array(range(0, 1π, length=100))
@@ -114,29 +115,43 @@ end
 function doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
                               obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
-                              t_start=0., ΔΩ=360/plane_num, min_elevation=5.)
+                              t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
+                              show_hist=true)
     constellation = define_constellation(a, plane_num, satellite_per_plane, i,
                                          t_range; eop=eop, show_plot=show_plot,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
                                          obs_lla=missing, ΔΩ=ΔΩ)
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
     N = length(t_range)*plane_num*satellite_per_plane
+    ts = Array{Float64}(undef, N)
+    ids = Array{Float64}(undef, N)
     dopplers = Array{Float64}(undef, N)
+    doppler_rates = Array{Float64}(undef, N)
+    doppler_ts = Array{Float64}(undef, N)
     elevations = Array{Float64}(undef, N)
     k = 1
     for satellite in constellation.satellites
-        for i in length(satellite.t)
+        for i in 1:length(satellite.t)
             r = view(satellite.r_ecef, i, :)
             sat_range, azimuth, elevation = calcelevation(r, obs_lla)
             if elevation >= min_elevation
                 v = view(satellite.v_ecef, i, :)
                 dopplers[k] = calcdoppler(r, v, obs_ecef, sig_freq)
                 elevations[k] = elevation
+                ts[k] = satellite.t[i]
+                ids[k] = satellite.id
                 k += 1
             end
         end
     end
-    return (dopplers[1:k-1], elevations[1:k-1])
+    if show_hist
+        figure()
+        hist(dopplers, bins=100, density=true)
+        xlabel("Doppler (Hz)")
+        ylabel("Prob")
+        title("Incination: $(round(i*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
+    end
+    return (dopplers[1:k-1], elevations[1:k-1], ts[1:k-1], ids[1:k-1])
  end
 
 
