@@ -37,7 +37,6 @@
 # end
 
 
-
 """
 doppler2chips(doppler_curve, chipping_rates, sig_freq, t;
               Δt=t[2]-t[1], N=length(doppler_curve),

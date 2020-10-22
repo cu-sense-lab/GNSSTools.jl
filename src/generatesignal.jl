@@ -18,7 +18,6 @@ array will still be the same size. You will need to keep track
 of the `t_length` you passed to `generatesignal!`.
 """
 function generatesignal!(signal::ReplicaSignal,
-                         # isreplica::Val{false}=Val(signal.isreplica::Bool);
                          t_length=signal.t_length;
                          doppler_curve=missing, doppler_t=missing,
                          message="Generating signal...")
@@ -32,14 +31,44 @@ function generatesignal!(signal::ReplicaSignal,
     fd_rate = signal.fd_rate
     ϕ_init = signal.ϕ
     if ismissing(doppler_curve)
-        get_ϕ2(t) = 2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ_init
-        get_code_val2(t) = calc_code_val(signal, t)
+        get_ϕ(t) = 2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ_init
+        get_code_val(t) = calc_code_val(signal, t)
     else
-        get_code_val2, get_ϕ2 = get_chips_and_ϕ(signal, doppler_curve;
+        get_code_val, get_ϕ = get_chips_and_ϕ(signal, doppler_curve;
                                               doppler_t=doppler_t)
     end
-    get_ϕ = FunctionWrapper{Float64,Tuple{Float64}}(get_ϕ2)
-    get_code_val = FunctionWrapper{Float64,Tuple{Float64}}(get_code_val2)
+    N = floor(Int, t_length*f_s)
+    sigtype = eltype(signal.data)
+    thermal_noise = randn(sigtype, N)
+    # get_ϕ = FunctionWrapper{Float64,Tuple{Float64}}(get_ϕ2)
+    # get_code_val = FunctionWrapper{Float64,Tuple{Float64}}(get_code_val2)
+    generatesignal!(signal, t_length, get_code_val, get_ϕ, thermal_noise)
+end
+
+
+"""
+    generatesignal!(signal, t_length, get_code_val, get_ϕ, thermal_noise)
+
+Generates local GNSS signal using paramters defined in a
+`ReplicaSignal` struct.
+
+Generates a signal with carrier, ADC quantization, noise,
+and Neuman sequence.
+
+No need to specify `isreplica`. Set `isreplica` to `true` to
+use alternate method, which ignores all `Bool` flags in `signal`.
+
+Specify `t_length` to be ≲ to `replica.t_length` for different
+signal generation lengths. **NOTE:** The size of the `replica.data`
+array will still be the same size. You will need to keep track
+of the `t_length` you passed to `generatesignal!`.
+"""
+function generatesignal!(signal, t_length, get_code_val, get_ϕ, thermal_noise)
+    # Common parmeters used for entire signal
+    prn = signal.prn
+    Tsys = signal.Tsys
+    CN0 = signal.CN0
+    f_s = signal.f_s
     B = signal.B
     nADC = signal.nADC
     include_carrier = signal.include_carrier
@@ -50,7 +79,6 @@ function generatesignal!(signal::ReplicaSignal,
     carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
     noise_amp = sqrt(k*B*Tsys)
     N = floor(Int, t_length*f_s)
-    thermal_noise = randn(sigtype, N)
     # p = Progress(N, 15, message)
     @threads for i in 1:N
         @inbounds t = signal.t[i]
