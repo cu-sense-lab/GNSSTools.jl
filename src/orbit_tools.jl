@@ -107,16 +107,17 @@ end
 
 
 """
-    doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
-                         obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
-                         Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
-                         t_start=0., ΔΩ=360/plane_num, min_elevation=5.)
+doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
+                     obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
+                     Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
+                     t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
+                     show_hist=true, bins=100)
 """
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
-                              show_hist=true)
+                              show_hist=true, bins=100)
     constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
                                          t_range; eop=eop, show_plot=show_plot,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
@@ -165,12 +166,12 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
     if show_hist
         figure()
         ax1 = subplot(1, 2, 1)
-        hist(dopplers./1000, bins=100, density=true)
+        hist(dopplers./1000, bins=bins, density=true)
         xlabel("Doppler (kHz)")
         ylabel("Prob")
         # title("Incination: $(round(i*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
         ax1 = subplot(1, 2, 2)
-        hist(doppler_rates, bins=100, density=true)
+        hist(doppler_rates, bins=bins, density=true)
         xlabel("Doppler (Hz)")
         ylabel("Prob")
         suptitle("Incination: $(round(incl, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
