@@ -241,6 +241,35 @@ end
 
 
 """
+    calcelevation(r::Vector{Float64}, obs_lla)
+
+Calculates the elevation of an object at a given ECEF coordinate specified
+by `sat_ecef`. Returns only `(sat_range, az, el)` instead of `SatelliteRAE`
+struct. Format is `(meters, deg, deg)`.
+"""
+function calcelevation(sat_ecef::Vector{Float64}, obs_lla)
+    # Calculate ENU transformation matrix
+    R_ENU = calcenumatrix(obs_lla)
+    obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+    # Calculate user-to-sat vector
+    user_to_sat = sat_ecef - obs_ecef
+    # Caluclate satellite range
+    sat_range = norm(user_to_sat)
+    # Normalize `user_to_sat`
+    user_to_sat_norm = user_to_sat./sat_range
+    # Transform normalized user-to-sat vector to ENU
+    enu = R_ENU*user_to_sat_norm  # [East, North, South]
+    # Calculate satellite azimuth
+    az = atan(enu[1], enu[2])
+    # Calculate satellite elevation
+    el = asin(enu[3]/norm(enu))
+    az = rad2deg(az)
+    el = rad2deg(el)
+    return (sat_range, az, el)
+end
+
+
+"""
     getGPSSatnums(obs_time_JD, prns)
 
 Get the NORAD ID for each PRN for a given
