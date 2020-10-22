@@ -75,17 +75,6 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
                 v_ecef[i,:] = [orbit_ecef.v[1], orbit_ecef.v[2], orbit_ecef.v[3]]
                 a_ecef[i,:] = [orbit_ecef.a[1], orbit_ecef.a[2], orbit_ecef.a[3]]
             end
-            # orbit_teme = [kepler_to_sv(orbit[i]) for i in 1:length(orbit)]
-            # orbit_ecef = [svECItoECEF(orbit_teme[i], TEME(), ITRF(), 0., eop)
-            #               for i in 1:length(orbit_teme)]
-            # r_ecef = [orbit_ecef[1].r[1] orbit_ecef[1].r[2] orbit_ecef[1].r[3]]
-            # v_ecef = [orbit_ecef[1].v[1] orbit_ecef[1].v[2] orbit_ecef[1].v[3]]
-            # a_ecef = [orbit_ecef[1].a[1] orbit_ecef[1].a[2] orbit_ecef[1].a[3]]
-            # for i in 2:length(orbit_ecef)
-            #     r_ecef = [r_ecef; [orbit_ecef[i].r[1] orbit_ecef[i].r[2] orbit_ecef[i].r[3]]]
-            #     v_ecef = [v_ecef; [orbit_ecef[i].v[1] orbit_ecef[i].v[2] orbit_ecef[i].v[3]]]
-            #     a_ecef = [a_ecef; [orbit_ecef[i].a[1] orbit_ecef[i].a[2] orbit_ecef[i].a[3]]]
-            # end
             satellites[k] = Satellite(id, init_orbit, t_range, orbit, r_ecef,
                                       v_ecef, a_ecef)
             k += 1
@@ -96,10 +85,6 @@ function define_constellation(a, plane_num, satellite_per_plane, i, t_range;
             end
             next!(p)
         end
-        # if show_plot
-        #     plot3D(satellites[k-1].r_ecef[:,1], satellites[k-1].r_ecef[:,2],
-        #            satellites[k-1].r_ecef[:,3], "k")
-        # end
     end
     if show_plot
         axis("off")
