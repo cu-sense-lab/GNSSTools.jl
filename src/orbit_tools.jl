@@ -124,12 +124,11 @@ function doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
     N = length(t_range)*plane_num*satellite_per_plane
     ts = Array{Float64}(undef, N)
-    ids = Array{Float64}(undef, N)
+    ids = Array{Int}(undef, N)
     dopplers = Array{Float64}(undef, N)
-    doppler_rates = Array{Float64}(undef, N)
-    doppler_ts = Array{Float64}(undef, N)
     elevations = Array{Float64}(undef, N)
     k = 1
+    j = 1
     for satellite in constellation.satellites
         for i in 1:length(satellite.t)
             r = view(satellite.r_ecef, i, :)
@@ -144,14 +143,40 @@ function doppler_distribution(a, plane_num, satellite_per_plane, i, t_range,
             end
         end
     end
+    dopplers = dopplers[1:k-1]
+    elevations = elevations[1:k-1]
+    doppler_rates = Array{Float64}(undef, N)
+    doppler_rate_ts = Array{Float64}(undef, N)
+    ts = ts[1:k-1]
+    ts_diff = diff(ts).*(60*60*24)
+    Δt = t_range[2] - t_range[1]
+    ids = ids[1:k-1]
+    ids_diff = diff(ids)
+    k = 1
+    for i in 1:length(ts_diff)
+        if (ts_diff[i] < 1.001) && (ids_diff[i] == 0)
+            doppler_rates[k] = (dopplers[i+1] - dopplers[i])/Δt
+            doppler_rate_ts[k] = ts[i+1]
+            k += 1
+        end
+    end
+    doppler_rates = doppler_rates[1:k-1]
+    doppler_rate_ts = doppler_rate_ts[1:k-1]
     if show_hist
         figure()
-        hist(dopplers, bins=100, density=true)
+        ax1 = subplot(1, 2, 1)
+        hist(dopplers./1000, bins=100, density=true)
+        xlabel("Doppler (kHz)")
+        ylabel("Prob")
+        # title("Incination: $(round(i*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
+        ax1 = subplot(1, 2, 2)
+        hist(doppler_rates, bins=100, density=true)
         xlabel("Doppler (Hz)")
         ylabel("Prob")
-        title("Incination: $(round(i*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
+        suptitle("Incination: $(round(i*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
+
     end
-    return (dopplers[1:k-1], elevations[1:k-1], ts[1:k-1], ids[1:k-1])
+    return (dopplers, elevations, ts, ids, doppler_rates, doppler_rate_ts)
  end
 
 
