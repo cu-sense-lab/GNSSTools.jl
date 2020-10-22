@@ -101,7 +101,7 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
         z = Rₑ.*cos.(v)
         plot_wireframe(x, y, z, color="grey", linestyle=":", rcount=20, ccount=30)
     end
-    return Constellation(t_start, plane_num, satellite_per_plane, Ω₀, f₀, ω, e, i,
+    return Constellation(t_start, plane_num, satellite_per_plane, Ω₀, f₀, ω, e, incl,
                          t_range, ΔΩ, Δf, satellites)
 end
 
@@ -173,7 +173,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         hist(doppler_rates, bins=100, density=true)
         xlabel("Doppler (Hz)")
         ylabel("Prob")
-        suptitle("Incination: $(round(incl*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
+        suptitle("Incination: $(round(incl, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
 
     end
     return (dopplers, elevations, ts, ids, doppler_rates, doppler_rate_ts)
