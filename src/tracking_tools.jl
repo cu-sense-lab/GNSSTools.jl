@@ -190,8 +190,6 @@ function getcorrelatoroutput!(ZP_array, data, replica, i, N, f_if, f_d,
     ze = 0. + 0im
     zp = 0. + 0im
     zl = 0. + 0im
-	zn_abs2 = 0. + 0im
-	zp_abs2 = 0. + 0im
     datasegment = view(data.data, (i-1)*N+1:i*N)
     ts = view(data.t, 1:N)
 	Δf = 1/replica.t_length
@@ -199,7 +197,7 @@ function getcorrelatoroutput!(ZP_array, data, replica, i, N, f_if, f_d,
     for j in 1:N
 		# Perform carrier wipeoff
 		# NOTE: # cis = exp(1im*A)
-        @inbounds wipeoff = datasegment[j]*cis(-(2π*(f_if+f_d)*ts[j] + π*fd_rate*ts[j]^2 + ϕ))
+        @inbounds wipeoff = datasegment[j]*cis(-(2π*(f_if+f_d)*ts[j] +  π*fd_rate*ts[j]^2 + ϕ))
 		# Calculate prompt correlator output at specific t
 		ZP = conj(replica.data[j]) * wipeoff
         @inbounds zp += ZP
@@ -223,7 +221,7 @@ function getcorrelatoroutput!(ZP_array, data, replica, i, N, f_if, f_d,
 	zp_max_idx = 1
 	for j in 1:N
 		ZP_abs_sqrd = abs2(ZP_array[j])
-		if ZP_abs_sqrd > zp_abs_sqrd_maxx
+		if ZP_abs_sqrd > zp_abs_sqrd_max
 			zp_abs_sqrd_max = ZP_abs_sqrd
 			zp_max_idx = j
 		end
