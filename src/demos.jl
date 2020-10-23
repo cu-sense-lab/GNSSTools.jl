@@ -199,8 +199,8 @@ end
          include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
          t_length=1e-3, M=4000, fd_range=5000., dll_b=8., state_num=3,
          dynamickf=true, covMult=1., q_a=100., figsize=missing, CN0=45.,
-         plot3d=true, show_acq_plot=true, saveto=missing, inclination=90.,
-         sig_freq=missing, t_start=3/60/24)
+         plot3d=true, show_acq_plot=true, saveto=missing, incl=56.,
+         sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num)
 
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking on simulated data based
@@ -217,8 +217,8 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
               t_length=1e-3, M=4000, fd_range=5000., dll_b=8., state_num=3,
               dynamickf=true, covMult=1., q_a=100., figsize=missing, CN0=45.,
-              plot3d=true, show_acq_plot=false, saveto=missing, inclination=90.,
-              sig_freq=missing, t_start=3/60/24)
+              plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
+              sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num)
     println("Running GNSSTools Constellation Demo")
     # Select signal type
     if sigtype == "l5q"
@@ -289,9 +289,9 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     constellation_t = Array(data.t[1]:1:data.t[end])
     doppler_t = Array(data.t[1]:0.001:data.t[end]+0.001)
     constellation = define_constellation(a, plane_num, satellite_per_plane,
-                                         inclination*pi/180, constellation_t;
+                                         incl, constellation_t;
                                          show_plot=true, obs_lla=user_lla,
-                                         eop=eop, t_start=t_start)
+                                         eop=eop, t_start=t_start, ΔΩ=ΔΩ)
     elevations = []
     max_elevations = []
     for satellite in constellation.satellites
