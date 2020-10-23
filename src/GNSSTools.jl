@@ -28,8 +28,6 @@ module GNSSTools
     print("Done\nImporting Interpolations...")
     using Interpolations
     print("Done\nImporting QuadGK...")
-    using FunctionWrappers: FunctionWrapper
-    print("Done\nImporting FunctionWrappers...")
     using QuadGK
     print("Done\nImporting HDF5...")
     using HDF5

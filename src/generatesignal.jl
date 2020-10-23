@@ -40,8 +40,6 @@ function generatesignal!(signal::ReplicaSignal,
     N = floor(Int, t_length*f_s)
     sigtype = eltype(signal.data)
     thermal_noise = randn(sigtype, N)
-    # get_ϕ = FunctionWrapper{Float64,Tuple{Float64}}(get_ϕ2)
-    # get_code_val = FunctionWrapper{Float64,Tuple{Float64}}(get_code_val2)
     generatesignal!(signal, t_length, get_code_val, get_ϕ, thermal_noise)
 end
 
