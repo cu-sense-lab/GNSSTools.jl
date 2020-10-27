@@ -45,7 +45,7 @@ end
 
 
 """
-    generatesignal!(signal, t_length, get_code_val, get_ϕ, thermal_noise)
+    generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ, thermal_noise)
 
 Generates local GNSS signal using paramters defined in a
 `ReplicaSignal` struct.
@@ -61,7 +61,7 @@ signal generation lengths. **NOTE:** The size of the `replica.data`
 array will still be the same size. You will need to keep track
 of the `t_length` you passed to `generatesignal!`.
 """
-function generatesignal!(signal, t_length, get_code_val, get_ϕ, thermal_noise)
+function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ, thermal_noise)
     # Common parmeters used for entire signal
     prn = signal.prn
     Tsys = signal.Tsys

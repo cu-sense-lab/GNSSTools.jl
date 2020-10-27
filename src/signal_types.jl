@@ -1,4 +1,33 @@
 """
+    SignalType
+
+Struct for holding parms for a
+given signal type.
+"""
+struct SignalType{T1,T2,T3,T4,T5,T6}
+    code_num::T1           # Number of codes in signal type
+                           # includes primary, secondary, and nav codes
+    codes::T2              # Vector of dictionaries
+                           # Each dictionary is a primary, secondary, or
+                           # or nav code which is specific for each PRN number
+    chipping_rates::T3     # Vector of chipping rates of length `code_num`
+    code_lengths::T4       # Vector of code lengths of length `code_num`
+    channel::T5            # Whether signal is on the I or Q channel
+                           # If signal is on I, `channel = 1 + 0im`
+                           # If signal is on Q, `channel = 0 + 1im`
+                           # If signal is on both, `channel = 1 1im`
+                           # `channel` is multiplied on resulting code value
+                           # during signal generation
+    include_codes::T6      # Bool vector of length `code_num`
+                           # Used to determine if a given code is used for
+                           # signal generation.
+                           # Will be used in `calc_code_val` method to determine
+                           # if a code value will be calculated and XOR`ed to
+                           # other code values.
+end
+
+
+"""
     GNSSSignal
 
 The most general type of
