@@ -6,13 +6,7 @@ given signal type.
 """
 struct SignalType{T1,T2,T3,T4,T5,T6,T7}
     code_num::T1           # Number of codes in signal type
-                           # includes primary, secondary, and nav codes
-    code_types::T2         # Describes whether a given code stored in `codes`
-                           # is a Dict or Array type. This helps determine
-                           # if the other codes are globally applied to all
-                           # primary codes. Primary codes are considered the
-                           # first code in `codes`. The length of `code_types`
-                           # is `code_num`.
+                           # Includes primary, secondary, and nav codes
     codes::T3              # Vector of dictionaries
                            # Each dictionary is a primary, secondary, or
                            # or nav code which is specific for each PRN number
@@ -20,13 +14,14 @@ struct SignalType{T1,T2,T3,T4,T5,T6,T7}
                            # assumed to be the navbits. This "code" will be
                            # ignored when generating replica signals for
                            # acquisition, fine acquisition, and signal tracking
-                           # methods.
+                           # methods. Primary codes are considered the
+                           # first code in `codes`.
     chipping_rates::T4     # Vector of chipping rates of length `code_num`
     code_lengths::T5       # Vector of code lengths of length `code_num`
     channel::T6            # Whether signal is on the I or Q channel
                            # If signal is on I, `channel = 1 + 0im`
                            # If signal is on Q, `channel = 0 + 1im`
-                           # If signal is on both, `channel = 1 1im`
+                           # If signal is on both, `channel = 1 + 1im`
                            # `channel` is multiplied on resulting code value
                            # during signal generation
     include_codes::T7      # Bool vector of length `code_num`
