@@ -67,6 +67,51 @@ end
 
 
 """
+    ReplicaSignals
+
+A abstract struct for the replica signal
+structs. For use when specifying types
+for method arguments.
+"""
+abstract type ReplicaSignals <: GNSSSignal
+    type::Val{:l1ca}
+    prn::Int64
+    f_s::Float64
+    t_length::Float64
+    f_if::Float64
+    f_d::Float64
+    fd_rate::Float64
+    Tsys::Float64
+    CN0::Float64
+    ϕ::Float64
+    nADC::Int64
+    B::Float64
+    code_start_idx::Float64
+    init_code_phases
+    t::Array{Float64,1}
+    data::Array{Complex{Float64},1}
+    include_carrier::Bool
+    include_adc::Bool
+    include_noise::Bool
+    include_databits::Bool
+    chipping_rates_d
+    chipping_rates_dd
+    sample_num::Int64
+    isreplica::Bool
+    noexp::Bool
+    sig_freq::Float64
+    # thermal_noise::Array{Complex{Float64},1}
+    # phase_noise::Array{Complex{Float64},1}
+end
+
+
+
+#------------------------------------------------------------------------------
+#                             OLD IMPLEMENTATON
+#------------------------------------------------------------------------------
+
+
+"""
     ReplicaSignal
 
 A abstract struct for the replica signal
