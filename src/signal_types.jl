@@ -5,6 +5,7 @@ Struct for holding parms for a
 given signal type.
 """
 struct SignalType{T1,T2,T3,T4,T5,T6,T7}
+    name::String           # Name of signal type (i.e. "l1ca" or "l5i" or "l5q")
     code_num::T1           # Number of codes in signal type
                            # Includes primary, secondary, and nav codes
     codes::T3              # Vector of dictionaries
@@ -38,7 +39,8 @@ end
 
 `channel` can be either `"I"`, `"Q"`, or "`both`".
 """
-function definesignaltype(codes, chipping_rates, code_lengths, channel="both")
+function definesignaltype(codes, chipping_rates, code_lengths, channel="both";
+                          name="custom")
     if typeof(codes[1]) ~= Dict
         error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
     end
@@ -110,7 +112,7 @@ A abstract struct for the replica signal
 structs. For use when specifying types
 for method arguments.
 """
-abstract type ReplicaSignals{T1,T2,T3,T4} <: GNSSSignal
+mutable struct ReplicaSignals{T1,T2,T3,T4} <: GNSSSignal
     type::Val{:l1ca}
     prn::Int64
     f_s::Float64
