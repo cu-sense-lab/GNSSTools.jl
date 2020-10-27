@@ -4,11 +4,11 @@
 Struct for holding parms for a
 given signal type.
 """
-struct SignalType{T1,T2,T3,T4,T5,T6,T7}
+struct SignalType{T1,T2,T3,T4,T5,T6}
     name::String           # Name of signal type (i.e. "l1ca" or "l5i" or "l5q")
     code_num::T1           # Number of codes in signal type
                            # Includes primary, secondary, and nav codes
-    codes::T3              # Vector of dictionaries
+    codes::T2              # Vector of dictionaries
                            # Each dictionary is a primary, secondary, or
                            # or nav code which is specific for each PRN number
                            # The last dictionary in the vector of `codes` is
@@ -17,15 +17,15 @@ struct SignalType{T1,T2,T3,T4,T5,T6,T7}
                            # acquisition, fine acquisition, and signal tracking
                            # methods. Primary codes are considered the
                            # first code in `codes`.
-    chipping_rates::T4     # Vector of chipping rates of length `code_num`
-    code_lengths::T5       # Vector of code lengths of length `code_num`
-    channel::T6            # Whether signal is on the I or Q channel
+    chipping_rates::T3     # Vector of chipping rates of length `code_num`
+    code_lengths::T4       # Vector of code lengths of length `code_num`
+    channel::T5            # Whether signal is on the I or Q channel
                            # If signal is on I, `channel = 1 + 0im`
                            # If signal is on Q, `channel = 0 + 1im`
                            # If signal is on both, `channel = 1 + 1im`
                            # `channel` is multiplied on resulting code value
                            # during signal generation
-    include_codes::T7      # Bool vector of length `code_num`
+    include_codes::T6      # Bool vector of length `code_num`
                            # Used to determine if a given code is used for
                            # signal generation.
                            # Will be used in `calc_code_val` method to determine
@@ -35,13 +35,16 @@ end
 
 
 """
-    definesignaltype(codes, chipping_rates, code_lengths, channel)
+    definesignaltype(codes::Vector{T}, chipping_rates::Vector{Float64},
+                     code_lengths::Vector{Int}, channel="both";
+                     name="custom") where T
 
-`channel` can be either `"I"`, `"Q"`, or "`both`".
+`channel` can be either `"I"`, `"Q"`, or `"both"`.
 """
-function definesignaltype(codes, chipping_rates, code_lengths, channel="both";
-                          name="custom")
-    if typeof(codes[1]) ~= Dict
+function definesignaltype(codes::Vector{T}, chipping_rates::Vector{Float64},
+                          code_lengths::Vector{Int}, channel="both";
+                          name="custom") where T
+    if ~isa(codes[1], Dict)
         error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
     end
     code_num = length(codes)
@@ -59,16 +62,47 @@ function definesignaltype(codes, chipping_rates, code_lengths, channel="both";
     dict_type = Dict{eltype(code_keys),Vector{eltype(codes[1][code_keys[1]])}}
     signal_codes = Vector{dict_type}(undef, code_num)
     for i in 1:code_num
-        if typeof(codes[i]) == Dict
-            signal_codes[i] = view(codes, i)
+        if isa(codes[i], Dict)
+            signal_codes[i] = codes[i]
         else
             code = dict_type()
             for code_key in code_keys
-                code[code_key] = view(codes, i)
+                code[code_key] = codes[i]
             end
             signal_codes[i] = code
         end
     end
+    return SignalType(name, code_num, codes, chipping_rates, code_lengths,
+                      channel, include_codes)
+end
+
+
+"""
+    definesignaltype(code::Dict, chipping_rate::Float64,
+                     code_length::Int, channel="both";
+                     name="custom")
+
+`channel` can be either `"I"`, `"Q"`, or `"both"`.
+"""
+function definesignaltype(code::Dict, chipping_rate::Float64,
+                          code_length::Int, channel="both";
+                          name="custom")
+    if ~isa(code, Dict)
+        error("Code given must be in the form of a dictionary.")
+    end
+    code_num = 1
+    include_code = true
+    if channel == "I"
+        channel = 1 + 0im
+    elseif channel == "Q"
+        channel = 0 + 1im
+    elseif channel == "both"
+        channel = 1 + 1im
+    else
+        error("Invalid channel specified.")
+    end
+    return SignalType(name, code_num, code, chipping_rate, code_length,
+                      channel, include_code)
 end
 
 
