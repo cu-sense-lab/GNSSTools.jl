@@ -34,6 +34,43 @@ end
 
 
 """
+    definesignaltype(codes, chipping_rates, code_lengths, channel)
+
+`channel` can be either `"I"`, `"Q"`, or "`both`".
+"""
+function definesignaltype(codes, chipping_rates, code_lengths, channel="both")
+    if typeof(codes[1]) ~= Dict
+        error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
+    end
+    code_num = length(codes)
+    include_codes = fill(true, code_num)
+    if channel == "I"
+        channel = 1 + 0im
+    elseif channel == "Q"
+        channel = 0 + 1im
+    elseif channel == "both"
+        channel = 1 + 1im
+    else
+        error("Invalid channel specified.")
+    end
+    code_keys = collect(keys(codes[1]))
+    dict_type = Dict{eltype(code_keys),Vector{eltype(codes[1][code_keys[1]])}}
+    signal_codes = Vector{dict_type}(undef, code_num)
+    for i in 1:code_num
+        if typeof(codes[i]) == Dict
+            signal_codes[i] = view(codes, i)
+        else
+            code = dict_type()
+            for code_key in code_keys
+                code[code_key] = view(codes, i)
+            end
+            signal_codes[i] = code
+        end
+    end
+end
+
+
+"""
     GNSSSignal
 
 The most general type of
@@ -73,7 +110,7 @@ A abstract struct for the replica signal
 structs. For use when specifying types
 for method arguments.
 """
-abstract type ReplicaSignals <: GNSSSignal
+abstract type ReplicaSignals{T1,T2,T3,T4} <: GNSSSignal
     type::Val{:l1ca}
     prn::Int64
     f_s::Float64
@@ -87,19 +124,20 @@ abstract type ReplicaSignals <: GNSSSignal
     nADC::Int64
     B::Float64
     code_start_idx::Float64
-    init_code_phases
+    init_code_phases::T1
     t::Array{Float64,1}
     data::Array{Complex{Float64},1}
     include_carrier::Bool
     include_adc::Bool
     include_noise::Bool
     include_databits::Bool
-    chipping_rates_d
-    chipping_rates_dd
+    chipping_rates_d::T2
+    chipping_rates_dd::T3
     sample_num::Int64
     isreplica::Bool
     noexp::Bool
     sig_freq::Float64
+    signal_type::T4
     # thermal_noise::Array{Complex{Float64},1}
     # phase_noise::Array{Complex{Float64},1}
 end
