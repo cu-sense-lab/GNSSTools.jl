@@ -4,21 +4,32 @@
 Struct for holding parms for a
 given signal type.
 """
-struct SignalType{T1,T2,T3,T4,T5,T6}
+struct SignalType{T1,T2,T3,T4,T5,T6,T7}
     code_num::T1           # Number of codes in signal type
                            # includes primary, secondary, and nav codes
-    codes::T2              # Vector of dictionaries
+    code_types::T2         # Describes whether a given code stored in `codes`
+                           # is a Dict or Array type. This helps determine
+                           # if the other codes are globally applied to all
+                           # primary codes. Primary codes are considered the
+                           # first code in `codes`. The length of `code_types`
+                           # is `code_num`.
+    codes::T3              # Vector of dictionaries
                            # Each dictionary is a primary, secondary, or
                            # or nav code which is specific for each PRN number
-    chipping_rates::T3     # Vector of chipping rates of length `code_num`
-    code_lengths::T4       # Vector of code lengths of length `code_num`
-    channel::T5            # Whether signal is on the I or Q channel
+                           # The last dictionary in the vector of `codes` is
+                           # assumed to be the navbits. This "code" will be
+                           # ignored when generating replica signals for
+                           # acquisition, fine acquisition, and signal tracking
+                           # methods.
+    chipping_rates::T4     # Vector of chipping rates of length `code_num`
+    code_lengths::T5       # Vector of code lengths of length `code_num`
+    channel::T6            # Whether signal is on the I or Q channel
                            # If signal is on I, `channel = 1 + 0im`
                            # If signal is on Q, `channel = 0 + 1im`
                            # If signal is on both, `channel = 1 1im`
                            # `channel` is multiplied on resulting code value
                            # during signal generation
-    include_codes::T6      # Bool vector of length `code_num`
+    include_codes::T7      # Bool vector of length `code_num`
                            # Used to determine if a given code is used for
                            # signal generation.
                            # Will be used in `calc_code_val` method to determine
