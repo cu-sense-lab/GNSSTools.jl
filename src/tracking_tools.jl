@@ -316,7 +316,7 @@ that are minumum amount to track a given PRN.
 function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
                   h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10., state_num=2,
-				  dynamickf=false, covMult=1.,
+				  dynamickf=false, cov_mult=1., q_mult=1.,
                   message="Tracking PRN $(prn) with T=$(Int64(floor(replica.t_length*1000)))ms...")
     # Assign signal specific parameters
     chipping_rate = replica.chipping_rate
@@ -358,7 +358,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
     data_bits = Array{Int64}(undef, M)
     A = calcA(T, state_num)
     C = calcC(T, state_num)
-    Q = calcQ(T, h₀, h₋₂, qₐ, sig_freq, state_num)
+    Q = calcQ(T, h₀, h₋₂, qₐ, sig_freq, state_num) .* q_mult
     P = Array{Float64}(undef, size(A)[1], M)
     x = Array{Float64}(undef, size(A)[1], M)
 	K = Array{Float64}(undef, size(A)[1], M)
@@ -372,7 +372,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		error("Number of states specified must be either 2 or 3.")
 	end
 	x⁻ᵢ = deepcopy(x⁺ᵢ)
-	P⁺ᵢ = covMult .* P⁺ᵢ
+	P⁺ᵢ = cov_mult .* P⁺ᵢ
 	Kᵢ = zeros(size(x⁻ᵢ))
 	Kfixed = dkalman(A, C, Q, Diagonal(R))
     # p = Progress(M, 1, message)
