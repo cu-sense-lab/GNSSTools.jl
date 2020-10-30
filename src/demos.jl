@@ -6,10 +6,10 @@
           include_noise=true, include_databits=true, simulatedata=true,
           saveto=missing, T="short", showplot=true, f_d=800.,
           fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
-          fd_range=5000., dll_b=8., state_num=3, dynamickf=true,
-          covMult=1., q_a=100., figsize=missing, CN0=45., plot3d=true,
+          fd_range=5000., dll_b=10, state_num=3, dynamickf=true,
+          cov_mult=1., q_a=1000, figsize=missing, CN0=45., plot3d=true,
           show_acq_plot=true, doppler_curve=missing, doppler_t=missing,
-          fd_center=missing, sig_freq=missing)
+          fd_center=missing, sig_freq=missing, signal=missing, q_mult=1)
 
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking on simulated and real
@@ -19,10 +19,10 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                include_noise=true, include_databits=true, simulatedata=true,
                saveto=missing, T="short", showplot=true, f_d=800.,
                fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
-               fd_range=5000., dll_b=8., state_num=3, dynamickf=true,
-               covMult=1., q_a=100., figsize=missing, CN0=45., plot3d=true,
+               fd_range=5000., dll_b=10, state_num=3, dynamickf=true,
+               cov_mult=1., q_a=1000, figsize=missing, CN0=45., plot3d=true,
                show_acq_plot=false, doppler_curve=missing, doppler_t=missing,
-               fd_center=missing, sig_freq=missing)
+               fd_center=missing, sig_freq=missing, signal=missing, q_mult=1)
     println("Running GNSSTools Signal Simulation and Data Processing Demo")
     # Select signal type
     if sigtype == "l5q"
@@ -79,21 +79,25 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
             fd_rate = (doppler_curve[zero_idx+1]-doppler_curve[zero_idx]) /
                       (doppler_t[zero_idx+1]-doppler_t[zero_idx])
         end
-        data = definesignal(type, f_s, M*t_length; prn=prn,
-                            f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
-                            CN0=CN0, ϕ=phi, nADC=nADC, B=B,
-                            include_carrier=include_carrier,
-                            include_adc=include_adc,
-                            include_noise=include_noise,
-                            code_start_idx=n0,
-                            sig_freq=sig_freq)
-        if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
-            data.include_databits = include_databits
+        if ismissing(signal)
+            data = definesignal(type, f_s, M*t_length; prn=prn,
+                                f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+                                CN0=CN0, ϕ=phi, nADC=nADC, B=B,
+                                include_carrier=include_carrier,
+                                include_adc=include_adc,
+                                include_noise=include_noise,
+                                code_start_idx=n0,
+                                sig_freq=sig_freq)
+            if (typeof(type) == Val{:l1ca}) | (typeof(type) == Val{:l5i})
+                data.include_databits = include_databits
+            end
+            if ismissing(doppler_t)
+                doppler_t = data.t
+            end
+            generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
+        else
+            data = signal
         end
-        if ismissing(doppler_t)
-            doppler_t = data.t
-        end
-        generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
         println("Done")
     else
         # Load data
@@ -152,7 +156,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
-                            covMult=covMult, qₐ=q_a)
+                            cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
     println("Done")
     # Plot results and save if `saveto` is a string
     if showplot
@@ -197,10 +201,10 @@ end
     demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 1655);
          sigtype="l1ca", include_carrier=true, include_adc=true, include_noise=true,
          include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
-         t_length=1e-3, M=4000, fd_range=5000., dll_b=8., state_num=3,
-         dynamickf=true, covMult=1., q_a=100., figsize=missing, CN0=45.,
+         t_length=1e-3, M=4000, fd_range=5000., dll_b=10., state_num=3,
+         dynamickf=true, cov_mult=1., q_a=1000., figsize=missing, CN0=45.,
          plot3d=true, show_acq_plot=true, saveto=missing, incl=56.,
-         sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num)
+         sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1)
 
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking on simulated data based
@@ -215,10 +219,10 @@ off a user defined constellation.
 function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 1655);
               sigtype="l1ca", include_carrier=true, include_adc=true, include_noise=true,
               include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
-              t_length=1e-3, M=4000, fd_range=5000., dll_b=8., state_num=3,
-              dynamickf=true, covMult=1., q_a=100., figsize=missing, CN0=45.,
+              t_length=1e-3, M=4000, fd_range=5000., dll_b=10., state_num=3,
+              dynamickf=true, cov_mult=1., q_a=1000., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
-              sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num)
+              sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1)
     println("Running GNSSTools Constellation Demo")
     # Select signal type
     if sigtype == "l5q"
@@ -357,7 +361,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
-                            covMult=covMult, qₐ=q_a)
+                            cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
     println("Done")
     # Plot results and save if `saveto` is a string
     if showplot
