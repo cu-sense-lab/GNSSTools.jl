@@ -40,7 +40,7 @@ Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, other
 function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_iers_eop(:IAU1980), show_plot=false,
                               Ω₀=0., f₀=0., ω=0., e=0., t_start=0., obs_lla=missing,
-                              ΔΩ=360/plane_num)
+                              ΔΩ=360/plane_num, a_lim=1, ax=missing)
     a = float(a)
     incl = incl*π/180
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
@@ -52,9 +52,9 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
     k = 1
     p = Progress(Int(plane_num*satellite_per_plane), 1,
                  "Generating constellation...")
-    if show_plot
+    if show_plot && ismissing(ax)
         fig = figure()
-        ax = subplot()
+        fig, ax = make_subplot(fig, 1, 1, 1; projection3d=true)
     end
     satellites = Array{Satellite}(undef, plane_num*satellite_per_plane)
     for plane in 1:plane_num
@@ -100,6 +100,9 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
         y = Rₑ.*sin.(u).*sin.(v)
         z = Rₑ.*cos.(v)
         plot_wireframe(x, y, z, color="grey", linestyle=":", rcount=20, ccount=30)
+        ax.axes.set_xlim3d(left=-a*a_lim/2, right=a*a_lim/2)
+        ax.axes.set_ylim3d(bottom=-a*a_lim/2, top=a*a_lim/2)
+        ax.axes.set_zlim3d(bottom=-a*a_lim/2, top=a*a_lim/2)
     end
     return Constellation(t_start, plane_num, satellite_per_plane, Ω₀, f₀, ω, e, incl,
                          t_range, ΔΩ, Δf, satellites)
@@ -117,11 +120,17 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
-                              show_hist=true, bins=100)
+                              bins=100, heatmap_bins=[bins, bins], a_lim=1.25)
+    if show_plot
+        fig = figure()
+        fig, ax1 = make_subplot(fig, 2, 2, 1; projection3d=true)
+    else
+        ax1 = missing
+    end
     constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
                                          t_range; eop=eop, show_plot=show_plot,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
-                                         obs_lla=missing, ΔΩ=ΔΩ)
+                                         obs_lla=obs_lla, ΔΩ=ΔΩ, ax=ax1, a_lim=a_lim)
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
     N = length(t_range)*plane_num*satellite_per_plane
     ts = Array{Float64}(undef, N)
@@ -146,6 +155,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
     end
     dopplers = dopplers[1:k-1]
     elevations = elevations[1:k-1]
+    doppler_means = Array{Float64}(undef, N)
     doppler_rates = Array{Float64}(undef, N)
     doppler_rate_ts = Array{Float64}(undef, N)
     ts = ts[1:k-1]
@@ -155,29 +165,33 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
     ids_diff = diff(ids)
     k = 1
     for i in 1:length(ts_diff)
-        if (ts_diff[i] < 1.001) && (ids_diff[i] == 0)
+        if (ts_diff[i] < (Δt + 0.001)) && (ids_diff[i] == 0)
+            doppler_means[k] = (dopplers[i+1] + dopplers[i])/2
             doppler_rates[k] = (dopplers[i+1] - dopplers[i])/Δt
-            doppler_rate_ts[k] = ts[i+1]
+            doppler_rate_ts[k] = (ts[i+1] + ts[i])/2
             k += 1
         end
     end
+    doppler_means = doppler_means[1:k-1]
     doppler_rates = doppler_rates[1:k-1]
     doppler_rate_ts = doppler_rate_ts[1:k-1]
-    if show_hist
-        figure()
-        ax1 = subplot(1, 2, 1)
-        hist(dopplers./1000, bins=bins, density=true)
+    if show_plot
+        fig, ax2 = make_subplot(fig, 2, 2, 2; aspect="auto")
+        hist2D(doppler_means./1000, doppler_rates, bins=heatmap_bins)
+        xlabel("Doppler (kHz)")
+        ylabel("Doppler Rate (Hz/s)")
+        colorbar()
+        fig, ax3 = make_subplot(fig, 2, 2, 3; aspect="auto")
+        hist(doppler_means./1000, bins=bins, density=true)
         xlabel("Doppler (kHz)")
         ylabel("Prob")
-        # title("Incination: $(round(i*180/pi, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)")
-        ax1 = subplot(1, 2, 2)
+        fig, ax4 = make_subplot(fig, 2, 2, 4; aspect="auto")
         hist(doppler_rates, bins=bins, density=true)
         xlabel("Doppler (Hz/sec)")
         ylabel("Prob")
-        suptitle("Incination: $(round(incl, digits=0))ᵒ; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane); User loc: ($(round(obs_lla[1], digits=3))ᵒ, $(round(obs_lla[2], digits=3))ᵒ, $(round(obs_lla[3], digits=3))m")
-
+        suptitle("Incination: $(round(incl, digits=0))ᵒ; a: $(Int(round(a/1000, digits=0)))km; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)\nUser loc: ($(round(obs_lla[1], digits=3))ᵒ, $(round(obs_lla[2], digits=3))ᵒ, $(round(obs_lla[3], digits=3))m)\nSignal Freq: $(sig_freq)Hz")
     end
-    return (dopplers, elevations, ts, ids, doppler_rates, doppler_rate_ts)
+    return (doppler_means, doppler_rates, doppler_rate_ts, ids, elevations)
  end
 
 
