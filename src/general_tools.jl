@@ -292,3 +292,18 @@ function get_signal_type(file_name)
 	end
 	return (f_s, f_if, f_center, sig_freq, sigtype)
 end
+
+
+"""
+	make_subplot(fig, row, col, i; projection3d=false, aspect="auto")
+"""
+function make_subplot(fig, row, col, i; projection3d=false, aspect="auto")
+	if projection3d
+		mplot3d = PyPlot.PyObject(PyPlot.axes3D)  # must be called in local scope
+		                                          # in order to make 3D subplots
+		ax = fig.add_subplot(row, col, i, projection="3d")
+	else
+		ax = fig.add_subplot(row, col, i, aspect=aspect)
+	end
+	return (fig, ax)
+end
