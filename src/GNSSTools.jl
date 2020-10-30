@@ -33,7 +33,7 @@ module GNSSTools
     using HDF5
     print("Done\nImporting PyPlot...")
     using PyPlot
-    Axes3D = PyPlot.Axes3D
+
     pygui(true)
     println("Done")
 
