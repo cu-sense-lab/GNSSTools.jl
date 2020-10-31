@@ -40,7 +40,8 @@ Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, other
 function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_iers_eop(:IAU1980), show_plot=false,
                               Ω₀=0., f₀=0., ω=0., e=0., t_start=0., obs_lla=missing,
-                              ΔΩ=360/plane_num, a_lim=1, ax=missing, figsize=missing)
+                              ΔΩ=360/plane_num, a_lim=1, ax=missing, figsize=missing,
+                              print_steps=true)
     a = float(a)
     incl = incl*π/180
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
@@ -50,8 +51,10 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
         f₀ += Δf/satellite_per_plane
     end
     k = 1
-    p = Progress(Int(plane_num*satellite_per_plane), 1,
-                 "Generating constellation...")
+    if print_steps
+        p = Progress(Int(plane_num*satellite_per_plane), 1,
+                     "Generating constellation...")
+    end
     if show_plot && ismissing(ax)
         if ismissing(figsize)
             fig = figure(figsize=figsize)
@@ -87,7 +90,9 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                 plot3D(satellites[k-1].r_ecef[:,1], satellites[k-1].r_ecef[:,2],
                        satellites[k-1].r_ecef[:,3], "k")
             end
-            next!(p)
+            if print_steps
+                next!(p)
+            end
         end
     end
     if show_plot
@@ -125,7 +130,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                               bins=100, heatmap_bins=[bins, bins], a_lim=1.25,
-                              figsize=figsize)
+                              figsize=figsize, print_steps=true)
     if show_plot
         if ismissing(figsize)
             fig = figure(figsize=figsize)
@@ -139,7 +144,8 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
     constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
                                          t_range; eop=eop, show_plot=show_plot,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
-                                         obs_lla=obs_lla, ΔΩ=ΔΩ, ax=ax1, a_lim=a_lim)
+                                         obs_lla=obs_lla, ΔΩ=ΔΩ, ax=ax1, a_lim=a_lim,
+                                         print_steps=print_steps)
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
     N = length(t_range)*plane_num*satellite_per_plane
     ts = Array{Float64}(undef, N)

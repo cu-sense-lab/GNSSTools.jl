@@ -22,8 +22,11 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                fd_range=5000., dll_b=10, state_num=3, dynamickf=true,
                cov_mult=1., q_a=1000, figsize=missing, CN0=45., plot3d=true,
                show_acq_plot=false, doppler_curve=missing, doppler_t=missing,
-               fd_center=missing, sig_freq=missing, signal=missing, q_mult=1)
-    println("Running GNSSTools Signal Simulation and Data Processing Demo")
+               fd_center=missing, sig_freq=missing, signal=missing, q_mult=1,
+               print_steps=true)
+    if print_steps
+        println("Running GNSSTools Signal Simulation and Data Processing Demo")
+    end
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
@@ -72,7 +75,9 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
 
     if simulatedata
         # Simulate data
-        print("Generating PRN $(prn) $(sigtype) signal...")
+        if print_steps
+            print("Generating PRN $(prn) $(sigtype) signal...")
+        end
         if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
             zero_idx = findfirst(t -> t == 0, doppler_t)
             f_d = doppler_curve[zero_idx]
@@ -98,20 +103,27 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         else
             data = signal
         end
-        println("Done")
+        if print_steps
+            println("Done")
+        end
     else
         # Load data
-        print("Loading $(sigtype) data...")
+        if print_steps
+            print("Loading $(sigtype) data...")
+        end
         file_dir = "/media/Srv3Pool2/by-location/hi/"
         file_path = string(file_dir, file_name)
         data_type = Val(:sc4)
         start_t = 1e-3
         data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
                         start_data_idx=Int(f_s * start_t)+1)
-        println("Done")
+        if print_steps
+            println("Done")
+        end
     end
-
-    print("Performing course acquisition...")
+    if print_steps
+        print("Performing course acquisition...")
+    end
     if T == "long"
         # Use 20ms coherent integration for L5Q signal and 10ms
         # coherent integration for L5I signal
@@ -141,26 +153,38 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                        fd_center=fd_center, fd_range=fd_range,
                        fd_rate=fd_rate, Δfd=Δfd, threads=threads)
     n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range, Δfd)
-    println("Done ($(SNR_est)dB)")
+    if print_steps
+        println("Done ($(SNR_est)dB)")
+    end
     # Perform FFT based fine acquisition
     # Returns structure containing the fine, course,
     # and estimated Doppler frequency
-    print("Performing FFT based fine acquisition...")
+    if print_steps
+        print("Performing FFT based fine acquisition...")
+    end
     results = fineacquisition(data, replicalong, prn, fd_est,
                               n0_est, Val(:fft))
-    println("Done")
+    if print_steps
+        println("Done")
+    end
     # Perform code/carrier phase, and Doppler frequency tracking on signal
     # using results from fine acquisition as the intial conditions
-    print("Performing signal tracking...")
+    if print_steps
+        print("Performing signal tracking...")
+    end
     trackresults = trackprn(data, replica, prn, results.phi_init,
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
                             cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
-    println("Done")
+    if print_steps
+        println("Done")
+    end
     # Plot results and save if `saveto` is a string
     if showplot
-        print("Generating figures...")
+        if print_steps
+            print("Generating figures...")
+        end
         # Course Acquisition Results
         if (sigtype == "l1ca") && show_acq_plot
             if ~plot3d
@@ -188,7 +212,9 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         end
         # Tracking results
         plotresults(trackresults; saveto=saveto, figsize=figsize)
-        println("Done")
+        if print_steps
+            println("Done")
+        end
     end
     return (trackresults, data)
 end
@@ -222,8 +248,11 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               t_length=1e-3, M=4000, fd_range=5000., dll_b=10., state_num=3,
               dynamickf=true, cov_mult=1., q_a=1000., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
-              sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1)
-    println("Running GNSSTools Constellation Demo")
+              sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
+              print_steps=true)
+    if print_steps
+        println("Running GNSSTools Constellation Demo")
+    end
     # Select signal type
     if sigtype == "l5q"
         type = Val(:l5q)
@@ -278,7 +307,9 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
 
     # Simulate data
     eop = get_iers_eop(:IAU1980)
-    print("Setting signal parameters and generating constellation...")
+    if print_steps
+        print("Setting signal parameters and generating constellation...")
+    end
     data = definesignal(type, f_s, M*t_length; prn=prn,
                         f_if=f_if, f_d=0., fd_rate=0., Tsys=Tsys,
                         CN0=CN0, ϕ=phi, nADC=nADC, B=B,
@@ -314,11 +345,17 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     end
     fd_rate = (doppler_curve[2]-doppler_curve[1])/0.001
     definesignal!(data; f_d=doppler_curve[1], fd_rate=fd_rate)
-    println("Done")
-    print("Generating PRN $(prn) $(sigtype) signal...")
+    if print_steps
+        println("Done")
+    end
+    if print_steps
+        print("Generating PRN $(prn) $(sigtype) signal...")
+    end
     generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
-    println("Done")
-    print("Performing course acquisition...")
+    if print_steps
+        println("Done")
+        print("Performing course acquisition...")
+    end
     if T == "long"
         # Use 20ms coherent integration for L5Q signal and 10ms
         # coherent integration for L5I signal
@@ -346,26 +383,38 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
                        fd_center=fd_center, fd_range=fd_range,
                        fd_rate=fd_rate, Δfd=Δfd, threads=threads)
     n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range, Δfd)
-    println("Done ($(SNR_est)dB)")
+    if print_steps
+        println("Done ($(SNR_est)dB)")
+    end
     # Perform FFT based fine acquisition
     # Returns structure containing the fine, course,
     # and estimated Doppler frequency
-    print("Performing FFT based fine acquisition...")
+    if print_steps
+        print("Performing FFT based fine acquisition...")
+    end
     results = fineacquisition(data, replicalong, prn, fd_est,
                               n0_est, Val(:fft))
-    println("Done")
+    if print_steps
+        println("Done")
+    end
     # Perform code/carrier phase, and Doppler frequency tracking on signal
     # using results from fine acquisition as the intial conditions
-    print("Performing signal tracking...")
+    if print_steps
+        print("Performing signal tracking...")
+    end
     trackresults = trackprn(data, replica, prn, results.phi_init,
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
                             cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
-    println("Done")
+    if print_steps
+        println("Done")
+    end
     # Plot results and save if `saveto` is a string
     if showplot
-        print("Generating figures...")
+        if print_steps
+            print("Generating figures...")
+        end
         # Course Acquisition Results
         if (sigtype == "l1ca") && show_acq_plot
             if ~plot3d
@@ -394,7 +443,9 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         # Tracking results
         plotresults(trackresults; saveto=saveto, figsize=figsize,
                     doppler_curve=doppler_curve, doppler_t=doppler_t, CN0=CN0)
-        println("Done")
+        if print_steps
+            println("Done")
+        end
     end
     return (trackresults, data)
 end
