@@ -116,6 +116,7 @@ module GNSSTools
     export plot_satellite_orbit
     export doppler_distribution
     export definesignaltype
+    export get_eop
 
     # println("Done")
 

@@ -32,13 +32,21 @@ end
 
 
 """
+    get_eop()
+"""
+function get_eop()
+    return get_iers_eop(:IAU1980)
+end
+
+
+"""
     define_constellation(plane_num, sat_per_plane, inclination)
 
 Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, otherwise,
 `ΔΩ` will default to `360/plane_num`.
 """
 function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
-                              eop=get_iers_eop(:IAU1980), show_plot=false,
+                              eop=get_eop(), show_plot=true,
                               Ω₀=0., f₀=0., ω=0., e=0., t_start=0., obs_lla=missing,
                               ΔΩ=360/plane_num, a_lim=1, ax=missing, figsize=missing,
                               print_steps=true)
@@ -57,9 +65,9 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
     end
     if show_plot && ismissing(ax)
         if ismissing(figsize)
-            fig = figure(figsize=figsize)
-        else
             fig = figure()
+        else
+            fig = figure(figsize=figsize)
         end
         fig, ax = make_subplot(fig, 1, 1, 1; projection3d=true)
     end
@@ -126,16 +134,16 @@ doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                      show_hist=true, bins=100)
 """
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
-                              obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
+                              obs_lla, sig_freq; eop=get_eop(),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                               bins=100, heatmap_bins=[bins, bins], a_lim=1.25,
                               figsize=missing, print_steps=true)
     if show_plot
         if ismissing(figsize)
-            fig = figure(figsize=figsize)
-        else
             fig = figure()
+        else
+            fig = figure(figsize=figsize)
         end
         fig, ax1 = make_subplot(fig, 2, 2, 1; projection3d=true)
     else

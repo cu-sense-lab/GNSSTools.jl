@@ -249,7 +249,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               dynamickf=true, cov_mult=1., q_a=1000., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
               sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
-              print_steps=true)
+              print_steps=true, eop=get_eop())
     if print_steps
         println("Running GNSSTools Constellation Demo")
     end
@@ -306,7 +306,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     end
 
     # Simulate data
-    eop = get_iers_eop(:IAU1980)
     if print_steps
         print("Setting signal parameters and generating constellation...")
     end
