@@ -40,7 +40,7 @@ Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, other
 function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_iers_eop(:IAU1980), show_plot=false,
                               Ω₀=0., f₀=0., ω=0., e=0., t_start=0., obs_lla=missing,
-                              ΔΩ=360/plane_num, a_lim=1, ax=missing)
+                              ΔΩ=360/plane_num, a_lim=1, ax=missing, figsize=missing)
     a = float(a)
     incl = incl*π/180
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
@@ -53,7 +53,11 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
     p = Progress(Int(plane_num*satellite_per_plane), 1,
                  "Generating constellation...")
     if show_plot && ismissing(ax)
-        fig = figure()
+        if ismissing(figsize)
+            fig = figure(figsize=figsize)
+        else
+            fig = figure()
+        end
         fig, ax = make_subplot(fig, 1, 1, 1; projection3d=true)
     end
     satellites = Array{Satellite}(undef, plane_num*satellite_per_plane)
@@ -120,9 +124,14 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
-                              bins=100, heatmap_bins=[bins, bins], a_lim=1.25)
+                              bins=100, heatmap_bins=[bins, bins], a_lim=1.25,
+                              figsize=figsize)
     if show_plot
-        fig = figure()
+        if ismissing(figsize)
+            fig = figure(figsize=figsize)
+        else
+            fig = figure()
+        end
         fig, ax1 = make_subplot(fig, 2, 2, 1; projection3d=true)
     else
         ax1 = missing
