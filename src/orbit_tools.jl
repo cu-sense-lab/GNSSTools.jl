@@ -130,7 +130,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                               bins=100, heatmap_bins=[bins, bins], a_lim=1.25,
-                              figsize=figsize, print_steps=true)
+                              figsize=missing, print_steps=true)
     if show_plot
         if ismissing(figsize)
             fig = figure(figsize=figsize)

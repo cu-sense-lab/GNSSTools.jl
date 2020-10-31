@@ -4,40 +4,40 @@ module GNSSTools
 
     include("greeting.jl")
     export logo, greeting
-    printstyled(logo, color=:default, bold=false)
-    println(greeting)
+    # printstyled(logo, color=:default, bold=false)
+    # println(greeting)
 
     # using Reexport
 
-    print("Importing Random...")
+    # print("Importing Random...")
     using Random
-    print("Done\nImporting FFTW...")
+    # print("Done\nImporting FFTW...")
     using FFTW
-    print("Done\nImporting Threads...")
+    # print("Done\nImporting Threads...")
     using Base.Threads
-    print("Done\nImporting ProgressMeter...")
+    # print("Done\nImporting ProgressMeter...")
     using ProgressMeter
-    print("Done\nImporting Statistics...")
+    # print("Done\nImporting Statistics...")
     using Statistics
-    print("Done\nImporting LinearAlgebra...")
+    # print("Done\nImporting LinearAlgebra...")
     using LinearAlgebra
-    print("Done\nImporting CPUTime...")
+    # print("Done\nImporting CPUTime...")
     using CPUTime
-    print("Done\nImporting SatelliteToolbox...")
+    # print("Done\nImporting SatelliteToolbox...")
     using SatelliteToolbox
-    print("Done\nImporting Interpolations...")
+    # print("Done\nImporting Interpolations...")
     using Interpolations
-    print("Done\nImporting QuadGK...")
+    # print("Done\nImporting QuadGK...")
     using QuadGK
-    print("Done\nImporting HDF5...")
+    # print("Done\nImporting HDF5...")
     using HDF5
-    print("Done\nImporting PyPlot...")
+    # print("Done\nImporting PyPlot...")
     using PyPlot
 
     pygui(true)
-    println("Done")
+    # println("Done")
 
-    print("Importing module files...")
+    # print("Importing module files...")
 
     include("constants.jl")
     include("general_tools.jl")
@@ -61,7 +61,7 @@ module GNSSTools
     include("demos.jl")
 
 
-    print("Done\nExporting variables and methods...")
+    # print("Done\nExporting variables and methods...")
 
     export Rₑ
     export L1_freq
@@ -117,6 +117,6 @@ module GNSSTools
     export doppler_distribution
     export definesignaltype
 
-    println("Done")
+    # println("Done")
 
 end # module
