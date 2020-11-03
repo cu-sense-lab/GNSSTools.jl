@@ -23,7 +23,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                cov_mult=1., q_a=1000, figsize=missing, CN0=45., plot3d=true,
                show_acq_plot=false, doppler_curve=missing, doppler_t=missing,
                fd_center=missing, sig_freq=missing, signal=missing, q_mult=1,
-               print_steps=true)
+               print_steps=true, σω=10.)
     if print_steps
         println("Running GNSSTools Signal Simulation and Data Processing Demo")
     end
@@ -138,8 +138,8 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         replica_t_length = 1e-3
     end
     # Define 1ms and RLM*1ms signals
-    replica = definesignal(type, f_s, replica_t_length)
-    replicalong = definesignal(type, f_s, RLM*t_length)
+    replica = definesignal(type, f_s, replica_t_length; sig_freq=sig_freq)
+    replicalong = definesignal(type, f_s, RLM*t_length; sig_freq=sig_freq)
     # Calculate Doppler bin spacing for course acquisition
     Δfd = 1/replica.t_length  # Hz
     if ismissing(fd_center)
@@ -152,7 +152,8 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     courseacquisition!(corr_result, data, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,
                        fd_rate=fd_rate, Δfd=Δfd, threads=threads)
-    n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range, Δfd)
+    n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
+                                             Δfd)
     if print_steps
         println("Done ($(SNR_est)dB)")
     end
@@ -163,7 +164,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         print("Performing FFT based fine acquisition...")
     end
     results = fineacquisition(data, replicalong, prn, fd_est,
-                              n0_est, Val(:fft))
+                              n0_est, Val(:fft); σω=σω)
     if print_steps
         println("Done")
     end
@@ -230,7 +231,8 @@ end
          t_length=1e-3, M=4000, fd_range=5000., dll_b=10., state_num=3,
          dynamickf=true, cov_mult=1., q_a=1000., figsize=missing, CN0=45.,
          plot3d=true, show_acq_plot=true, saveto=missing, incl=56.,
-         sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1)
+         sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
+         σω=10.)
 
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking on simulated data based
@@ -249,7 +251,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               dynamickf=true, cov_mult=1., q_a=1000., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
               sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
-              print_steps=true, eop=get_eop())
+              print_steps=true, eop=get_eop(), σω=10.)
     if print_steps
         println("Running GNSSTools Constellation Demo")
     end
@@ -369,8 +371,8 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         replica_t_length = 1e-3
     end
     # Define 1ms and RLM*1ms signals
-    replica = definesignal(type, f_s, replica_t_length)
-    replicalong = definesignal(type, f_s, RLM*t_length)
+    replica = definesignal(type, f_s, replica_t_length; sig_freq=sig_freq)
+    replicalong = definesignal(type, f_s, RLM*t_length; sig_freq=sig_freq)
     # Calculate Doppler bin spacing for course acquisition
     Δfd = 1/replica.t_length  # Hz
     fd_center = round(doppler_curve[1]/Δfd)*Δfd  # Hz
@@ -392,7 +394,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         print("Performing FFT based fine acquisition...")
     end
     results = fineacquisition(data, replicalong, prn, fd_est,
-                              n0_est, Val(:fft))
+                              n0_est, Val(:fft); σω=σω)
     if print_steps
         println("Done")
     end
