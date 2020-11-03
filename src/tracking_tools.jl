@@ -474,7 +474,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         # Update code phase with filtered code phase error and propagate to next `i`
 		# This essetially makes the DLL rate aided.
         if i > 1
-            n0 += (n0_err_filtered + f_code_d*T)%code_length
+            n0 += (n0_err_filtered + f_code_d*T + 0.5*f_code_dd*T^2)%code_length
         end
 		# Propagate x⁺ᵢ to next time step
 		x⁻ᵢ = A*x⁺ᵢ
