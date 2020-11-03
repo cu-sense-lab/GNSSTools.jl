@@ -161,19 +161,6 @@ end
 
 
 """
-    filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_err, fd_code)
-
-Returns the filtered code phase measusurement. RATE AIDED Version [NOT WORKING!]
-"""
-function filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_err, f_code_d, f_code_dd)
-	T = dll_parms.T
-	B = dll_parms.B
-    return last_filt_code_err + T*f_code_d + 0.5*f_code_dd*T^2 + 4*T*B*(current_code_err-last_filt_code_err)
-	# return last_filt_code_err + T*f_code_d + 4*T*B*(current_code_err-last_filt_code_err)
-end
-
-
-"""
 	shiftandcheck(i, offset, N)
 """
 function shiftandcheck(i, offset, N)
@@ -448,7 +435,6 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
-			# n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1], f_code_d, f_code_dd)
         else
             n0_err_filtered = n0_err
         end
