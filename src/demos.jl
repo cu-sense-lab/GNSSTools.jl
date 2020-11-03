@@ -7,9 +7,10 @@
           saveto=missing, T="short", showplot=true, f_d=800.,
           fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
           fd_range=5000., dll_b=10, state_num=3, dynamickf=true,
-          cov_mult=1., q_a=1000, figsize=missing, CN0=45., plot3d=true,
+          cov_mult=1., q_a=10, figsize=missing, CN0=45., plot3d=true,
           show_acq_plot=true, doppler_curve=missing, doppler_t=missing,
-          fd_center=missing, sig_freq=missing, signal=missing, q_mult=1)
+          fd_center=missing, sig_freq=missing, signal=missing, q_mult=1,
+          print_steps=true, σω=10.)
 
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking on simulated and real
@@ -20,7 +21,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                saveto=missing, T="short", showplot=true, f_d=800.,
                fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
                fd_range=5000., dll_b=10, state_num=3, dynamickf=true,
-               cov_mult=1., q_a=1000, figsize=missing, CN0=45., plot3d=true,
+               cov_mult=1., q_a=10, figsize=missing, CN0=45., plot3d=true,
                show_acq_plot=false, doppler_curve=missing, doppler_t=missing,
                fd_center=missing, sig_freq=missing, signal=missing, q_mult=1,
                print_steps=true, σω=10.)
@@ -229,10 +230,10 @@ end
          sigtype="l1ca", include_carrier=true, include_adc=true, include_noise=true,
          include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
          t_length=1e-3, M=4000, fd_range=5000., dll_b=10., state_num=3,
-         dynamickf=true, cov_mult=1., q_a=1000., figsize=missing, CN0=45.,
+         dynamickf=true, cov_mult=1., q_a=10., figsize=missing, CN0=45.,
          plot3d=true, show_acq_plot=true, saveto=missing, incl=56.,
          sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
-         σω=10.)
+         print_steps=true, eop=get_eop(), σω=10.)
 
 Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
 and code/carrier phase and Doppler frequency tracking on simulated data based
@@ -248,7 +249,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               sigtype="l1ca", include_carrier=true, include_adc=true, include_noise=true,
               include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
               t_length=1e-3, M=4000, fd_range=5000., dll_b=10., state_num=3,
-              dynamickf=true, cov_mult=1., q_a=1000., figsize=missing, CN0=45.,
+              dynamickf=true, cov_mult=1., q_a=10., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
               sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
               print_steps=true, eop=get_eop(), σω=10.)
