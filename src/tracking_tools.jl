@@ -169,6 +169,7 @@ function filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_e
 	T = dll_parms.T
 	B = dll_parms.B
     return last_filt_code_err + T*f_code_d + 0.5*f_code_dd*T^2 + 4*T*B*(current_code_err-last_filt_code_err)
+	# return last_filt_code_err + T*f_code_d + 4*T*B*(current_code_err-last_filt_code_err)
 end
 
 
@@ -447,7 +448,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         if i > 1
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
-			# n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1], f_code_d, 0)
+			# n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1], f_code_d, f_code_dd)
         else
             n0_err_filtered = n0_err
         end
@@ -471,6 +472,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + (x⁺ᵢ[2]/2π - f_if)/sig_freq)
         # Update code phase with filtered code phase error and propagate to next `i`
+		# This essetially makes the DLL rate aided.
         if i > 1
             n0 += (n0_err_filtered + f_code_d*T)%code_length
         end
