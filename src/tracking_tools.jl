@@ -161,6 +161,18 @@ end
 
 
 """
+    filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_err, fd_code)
+
+Returns the filtered code phase measusurement. RATE AIDED Version [NOT WORKING!]
+"""
+function filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_err, f_code_d, f_code_dd)
+	T = dll_parms.T
+	B = dll_parms.B
+    return last_filt_code_err + T*f_code_d + 0.5*f_code_dd*T^2 + 4*T*B*(current_code_err-last_filt_code_err)
+end
+
+
+"""
 	shiftandcheck(i, offset, N)
 """
 function shiftandcheck(i, offset, N)
@@ -387,6 +399,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		f_d = ω/2π - f_if
 		fd_rate = ωdot/2π
 		f_code_d = chipping_rate*(1. + f_d/sig_freq)
+		f_code_dd = chipping_rate*fd_rate/sig_freq
         # Calculate the current code start index
         t₀ = ((code_length-n0)%code_length)/f_code_d
         code_start_idx = t₀*f_s + 1
@@ -433,7 +446,8 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		x⁺ᵢ = x⁻ᵢ + correction
         if i > 1
             # Filter raw code phase error measurement
-            n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
+            # n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
+			n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1], f_code_d, f_code_dd)
         else
             n0_err_filtered = n0_err
         end
