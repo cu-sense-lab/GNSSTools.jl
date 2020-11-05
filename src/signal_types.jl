@@ -1,10 +1,10 @@
 """
-    SignalType
+    CodeType
 
 Struct for holding parms for a
-given signal type.
+given code type. Specific for a channel I or Q.
 """
-struct SignalType{T1,T2,T3,T4,T5,T6}
+struct CodeType{T1,T2,T3,T4,T5,T6}
     name::String           # Name of signal type (i.e. "l1ca" or "l5i" or "l5q")
     code_num::T1           # Number of codes in signal type
                            # Includes primary, secondary, and nav codes
@@ -35,15 +35,26 @@ end
 
 
 """
-    definesignaltype(codes::Vector{T}, chipping_rates::Vector{Float64},
-                     code_lengths::Vector{Int}, channel="both";
-                     name="custom") where T
+    SignalType
+
+Holds common parms for a signal including its codes for each channel.
+"""
+struct SignalType{T1,T2,T3,T4}
+    name::T1
+    I_codes::T2
+    Q_codes::T3
+    sig_freq::T4
+end
+
+
+"""
+    definecodetype(codes::Vector{T}, chipping_rates::Vector{Float64},
+                   code_lengths::Vector{Int}, channel="both") where T
 
 `channel` can be either `"I"`, `"Q"`, or `"both"`.
 """
-function definesignaltype(codes::Vector{T}, chipping_rates::Vector{Float64},
-                          code_lengths::Vector{Int}, channel="both";
-                          name="custom") where T
+function definecodetype(codes::Vector{T}, chipping_rates::Vector{Float64},
+                        code_lengths::Vector{Int}, channel="both") where T
     if ~isa(codes[1], Dict)
         error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
     end
@@ -51,10 +62,13 @@ function definesignaltype(codes::Vector{T}, chipping_rates::Vector{Float64},
     include_codes = fill(true, code_num)
     if channel == "I"
         channel = 1 + 0im
+        name = "I"
     elseif channel == "Q"
         channel = 0 + 1im
+        name = "Q"
     elseif channel == "both"
         channel = 1 + 1im
+        name = "IQ"
     else
         error("Invalid channel specified.")
     end
@@ -72,21 +86,19 @@ function definesignaltype(codes::Vector{T}, chipping_rates::Vector{Float64},
             signal_codes[i] = code
         end
     end
-    return SignalType(name, code_num, codes, chipping_rates, code_lengths,
-                      channel, include_codes)
+    return CodeType(name, code_num, codes, chipping_rates, code_lengths,
+                    channel, include_codes)
 end
 
 
 """
-    definesignaltype(code::Dict, chipping_rate::Float64,
-                     code_length::Int, channel="both";
-                     name="custom")
+    definecodetype(code::Dict, chipping_rate::Float64,
+                   code_length::Int, channel="both")
 
 `channel` can be either `"I"`, `"Q"`, or `"both"`.
 """
-function definesignaltype(code::Dict, chipping_rate::Float64,
-                          code_length::Int, channel="both";
-                          name="custom")
+function definecodetype(code::Dict, chipping_rate::Float64,
+                        code_length::Int, channel="both")
     if ~isa(code, Dict)
         error("Code given must be in the form of a dictionary.")
     end
@@ -94,16 +106,24 @@ function definesignaltype(code::Dict, chipping_rate::Float64,
     include_code = true
     if channel == "I"
         channel = 1 + 0im
+        name = "I"
     elseif channel == "Q"
+        name = "Q"
         channel = 0 + 1im
     elseif channel == "both"
         channel = 1 + 1im
+        name = "IQ"
     else
         error("Invalid channel specified.")
     end
-    return SignalType(name, code_num, code, chipping_rate, code_length,
-                      channel, include_code)
+    return CodeType(name, code_num, code, chipping_rate, code_length,
+                    channel, include_code)
 end
+
+
+"""
+    definesignaltype(I_codes, Q_codes; name="custom")
+"""
 
 
 """
