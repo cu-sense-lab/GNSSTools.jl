@@ -194,8 +194,8 @@ mutable struct ReplicaSignals{T1,T2,T3,T4} <: GNSSSignal
     noexp::Bool
     sig_freq::Float64
     signal_type::T4
-    # thermal_noise::Array{Complex{Float64},1}
-    # phase_noise::Array{Complex{Float64},1}
+    thermal_noise::Array{Complex{Float64},1}
+    phase_noise::Array{Complex{Float64},1}
 end
 
 
