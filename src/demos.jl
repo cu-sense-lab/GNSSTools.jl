@@ -37,8 +37,6 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         type = Val(:l1ca)
     end
 
-    threads = nthreads()
-
     # L5Q parameters
     if typeof(type) == Val{:l5q}
         f_s = 25e6  # Hz
@@ -152,7 +150,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     # Perform course acquisition
     courseacquisition!(corr_result, data, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,
-                       fd_rate=fd_rate, Δfd=Δfd, threads=threads)
+                       fd_rate=fd_rate, Δfd=Δfd)
     n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
                                              Δfd)
     if print_steps
@@ -264,8 +262,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     elseif sigtype == "l1ca"
         type = Val(:l1ca)
     end
-
-    threads = nthreads()
 
     # L5Q parameters
     if typeof(type) == Val{:l5q}
@@ -383,7 +379,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     # Perform course acquisition
     courseacquisition!(corr_result, data, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,
-                       fd_rate=fd_rate, Δfd=Δfd, threads=threads)
+                       fd_rate=fd_rate, Δfd=Δfd)
     n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range, Δfd)
     if print_steps
         println("Done ($(SNR_est)dB)")

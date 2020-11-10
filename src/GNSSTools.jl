@@ -15,6 +15,7 @@ module GNSSTools
     using FFTW
     # print("Done\nImporting Threads...")
     using Base.Threads
+    FFTW.set_num_threads(nthreads())
     # print("Done\nImporting ProgressMeter...")
     using ProgressMeter
     # print("Done\nImporting Statistics...")

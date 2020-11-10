@@ -40,11 +40,9 @@ function courseacquisition!(corr_result::Array{Float64,2},
                             data::GNSSSignal, replica::ReplicaSignal,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/replica.t_length,
-                            threads=nthreads(), message="Correlating...",
+                            message="Correlating...",
                             operation="replace", start_idx=1,
                             showprogressbar=true)
-    # Set number of threads to use for FFTW functions
-    FFTW.set_num_threads(threads)
     # Number of data samples
     dsize = replica.sample_num
     # Pre-plan FFTs and IFFTs
