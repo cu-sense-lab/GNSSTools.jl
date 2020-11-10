@@ -9,36 +9,21 @@ module GNSSTools
 
     # using Reexport
 
-    # print("Importing Random...")
     using Random
-    # print("Done\nImporting FFTW...")
     using FFTW
-    # print("Done\nImporting Threads...")
     using Base.Threads
     FFTW.set_num_threads(nthreads())
-    # print("Done\nImporting ProgressMeter...")
     using ProgressMeter
-    # print("Done\nImporting Statistics...")
     using Statistics
-    # print("Done\nImporting LinearAlgebra...")
     using LinearAlgebra
-    # print("Done\nImporting CPUTime...")
     using CPUTime
-    # print("Done\nImporting SatelliteToolbox...")
     using SatelliteToolbox
-    # print("Done\nImporting Interpolations...")
     using Interpolations
-    # print("Done\nImporting QuadGK...")
     using QuadGK
-    # print("Done\nImporting HDF5...")
     using HDF5
-    # print("Done\nImporting PyPlot...")
     using PyPlot
 
     pygui(true)
-    # println("Done")
-
-    # print("Importing module files...")
 
     include("constants.jl")
     include("general_tools.jl")
@@ -61,9 +46,6 @@ module GNSSTools
     include("data_process.jl")
     include("doppler_tools.jl")
     include("demos.jl")
-
-
-    # print("Done\nExporting variables and methods...")
 
     export Rₑ
     export L1_freq
@@ -120,7 +102,5 @@ module GNSSTools
     export definesignaltype
     export get_eop
     export generate_phase_noise, plot_spectrum
-
-    # println("Done")
 
 end # module
