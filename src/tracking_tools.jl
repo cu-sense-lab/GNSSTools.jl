@@ -362,6 +362,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
     P = Array{Float64}(undef, size(A)[1], M)
     x = Array{Float64}(undef, size(A)[1], M)
 	K = Array{Float64}(undef, size(A)[1], M)
+	FFTW.set_num_threads(1)
 	if state_num == 3
     	x⁺ᵢ = [ϕ_init; 2π*(f_if+fd_init); 0.]
 		P⁺ᵢ = deepcopy(P₀)
@@ -466,6 +467,7 @@ function trackprn(data, replica, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
 		x⁻ᵢ = A*x⁺ᵢ
         # next!(p)
     end
+	FFTW.set_num_threads(nthreads())
     # Return `TrackResults` struct
     # Specify what to store if `data` is a simulated signal struct
     # or `GNSSData` struct
