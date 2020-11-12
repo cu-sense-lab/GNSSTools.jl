@@ -1,7 +1,7 @@
 """
-    generate_phase_noise(N; scale=1/100)
+    generate_phase_noise(N; scale=1/10)
 """
-function generate_phase_noise(N; scale=1/100)
+function generate_phase_noise(N; scale=1/10)
     noise = randn(N)
     noise_temp = randn(N)
     n = 2
@@ -32,9 +32,9 @@ end
 
 
 """
-    generate_phase_noise!(noise, temp_noise; scale=1/100)
+    generate_phase_noise!(noise, temp_noise; scale=1/10)
 """
-function generate_phase_noise!(noise, noise_temp; scale=1/100)
+function generate_phase_noise!(noise, noise_temp; scale=1/10)
     n = 2
     sampled_noise_T = Array{Int}(undef, 0)
     N = length(noise)
