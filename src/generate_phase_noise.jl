@@ -34,9 +34,10 @@ end
 """
     generate_phase_noise!(noise, temp_noise; scale=1/100)
 """
-function generate_phase_noise!(noise, temp_noise; scale=1/100)
+function generate_phase_noise!(noise, noise_temp; scale=1/100)
     n = 2
     sampled_noise_T = Array{Int}(undef, 0)
+    N = length(noise)
     while n <= N
         push!(sampled_noise_T, n)
         n = 2*n
