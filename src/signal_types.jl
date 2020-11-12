@@ -48,7 +48,7 @@ end
 
 
 """
-    definecodetype(codes::Vector{T}, chipping_rates::Vector{Float64},
+    definecodetype(codes::Vector, chipping_rates::Vector{Float64},
                    code_lengths::Vector{Int}, channel="both")
 
 `channel` can be either `"I"`, `"Q"`, or `"both"`.
@@ -122,8 +122,13 @@ end
 
 
 """
-    definesignaltype(I_codes, Q_codes; name="custom")
+    definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
+                     name="custom")
 """
+function definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
+                          name="custom")
+    return SignalType(name, I_codes, Q_codes, sig_freq)
+end
 
 
 """
@@ -187,12 +192,12 @@ mutable struct ReplicaSignals{T1,T2,T3,T4} <: GNSSSignal
     include_adc::Bool
     include_noise::Bool
     include_databits::Bool
+    include_phase_noise::Bool
     chipping_rates_d::T2
     chipping_rates_dd::T3
     sample_num::Int64
     isreplica::Bool
     noexp::Bool
-    sig_freq::Float64
     signal_type::T4
     thermal_noise::Array{Complex{Float64},1}
     phase_noise::Array{Complex{Float64},1}
