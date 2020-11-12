@@ -49,12 +49,12 @@ end
 
 """
     definecodetype(codes::Vector{T}, chipping_rates::Vector{Float64},
-                   code_lengths::Vector{Int}, channel="both") where T
+                   code_lengths::Vector{Int}, channel="both")
 
 `channel` can be either `"I"`, `"Q"`, or `"both"`.
 """
-function definecodetype(codes::Vector{T}, chipping_rates::Vector{Float64},
-                        code_lengths::Vector{Int}, channel="both") where T
+function definecodetype(codes::Vector, chipping_rates::Vector{Float64},
+                        code_lengths::Vector{Int}, channel="both")
     if ~isa(codes[1], Dict)
         error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
     end
