@@ -190,7 +190,7 @@ mutable struct ReplicaSignals{T1,T2,T3,T4} <: GNSSSignal
     data::Array{Complex{Float64},1}
     include_carrier::Bool
     include_adc::Bool
-    include_noise::Bool
+    include_thermal_noise::Bool
     include_databits::Bool
     include_phase_noise::Bool
     chipping_rates_d::T2

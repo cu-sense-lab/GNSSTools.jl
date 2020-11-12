@@ -1,5 +1,5 @@
 """
-    generate_phase_noise(m, N)
+    generate_phase_noise(N; scale=1/100)
 """
 function generate_phase_noise(N; scale=1/100)
     noise = randn(N)
@@ -26,7 +26,39 @@ function generate_phase_noise(N; scale=1/100)
         idx += T
     end
     scale_factor = scale/M
-    return noise.*scale_factor
+    view(noise, 1:N) .*= scale_factor
+    return noise
+end
+
+
+"""
+    generate_phase_noise!(noise, temp_noise; scale=1/100)
+"""
+function generate_phase_noise!(noise, temp_noise; scale=1/100)
+    n = 2
+    sampled_noise_T = Array{Int}(undef, 0)
+    while n <= N
+        push!(sampled_noise_T, n)
+        n = 2*n
+    end
+    M = length(sampled_noise_T)
+    idx = 1
+    T = 2
+    for i in 1:N
+        if idx > N
+            idx = 1
+            T = 2*T
+        end
+        if (idx+T-1) > N
+            view(noise, idx:N) .+= noise_temp[i]
+        else
+            view(noise, idx:idx+T-1) .+= noise_temp[i]
+        end
+        idx += T
+    end
+    scale_factor = scale/M
+    view(noise, 1:N) .*= scale_factor
+    return noise
 end
 
 
