@@ -1,11 +1,11 @@
 """
-    process(signal::GNSSSignal, signal_type::SignalType, prn; σω=1000.,
+    process(signal::GNSSSignal, signal_type, prn; σω=1000.,
             fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
             cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=2,
             state_num=3, fd_rate=0., figsize=missing, saveto=missing,
             show_plot=true)
 """
-function process(signal::GNSSSignal, signal_type::SignalType, prn; σω=1000.,
+function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
                  fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
                  cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=2,
                  state_num=3, fd_rate=0., figsize=missing, saveto=missing,
@@ -16,6 +16,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn; σω=1000.,
     # as long as `RLM*replica_t_length`
     f_s = signal.f_s;
     replica = definesignal(signal_type, f_s, replica_t_length);
+    println(typeof(replica))
     replicalong = definesignal(signal_type, f_s, RLM*replica_t_length);
     if replicalong.sample_num > signal.sample_num
         error("Signal length equal to or greater than $(RLM*replica_t_length) seconds.")
@@ -43,10 +44,10 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn; σω=1000.,
     # Peform tracking on signal using the initial estimates and
     # uncertainties calculated above.
     trackresults = trackprn(signal, replica, prn, results.phi_init,
-                        results.fd_est, results.n0_idx_course,
-                        results.P, results.R; DLL_B=dll_b,
-                        state_num=state_num, dynamickf=dynamickf,
-                        cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult);
+                            results.fd_est, results.n0_idx_course,
+                            results.P, results.R; DLL_B=dll_b,
+                            state_num=state_num, dynamickf=dynamickf,
+                            cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult);
     if show_plot
         plotresults(trackresults; saveto=saveto, figsize=figsize)
     end
