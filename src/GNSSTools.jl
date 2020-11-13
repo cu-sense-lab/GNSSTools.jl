@@ -99,8 +99,9 @@ module GNSSTools
     export course_acq_est
     export plot_satellite_orbit
     export doppler_distribution
-    export definesignaltype
+    export definecodetype, definesignaltype
     export get_eop
     export generate_phase_noise, plot_spectrum
+    export calc_code_val
 
 end # module
