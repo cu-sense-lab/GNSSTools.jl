@@ -92,7 +92,7 @@ function definecodetype(codes::Vector, chipping_rates::Vector{Float64},
             signal_codes[i] = code
         end
     end
-    return CodeType(name, code_num, codes, chipping_rates, code_lengths,
+    return CodeType(name, code_num, signal_codes, chipping_rates, code_lengths,
                     channel, include_codes, databits)
 end
 
