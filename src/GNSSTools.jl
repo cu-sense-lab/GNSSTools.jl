@@ -45,6 +45,7 @@ module GNSSTools
     include("tle_tools.jl")
     include("data_process.jl")
     include("doppler_tools.jl")
+    include("processing_tools.jl")
     include("demos.jl")
 
     export Rₑ
@@ -103,5 +104,6 @@ module GNSSTools
     export get_eop
     export generate_phase_noise, plot_spectrum
     export calc_code_val
+    export process
 
 end # module
