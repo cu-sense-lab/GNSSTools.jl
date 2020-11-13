@@ -1,4 +1,195 @@
 ##################################################################
+######################## Generic Signal ##########################
+##################################################################
+"""
+    definesignal(signal_type::SignalType, f_s, t_length; prn=1,
+                 f_if=0., f_d=0., fd_rate=0., Tsys=535.,
+                 CN0=45., ϕ=0., nADC=4, include_carrier=true,
+                 include_adc=true, include_thermal_noise=true,
+                 code_start_idx=1, include_databits_I=true,
+                 include_databits_Q=true, include_phase_noise=true,
+                 phase_noise_scaler=1/10, name="custom")
+
+Define properties of locally generated generic signal
+based off its type, PRN, etc.
+"""
+function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
+                      f_if=0., f_d=0., fd_rate=0., Tsys=535.,
+                      CN0=45., ϕ=0., nADC=4, include_carrier=true,
+                      include_adc=true, include_thermal_noise=true,
+                      code_start_idx=1., include_databits_I=true,
+                      include_databits_Q=true, include_phase_noise=true,
+                      phase_noise_scaler=1/10, name="custom")
+    sample_num = Int(f_s * t_length)
+    # Generate time vector
+    t = calctvector(sample_num, f_s)
+    # Calculate code chipping rates with Doppler applied for all codes on
+    # each channel and their initial code phases
+    sig_freq = signal_type.sig_freq
+    I_codes = signal_type.I_codes
+    Q_codes = signal_type.Q_codes
+    f_code_d_I = Array{Float64}(undef, I_codes.code_num)
+    f_code_dd_I = Array{Float64}(undef, I_codes.code_num)
+    init_code_phases_I = Array{Float64}(undef, I_codes.code_num)
+    f_code_d_Q = Array{Float64}(undef, Q_codes.code_num)
+    f_code_dd_Q = Array{Float64}(undef, Q_codes.code_num)
+    init_code_phases_Q = Array{Float64}(undef, Q_codes.code_num)
+    for i in 1:signal_type.I_codes.code_num
+        # I channel
+        f_code = I_codes.chipping_rates[i]
+        code_length = I_codes.code_lengths[i]
+        f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+        f_code_d_I[i] = f_code_d
+        f_code_dd_I[i] = f_code_dd
+        init_code_phases_I[i] = calcinitcodephase(code_length, f_code_d,
+                                                  f_code_dd, f_s, code_start_idx)
+    end
+    for i in 1:signal_type.Q_codes.code_num
+        # Q channel
+        f_code = Q_codes.chipping_rates[i]
+        code_length = Q_codes.code_lengths[i]
+        f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+        f_code_d_Q[i] = f_code_d
+        f_code_dd_Q[i] = f_code_dd
+        init_code_phases_Q[i] = calcinitcodephase(code_length, f_code_d,
+                                                  f_code_dd, f_s, code_start_idx)
+    end
+    # Allocate space for signal
+    data = Array{Complex{Float64}}(undef, sample_num)
+    isreplica = false
+    noexp = false
+    if I_codes.databits
+        if ~include_databits_I
+            I_codes.include_codes[end] = false
+        else
+            I_codes.include_codes[end] = true
+        end
+    end
+    if Q_codes.databits
+        if ~include_databits_Q
+            Q_codes.include_codes[end] = false
+        else
+            Q_codes.include_codes[end] = true
+        end
+    end
+    # Generate thermal noise and phase noise
+    thermal_noise = randn(Complex{Float64}, sample_num)
+    phase_noise = real.(thermal_noise)
+    phase_noise = generate_phase_noise!(phase_noise, imag.(thermal_noise),
+                                        scale=phase_noise_scaler)
+    return ReplicaSignals(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
+                          CN0, ϕ, nADC, code_start_idx, init_code_phases_I,
+                          init_code_phases_Q, t, data, include_carrier,
+                          include_adc, include_thermal_noise, include_databits_I,
+                          include_databits_Q, include_phase_noise, f_code_d_I,
+                          f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
+                          isreplica, noexp, thermal_noise, phase_noise,
+                          signal_type)
+end
+
+
+"""
+    definesignal!(signal::ReplicaSignals; prn=1,
+                  f_if=0., f_d=0., fd_rate=0., Tsys=535.,
+                  CN0=45., ϕ=0., nADC=4, include_carrier=true,
+                  include_adc=true, include_thermal_noise=true,
+                  code_start_idx=1, include_databits_I=true,
+                  include_databits_Q=true, include_phase_noise=true,
+                  phase_noise_scaler=1/10, name="custom")
+
+Define properties of locally generated generic signal
+based off its type, PRN, etc.
+"""
+function definesignal!(signal::ReplicaSignals;
+                       prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
+                       fd_rate=signal.fd_rate, Tsys=signal.Tsys,
+                       CN0=signal.CN0, ϕ=signal.ϕ, nADC=signal.nADC,
+                       include_carrier=signal.include_carrier,
+                       include_adc=signal.include_adc,
+                       include_thermal_noise=signal.include_thermal_noise,
+                       code_start_idx=signal.code_start_idx,
+                       include_databits_I=signal.include_databits_I,
+                       include_databits_Q=signal.include_databits_Q,
+                       include_phase_noise=signal.include_phase_noise,
+                       phase_noise_scaler=1/10, name=signal.name,
+                       new_thermal_noise=false, new_phase_noise=false,
+                       isreplica=signal.isreplica, noexp=signal.noexp)
+    # Calculate code chipping rates with Doppler applied for all codes on
+    # each channel and their initial code phases
+    f_s = signal.f_s
+    signal_type = signal.signal_type
+    sig_freq = signal_type.sig_freq
+    I_codes = signal_type.I_codes
+    Q_codes = signal_type.Q_codes
+    for i in 1:signal_type.I_codes.code_num
+        # I channel
+        f_code = I_codes.chipping_rates[i]
+        code_length = I_codes.code_lengths[i]
+        f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+        signal.f_code_d_I[i] = f_code_d
+        signal.f_code_dd_I[i] = f_code_dd
+        signal.init_code_phases_I[i] = calcinitcodephase(code_length, f_code_d,
+                                                         f_code_dd, f_s,
+                                                         code_start_idx)
+    end
+    for i in 1:signal_type.Q_codes.code_num
+        # Q channel
+        f_code = Q_codes.chipping_rates[i]
+        code_length = Q_codes.code_lengths[i]
+        f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+        signal.f_code_d_Q[i] = f_code_d
+        signal.f_code_dd_Q[i] = f_code_dd
+        signal.init_code_phases_Q[i] = calcinitcodephase(code_length, f_code_d,
+                                                         f_code_dd, f_s,
+                                                         code_start_idx)
+    end
+    if I_codes.databits
+        if ~include_databits_I
+            signal.signal_type.I_codes.include_codes[end] = false
+        else
+            signal.signal_type.I_codes.include_codes[end] = true
+        end
+    end
+    if Q_codes.databits
+        if ~include_databits_Q
+            signal.signal_type.Q_codes.include_codes[end] = false
+        else
+            signal.signal_type.Q_codes.include_codes[end] = true
+        end
+    end
+    # Generate thermal noise and phase noise
+    if new_thermal_noise
+        randn!(signal.thermal_noise)
+    end
+    if new_phase_noise
+        randn!(signal.phase_noise)
+        phase_noise = generate_phase_noise!(signal.phase_noise,
+                                            imag.(signal.thermal_noise),
+                                            scale=phase_noise_scaler)
+    end
+    signal.name = name
+    signal.prn = prn
+    signal.f_if = f_if
+    signal.f_d = f_d
+    signal.fd_rate = fd_rate
+    signal.Tsys = Tsys
+    signal.CN0 = CN0
+    signal.ϕ = ϕ
+    signal.nADC = nADC
+    signal.code_start_idx = code_start_idx
+    signal.include_carrier = include_carrier
+    signal.include_adc = include_adc
+    signal.include_thermal_noise = include_thermal_noise
+    signal.include_databits_I = include_databits_I
+    signal.include_databits_Q = include_databits_Q
+    signal.include_phase_noise = include_phase_noise
+    signal.isreplica = isreplica
+    signal.noexp = noexp
+    return signal
+end
+
+
+##################################################################
 ######################### L1 C/A Signal ##########################
 ##################################################################
 """
