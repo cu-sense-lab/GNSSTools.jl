@@ -307,3 +307,13 @@ function make_subplot(fig, row, col, i; projection3d=false, aspect="auto")
 	end
 	return (fig, ax)
 end
+
+
+"""
+	calc_doppler_code_rate(f_code, f_carrier, f_d)
+"""
+function calc_doppler_code_rate(f_code, f_carrier, f_d, fd_rate)
+	f_code_d = f_code*(1. + f_d/f_carrier)
+	f_code_dd = f_code*fd_rate/f_carrier
+	return (f_code_d, f_code_dd)
+end
