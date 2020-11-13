@@ -122,7 +122,7 @@ function definecodetype(code::Dict, chipping_rate::Float64,
     else
         error("Invalid channel specified.")
     end
-    return CodeType(name, code_num, code, chipping_rate, code_length,
+    return CodeType(name, code_num, [code], chipping_rate, code_length,
                     channel, include_code, false)
 end
 
