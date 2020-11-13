@@ -48,6 +48,8 @@ struct SignalType{T1,T2,T3,T4,T5}
     Q_codes::T3
     sig_freq::T4
     B::T5
+    include_I::Bool
+    include_Q::Bool
 end
 
 
@@ -136,16 +138,24 @@ function definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
     B_I = maximum(I_codes.chipping_rates)
     B_Q = maximum(Q_codes.chipping_rates)
     B = max(B_I, B_Q)
-    return SignalType(name, I_codes, Q_codes, sig_freq, B)
+    return SignalType(name, I_codes, Q_codes, sig_freq, B, true, true)
 end
 
 
 """
     definesignaltype(codes::CodeType, sig_freq; name="custom")
 """
-function definesignaltype(codes::CodeType, sig_freq; name="custom")
+function definesignaltype(codes::CodeType, sig_freq, channel="both"; name="custom")
     B = maximum(codes.chipping_rates)
-    return SignalType(name, codes, codes, sig_freq, B)
+    if channel == "both"
+        return SignalType(name, codes, codes, sig_freq, B, true, true)
+    elseif channel == "I"
+        return SignalType(name, codes, missing, sig_freq, B, true, false)
+    elseif channel == "Q"
+        return SignalType(name, missing, codes, sig_freq, B, false, true)
+    else
+        error("Invalid channel specified.")
+    end
 end
 
 
