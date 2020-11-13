@@ -24,7 +24,7 @@ function calc_code_val(signal::ReplicaSignals, t)
         code_idx = calccodeidx(signal.init_code_phases_I[i],
                                signal.f_code_d_I[i], signal.f_code_dd_I[i],
                                t, I_codes.code_lengths[i])
-        I_val = xor(I_val, I_codes.codes[prn][code_idx])
+        I_val = xor(I_val, I_codes.codes[i][prn][code_idx])
     end
     # Q channel
     Q_val = 0
@@ -42,7 +42,7 @@ function calc_code_val(signal::ReplicaSignals, t)
         code_idx = calccodeidx(signal.init_code_phases_Q[i],
                                signal.f_code_d_Q[i], signal.f_code_dd_Q[i],
                                t, Q_codes.code_lengths[i])
-        Q_val = xor(Q_val, Q_codes.codes[prn][code_idx])
+        Q_val = xor(Q_val, Q_codes.codes[i][prn][code_idx])
     end
     return 2*(I_val + Q_val*1im) - (1+1im)
 end
