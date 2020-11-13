@@ -28,50 +28,62 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
     sig_freq = signal_type.sig_freq
     I_codes = signal_type.I_codes
     Q_codes = signal_type.Q_codes
-    f_code_d_I = Array{Float64}(undef, I_codes.code_num)
-    f_code_dd_I = Array{Float64}(undef, I_codes.code_num)
-    init_code_phases_I = Array{Float64}(undef, I_codes.code_num)
-    f_code_d_Q = Array{Float64}(undef, Q_codes.code_num)
-    f_code_dd_Q = Array{Float64}(undef, Q_codes.code_num)
-    init_code_phases_Q = Array{Float64}(undef, Q_codes.code_num)
-    for i in 1:signal_type.I_codes.code_num
-        # I channel
-        f_code = I_codes.chipping_rates[i]
-        code_length = I_codes.code_lengths[i]
-        f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
-        f_code_d_I[i] = f_code_d
-        f_code_dd_I[i] = f_code_dd
-        init_code_phases_I[i] = calcinitcodephase(code_length, f_code_d,
-                                                  f_code_dd, f_s, code_start_idx)
+    if signal_type.include_I
+        f_code_d_I = Array{Float64}(undef, I_codes.code_num)
+        f_code_dd_I = Array{Float64}(undef, I_codes.code_num)
+        init_code_phases_I = Array{Float64}(undef, I_codes.code_num)
+        for i in 1:signal_type.I_codes.code_num
+            # I channel
+            f_code = I_codes.chipping_rates[i]
+            code_length = I_codes.code_lengths[i]
+            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+            f_code_d_I[i] = f_code_d
+            f_code_dd_I[i] = f_code_dd
+            init_code_phases_I[i] = calcinitcodephase(code_length, f_code_d,
+                                                      f_code_dd, f_s, code_start_idx)
+        end
+        if I_codes.databits
+            if ~include_databits_I
+                I_codes.include_codes[end] = false
+            else
+                I_codes.include_codes[end] = true
+            end
+        end
+    else
+        f_code_d_I = Array{Float64}(undef, 0)
+        f_code_dd_I = Array{Float64}(undef, 0)
+        init_code_phases_I = Array{Float64}(undef, 0)
     end
-    for i in 1:signal_type.Q_codes.code_num
-        # Q channel
-        f_code = Q_codes.chipping_rates[i]
-        code_length = Q_codes.code_lengths[i]
-        f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
-        f_code_d_Q[i] = f_code_d
-        f_code_dd_Q[i] = f_code_dd
-        init_code_phases_Q[i] = calcinitcodephase(code_length, f_code_d,
-                                                  f_code_dd, f_s, code_start_idx)
+    if signal_type.include_Q
+        f_code_d_Q = Array{Float64}(undef, Q_codes.code_num)
+        f_code_dd_Q = Array{Float64}(undef, Q_codes.code_num)
+        init_code_phases_Q = Array{Float64}(undef, Q_codes.code_num)
+        for i in 1:signal_type.Q_codes.code_num
+            # Q channel
+            f_code = Q_codes.chipping_rates[i]
+            code_length = Q_codes.code_lengths[i]
+            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+            f_code_d_Q[i] = f_code_d
+            f_code_dd_Q[i] = f_code_dd
+            init_code_phases_Q[i] = calcinitcodephase(code_length, f_code_d,
+                                                      f_code_dd, f_s, code_start_idx)
+        end
+        if Q_codes.databits
+            if ~include_databits_Q
+                Q_codes.include_codes[end] = false
+            else
+                Q_codes.include_codes[end] = true
+            end
+        end
+    else
+        f_code_d_Q = Array{Float64}(undef, 0)
+        f_code_dd_Q = Array{Float64}(undef, 0)
+        init_code_phases_Q = Array{Float64}(undef, 0)
     end
     # Allocate space for signal
     data = Array{Complex{Float64}}(undef, sample_num)
     isreplica = false
     noexp = false
-    if I_codes.databits
-        if ~include_databits_I
-            I_codes.include_codes[end] = false
-        else
-            I_codes.include_codes[end] = true
-        end
-    end
-    if Q_codes.databits
-        if ~include_databits_Q
-            Q_codes.include_codes[end] = false
-        else
-            Q_codes.include_codes[end] = true
-        end
-    end
     # Generate thermal noise and phase noise
     thermal_noise = randn(Complex{Float64}, sample_num)
     phase_noise = real.(thermal_noise)
@@ -121,40 +133,44 @@ function definesignal!(signal::ReplicaSignals;
     sig_freq = signal_type.sig_freq
     I_codes = signal_type.I_codes
     Q_codes = signal_type.Q_codes
-    for i in 1:signal_type.I_codes.code_num
-        # I channel
-        f_code = I_codes.chipping_rates[i]
-        code_length = I_codes.code_lengths[i]
-        f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
-        signal.f_code_d_I[i] = f_code_d
-        signal.f_code_dd_I[i] = f_code_dd
-        signal.init_code_phases_I[i] = calcinitcodephase(code_length, f_code_d,
-                                                         f_code_dd, f_s,
-                                                         code_start_idx)
-    end
-    for i in 1:signal_type.Q_codes.code_num
-        # Q channel
-        f_code = Q_codes.chipping_rates[i]
-        code_length = Q_codes.code_lengths[i]
-        f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
-        signal.f_code_d_Q[i] = f_code_d
-        signal.f_code_dd_Q[i] = f_code_dd
-        signal.init_code_phases_Q[i] = calcinitcodephase(code_length, f_code_d,
-                                                         f_code_dd, f_s,
-                                                         code_start_idx)
-    end
-    if I_codes.databits
-        if ~include_databits_I
-            signal.signal_type.I_codes.include_codes[end] = false
-        else
-            signal.signal_type.I_codes.include_codes[end] = true
+    if signal_type.include_I
+        for i in 1:signal_type.I_codes.code_num
+            # I channel
+            f_code = I_codes.chipping_rates[i]
+            code_length = I_codes.code_lengths[i]
+            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+            signal.f_code_d_I[i] = f_code_d
+            signal.f_code_dd_I[i] = f_code_dd
+            signal.init_code_phases_I[i] = calcinitcodephase(code_length, f_code_d,
+                                                             f_code_dd, f_s,
+                                                             code_start_idx)
+        end
+        if I_codes.databits
+            if ~include_databits_I
+                signal.signal_type.I_codes.include_codes[end] = false
+            else
+                signal.signal_type.I_codes.include_codes[end] = true
+            end
         end
     end
-    if Q_codes.databits
-        if ~include_databits_Q
-            signal.signal_type.Q_codes.include_codes[end] = false
-        else
-            signal.signal_type.Q_codes.include_codes[end] = true
+    if signal_type.include_Q
+        for i in 1:signal_type.Q_codes.code_num
+            # Q channel
+            f_code = Q_codes.chipping_rates[i]
+            code_length = Q_codes.code_lengths[i]
+            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+            signal.f_code_d_Q[i] = f_code_d
+            signal.f_code_dd_Q[i] = f_code_dd
+            signal.init_code_phases_Q[i] = calcinitcodephase(code_length, f_code_d,
+                                                             f_code_dd, f_s,
+                                                             code_start_idx)
+        end
+        if Q_codes.databits
+            if ~include_databits_Q
+                signal.signal_type.Q_codes.include_codes[end] = false
+            else
+                signal.signal_type.Q_codes.include_codes[end] = true
+            end
         end
     end
     # Generate thermal noise and phase noise
