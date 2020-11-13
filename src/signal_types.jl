@@ -31,6 +31,9 @@ struct CodeType{T1,T2,T3,T4,T5,T6}
                            # Will be used in `calc_code_val` method to determine
                            # if a code value will be calculated and XOR`ed to
                            # other code values.
+    databits::Bool         # Flag for if there are databits present in code
+                           # Databits are assumed to be last entry in the
+                           # vector of codes given to definecodetype funciton.
 end
 
 
@@ -39,22 +42,25 @@ end
 
 Holds common parms for a signal including its codes for each channel.
 """
-struct SignalType{T1,T2,T3,T4}
+struct SignalType{T1,T2,T3,T4,T5}
     name::T1
     I_codes::T2
     Q_codes::T3
     sig_freq::T4
+    B::T5
 end
 
 
 """
     definecodetype(codes::Vector, chipping_rates::Vector{Float64},
-                   code_lengths::Vector{Int}, channel="both")
+                   code_lengths::Vector{Int}, channel="both",
+                   databits=false)
 
 `channel` can be either `"I"`, `"Q"`, or `"both"`.
 """
 function definecodetype(codes::Vector, chipping_rates::Vector{Float64},
-                        code_lengths::Vector{Int}, channel="both")
+                        code_lengths::Vector{Int}, channel="both",
+                        databits=false)
     if ~isa(codes[1], Dict)
         error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
     end
@@ -87,7 +93,7 @@ function definecodetype(codes::Vector, chipping_rates::Vector{Float64},
         end
     end
     return CodeType(name, code_num, codes, chipping_rates, code_lengths,
-                    channel, include_codes)
+                    channel, include_codes, databits)
 end
 
 
@@ -117,7 +123,7 @@ function definecodetype(code::Dict, chipping_rate::Float64,
         error("Invalid channel specified.")
     end
     return CodeType(name, code_num, code, chipping_rate, code_length,
-                    channel, include_code)
+                    channel, include_code, false)
 end
 
 
@@ -127,7 +133,19 @@ end
 """
 function definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
                           name="custom")
-    return SignalType(name, I_codes, Q_codes, sig_freq)
+    B_I = maximum(I_codes.chipping_rates)
+    B_Q = maximum(Q_codes.chipping_rates)
+    B = max(B_I, B_Q)
+    return SignalType(name, I_codes, Q_codes, sig_freq, B)
+end
+
+
+"""
+    definesignaltype(codes::CodeType, sig_freq; name="custom")
+"""
+function definesignaltype(codes::CodeType, sig_freq; name="custom")
+    B = maximum(codes.chipping_rates)
+    return SignalType(name, codes, codes, sig_freq, B)
 end
 
 
@@ -171,8 +189,8 @@ A abstract struct for the replica signal
 structs. For use when specifying types
 for method arguments.
 """
-mutable struct ReplicaSignals{T1,T2,T3,T4} <: GNSSSignal
-    type::Val{:l1ca}
+mutable struct ReplicaSignals{T1,T2,T3,T4,T5,T7} <: GNSSSignal
+    name::String
     prn::Int64
     f_s::Float64
     t_length::Float64
@@ -183,24 +201,27 @@ mutable struct ReplicaSignals{T1,T2,T3,T4} <: GNSSSignal
     CN0::Float64
     ϕ::Float64
     nADC::Int64
-    B::Float64
     code_start_idx::Float64
-    init_code_phases::T1
+    init_code_phases_I::T1
+    init_code_phases_Q::T2
     t::Array{Float64,1}
     data::Array{Complex{Float64},1}
     include_carrier::Bool
     include_adc::Bool
     include_thermal_noise::Bool
-    include_databits::Bool
+    include_databits_I::Bool
+    include_databits_Q::Bool
     include_phase_noise::Bool
-    chipping_rates_d::T2
-    chipping_rates_dd::T3
+    f_code_d_I::T2
+    f_code_dd_I::T3
+    f_code_d_Q::T4
+    f_code_dd_Q::T5
     sample_num::Int64
     isreplica::Bool
     noexp::Bool
-    signal_type::T4
     thermal_noise::Array{Complex{Float64},1}
-    phase_noise::Array{Complex{Float64},1}
+    phase_noise::Array{Float64,1}
+    signal_type::T7
 end
 
 
