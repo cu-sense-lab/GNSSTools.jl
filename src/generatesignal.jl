@@ -1,10 +1,11 @@
 """
     generatesignal!(signal::ReplicaSignals,
-                    isreplica::Val{false}=Val(signal.isreplica);
-                    t_length=signal.t_length)
+                    t_length=signal.t_length;
+                    doppler_curve=missing, doppler_t=missing,
+                    message="Generating signal...")
 
 Generates local GNSS signal using paramters defined in a
-`ReplicaSignal` struct.
+`ReplicaSignals` struct.
 
 Generates a signal with carrier, ADC quantization, noise,
 and Neuman sequence.
@@ -42,10 +43,10 @@ end
 
 
 """
-    generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ, thermal_noise)
+    generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
 
 Generates local GNSS signal using paramters defined in a
-`ReplicaSignal` struct.
+`ReplicaSignals` struct.
 
 Generates a signal with carrier, ADC quantization, noise,
 and Neuman sequence.
@@ -120,11 +121,10 @@ end
 
 
 """
-    generatesignal!(signal::ReplicaSignal,
-                    isreplica::Val{true}=Val(signal.isreplica))
+    generatesignal!(signal::ReplicaSignals, isreplica::Bool)
 
 Generates local GNSS signal using paramters defined in a
-`ReplicaSignal` struct.
+`ReplicaSignals` struct.
 
 Generates a signal with carrier, ADC quantization, noise,
 and Neuman sequence.
@@ -133,9 +133,7 @@ This version is used only when `isreplica` is set to `true`
 in `signal` and ignores all the `include_*` flags in `signal`.
 Exponential without the amplitude is included automatically.
 """
-function generatesignal!(signal::ReplicaSignals,
-                         # isreplica::Val{true}=Val(signal.isreplica::Bool))
-                         isreplica::Bool)
+function generatesignal!(signal::ReplicaSignals, isreplica::Bool)
     # Common parmeters used for entire signal
     prn = signal.prn
     f_d = signal.f_d
@@ -161,8 +159,9 @@ end
 
 """
     generatesignal!(signal::ReplicaSignal,
-                    isreplica::Val{false}=Val(signal.isreplica);
-                    t_length=signal.t_length)
+                    t_length=signal.t_length;
+                    doppler_curve=missing, doppler_t=missing,
+                    message="Generating signal...")
 
 Generates local GNSS signal using paramters defined in a
 `ReplicaSignal` struct.
@@ -273,8 +272,7 @@ end
 
 
 """
-    generatesignal!(signal::ReplicaSignal,
-                    isreplica::Val{true}=Val(signal.isreplica))
+    generatesignal!(signal::ReplicaSignal, isreplica::Bool)
 
 Generates local GNSS signal using paramters defined in a
 `ReplicaSignal` struct.
@@ -286,9 +284,7 @@ This version is used only when `isreplica` is set to `true`
 in `signal` and ignores all the `include_*` flags in `signal`.
 Exponential without the amplitude is included automatically.
 """
-function generatesignal!(signal::ReplicaSignal,
-                         # isreplica::Val{true}=Val(signal.isreplica::Bool))
-                         isreplica::Bool)
+function generatesignal!(signal::ReplicaSignal, isreplica::Bool)
     # Common parmeters used for entire signal
     prn = signal.prn
     f_d = signal.f_d
