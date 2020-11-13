@@ -10,39 +10,43 @@ function calc_code_val(signal::ReplicaSignals, t)
     prn = signal.prn
     # I channel
     I_val = 0
-    I_codes = signal.signal_type.I_codes
-    if I_codes.databits
-        if ~signal.isreplica & signal.include_databits_I
-            code_num = I_codes.code_num
+    if signal.signal_type.include_I
+        I_codes = signal.signal_type.I_codes
+        if I_codes.databits
+            if ~signal.isreplica & signal.include_databits_I
+                code_num = I_codes.code_num
+            else
+                code_num = I_codes.code_num - 1
+            end
         else
-            code_num = I_codes.code_num - 1
+            code_num = I_codes.code_num
         end
-    else
-        code_num = I_codes.code_num
-    end
-    for i in 1:code_num
-        code_idx = calccodeidx(signal.init_code_phases_I[i],
-                               signal.f_code_d_I[i], signal.f_code_dd_I[i],
-                               t, I_codes.code_lengths[i])
-        I_val = xor(I_val, I_codes.codes[i][prn][code_idx])
+        for i in 1:code_num
+            code_idx = calccodeidx(signal.init_code_phases_I[i],
+                                   signal.f_code_d_I[i], signal.f_code_dd_I[i],
+                                   t, I_codes.code_lengths[i])
+            I_val = xor(I_val, I_codes.codes[i][prn][code_idx])
+        end
     end
     # Q channel
     Q_val = 0
-    Q_codes = signal.signal_type.Q_codes
-    if Q_codes.databits
-        if ~signal.isreplica & signal.include_databits_Q
-            code_num = Q_codes.code_num
+    if signal.signal_type.include_Q
+        Q_codes = signal.signal_type.Q_codes
+        if Q_codes.databits
+            if ~signal.isreplica & signal.include_databits_Q
+                code_num = Q_codes.code_num
+            else
+                code_num = Q_codes.code_num - 1
+            end
         else
-            code_num = Q_codes.code_num - 1
+            code_num = Q_codes.code_num
         end
-    else
-        code_num = Q_codes.code_num
-    end
-    for i in 1:code_num
-        code_idx = calccodeidx(signal.init_code_phases_Q[i],
-                               signal.f_code_d_Q[i], signal.f_code_dd_Q[i],
-                               t, Q_codes.code_lengths[i])
-        Q_val = xor(Q_val, Q_codes.codes[i][prn][code_idx])
+        for i in 1:code_num
+            code_idx = calccodeidx(signal.init_code_phases_Q[i],
+                                   signal.f_code_d_Q[i], signal.f_code_dd_Q[i],
+                                   t, Q_codes.code_lengths[i])
+            Q_val = xor(Q_val, Q_codes.codes[i][prn][code_idx])
+        end
     end
     return 2*(I_val + Q_val*1im) - (1+1im)
 end
