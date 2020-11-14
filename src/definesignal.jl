@@ -19,7 +19,8 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                       include_adc=true, include_thermal_noise=true,
                       code_start_idx=1., include_databits_I=true,
                       include_databits_Q=true, include_phase_noise=true,
-                      phase_noise_scaler=1/10, name="custom")
+                      phase_noise_scaler=1/10, name="custom",
+                      skip_noise_generation=false)
     sample_num = Int(f_s * t_length)
     # Generate time vector
     t = calctvector(sample_num, f_s)
@@ -85,10 +86,15 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
     isreplica = false
     noexp = false
     # Generate thermal noise and phase noise
-    thermal_noise = randn(Complex{Float64}, sample_num)
-    phase_noise = real.(thermal_noise)
-    phase_noise = generate_phase_noise!(phase_noise, imag.(thermal_noise),
-                                        scale=phase_noise_scaler)
+    if skip_noise_generation
+        thermal_noise = Array{Complex{Float64}}(undef, 0)
+        phase_noise = Array{Float64}(undef, 0)
+    else
+        thermal_noise = randn(Complex{Float64}, sample_num)
+        phase_noise = real.(thermal_noise)
+        phase_noise = generate_phase_noise!(phase_noise, imag.(thermal_noise),
+                                            scale=phase_noise_scaler)
+    end
     return ReplicaSignals(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
                           CN0, ϕ, nADC, code_start_idx, init_code_phases_I,
                           init_code_phases_Q, t, data, include_carrier,

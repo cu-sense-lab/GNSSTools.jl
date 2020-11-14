@@ -15,8 +15,10 @@ function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
     # is used for fine acquisition only. The signal must be at least
     # as long as `RLM*replica_t_length`
     f_s = signal.f_s;
-    replica = definesignal(signal_type, f_s, replica_t_length);
-    replicalong = definesignal(signal_type, f_s, RLM*replica_t_length);
+    replica = definesignal(signal_type, f_s, replica_t_length;
+                           skip_noise_generation=true);
+    replicalong = definesignal(signal_type, f_s, RLM*replica_t_length;
+                               skip_noise_generation=true);
     if replicalong.sample_num > signal.sample_num
         error("Signal length equal to or greater than $(RLM*replica_t_length) seconds.")
     end
