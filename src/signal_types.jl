@@ -145,7 +145,7 @@ end
 """
     definesignaltype(codes::CodeType, sig_freq; name="custom")
 """
-function definesignaltype(codes::CodeType, sig_freq, channel="both"; name="custom")
+function definesignaltype(codes::CodeType, sig_freq, channel="I"; name="custom")
     B = maximum(codes.chipping_rates)
     if channel == "both"
         return SignalType(name, codes, codes, sig_freq, B, true, true)
