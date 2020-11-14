@@ -82,7 +82,6 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
         code_val = get_code_val(t)
-        # code_val = real(code_val)
         if include_carrier & include_thermal_noise & include_phase_noise
             # Calculate code value with carrier, thermal and phase noise
             ϕ = get_ϕ(t)
@@ -145,7 +144,6 @@ function generatesignal!(signal::ReplicaSignals, isreplica::Bool)
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
         code_val = calc_code_val(signal, t)
-        # code_val = real(code_val)
         if noexp
             @inbounds signal.data[i] = complex(float(code_val))
         else

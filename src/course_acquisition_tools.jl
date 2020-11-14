@@ -79,7 +79,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
         # Perform in place FFT on replica
         pfft*replica.data
         # Take conjugate of FFT(replica) and multiply with FFT of
-        # data. The result is stored in `replica.signal`
+        # data. The result is stored in `replica.data`
         conjAmultB1D!(replica.data, datafft, dsize)
         # Take IFFT in place
         pifft*replica.data

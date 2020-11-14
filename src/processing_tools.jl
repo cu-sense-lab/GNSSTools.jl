@@ -14,21 +14,26 @@ function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
     # as long as `RLM*replica_t_length`
-    f_s = signal.f_s;
-    replica = definesignal(signal_type, f_s, replica_t_length;
-                           skip_noise_generation=true);
-    replicalong = definesignal(signal_type, f_s, RLM*replica_t_length;
-                               skip_noise_generation=true);
+    f_s = signal.f_s
+    if typeof(signal_type) == SignalType
+        replica = definesignal(signal_type, f_s, replica_t_length;
+                               skip_noise_generation=true)
+        replicalong = definesignal(signal_type, f_s, RLM*replica_t_length;
+                                   skip_noise_generation=true)
+    else
+        replica = definesignal(signal_type, f_s, replica_t_length)
+        replicalong = definesignal(signal_type, f_s, RLM*replica_t_length)
+    end
     if replicalong.sample_num > signal.sample_num
         error("Signal length equal to or greater than $(RLM*replica_t_length) seconds.")
     end
     # Initlalize 2D acquisition array
-    Δfd = 1/replica.t_length;  # Hz
-    corr_result = gencorrresult(fd_range, Δfd, replica.sample_num);
+    Δfd = 1/replica.t_length  # Hz
+    corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
     # Peform course acquisition
     courseacquisition!(corr_result, signal, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,
-                       fd_rate=fd_rate, Δfd=Δfd, showprogressbar=false);
+                       fd_rate=fd_rate, Δfd=Δfd, showprogressbar=false)
     # Calculate the code start index (`n0_est`), Doppler estimate (`fd_est`),
     # anc the SNR estimate (`SNR_est`)
     n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
@@ -48,7 +53,7 @@ function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
                             results.fd_est, results.n0_idx_course,
                             results.P, results.R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
-                            cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult);
+                            cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
     if show_plot
         plotresults(trackresults; saveto=saveto, figsize=figsize)
     end
