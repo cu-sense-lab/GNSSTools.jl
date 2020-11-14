@@ -319,9 +319,16 @@ function trackprn(data, replica::ReplicaSignals, prn, ϕ_init, fd_init, n0_idx_i
 				  dynamickf=false, cov_mult=1., q_mult=1., channel="I",
                   message="Tracking PRN $(prn) with T=$(Int64(floor(replica.t_length*1000)))ms...")
     # Assign signal specific parameters
-    chipping_rate = replica.signal_type.I_codes.chipping_rates[1]
     sig_freq = replica.signal_type.sig_freq
-    code_length = replica.signal_type.I_codes.code_lengths[1]
+	if replica.signal_type.include_I
+		chipping_rate = replica.signal_type.I_codes.chipping_rates[1]
+    	code_length = replica.signal_type.I_codes.code_lengths[1]
+	elseif replica.signal_type.include_Q
+		chipping_rate = replica.signal_type.Q_codes.chipping_rates[1]
+    	code_length = replica.signal_type.Q_codes.code_lengths[1]
+	else
+		error("Cannot track since there are no codes defined in signal type.")
+	end
     # Compute the spacing between the ZE, ZP, and ZL correlators
     d = Int64(floor(data.f_s/chipping_rate/2))
     # Initialize common variables and initial conditions
