@@ -16,7 +16,6 @@ function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
     # as long as `RLM*replica_t_length`
     f_s = signal.f_s;
     replica = definesignal(signal_type, f_s, replica_t_length);
-    println(typeof(replica))
     replicalong = definesignal(signal_type, f_s, RLM*replica_t_length);
     if replicalong.sample_num > signal.sample_num
         error("Signal length equal to or greater than $(RLM*replica_t_length) seconds.")
@@ -51,5 +50,5 @@ function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
     if show_plot
         plotresults(trackresults; saveto=saveto, figsize=figsize)
     end
-    return trackresults
+    return (results, trackresults)
 end
