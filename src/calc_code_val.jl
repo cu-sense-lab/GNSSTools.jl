@@ -27,6 +27,9 @@ function calc_code_val(signal::ReplicaSignals, t)
                                    t, I_codes.code_lengths[i])
             I_val = xor(I_val, I_codes.codes[i][prn][code_idx])
         end
+        if I_val < 1
+            I_val = -1
+        end
     end
     # Q channel
     Q_val = 0
@@ -47,8 +50,11 @@ function calc_code_val(signal::ReplicaSignals, t)
                                    t, Q_codes.code_lengths[i])
             Q_val = xor(Q_val, Q_codes.codes[i][prn][code_idx])
         end
+        if Q_val < 1
+            Q_val = -1
+        end
     end
-    return 2*(I_val + Q_val*1im) - (1+1im)
+    return I_val + Q_val*1im
 end
 
 
