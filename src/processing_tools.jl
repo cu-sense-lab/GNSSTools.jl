@@ -28,7 +28,7 @@ function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
     # Peform course acquisition
     courseacquisition!(corr_result, signal, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,
-                       fd_rate=fd_rate, Δfd=Δfd);
+                       fd_rate=fd_rate, Δfd=Δfd, showprogressbar=false);
     # Calculate the code start index (`n0_est`), Doppler estimate (`fd_est`),
     # anc the SNR estimate (`SNR_est`)
     n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
