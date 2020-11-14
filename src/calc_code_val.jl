@@ -13,7 +13,7 @@ function calc_code_val(signal::ReplicaSignals, t)
     if signal.signal_type.include_I
         I_codes = signal.signal_type.I_codes
         if I_codes.databits
-            if ~signal.isreplica & signal.include_databits_I
+            if ~signal.isreplica && signal.include_databits_I
                 code_num = I_codes.code_num
             else
                 code_num = I_codes.code_num - 1
@@ -36,7 +36,7 @@ function calc_code_val(signal::ReplicaSignals, t)
     if signal.signal_type.include_Q
         Q_codes = signal.signal_type.Q_codes
         if Q_codes.databits
-            if ~signal.isreplica & signal.include_databits_Q
+            if ~signal.isreplica && signal.include_databits_Q
                 code_num = Q_codes.code_num
             else
                 code_num = Q_codes.code_num - 1
