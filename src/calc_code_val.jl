@@ -59,6 +59,70 @@ end
 
 
 """
+        calc_code_val(signal::ReplicaSignals, t)
+
+Calculates the value of the generic code with
+parameters defined by `signal` at a time
+specified by `t` in seconds. Returns a
+complex Int value that is either -1 or 1.
+"""
+function calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
+                       code_chips_Q::Vector{T}) where T
+    prn = signal.prn
+    # I channel
+    I_val = 0
+    if signal.signal_type.include_I
+        I_codes = signal.signal_type.I_codes
+        if I_codes.databits
+            if ~signal.isreplica && signal.include_databits_I
+                code_num = I_codes.code_num
+            else
+                code_num = I_codes.code_num - 1
+            end
+        else
+            code_num = I_codes.code_num
+        end
+        for i in 1:code_num
+            code_chip = code_chips_I[i](t)
+            code_idx = Int(floor(code_chip%signal.signal_type.I_codes.code_lengths[i])) + 1
+            I_val = xor(I_val, I_codes.codes[i][prn][code_idx])
+        end
+        if I_val < 1
+            I_val = -1
+        end
+    end
+    # Q channel
+    Q_val = 0
+    if signal.signal_type.include_Q
+        Q_codes = signal.signal_type.Q_codes
+        if Q_codes.databits
+            if ~signal.isreplica && signal.include_databits_Q
+                code_num = Q_codes.code_num
+            else
+                code_num = Q_codes.code_num - 1
+            end
+        else
+            code_num = Q_codes.code_num
+        end
+        for i in 1:code_num
+            code_chip = code_chips_Q[i](t)
+            code_idx = Int(floor(code_chip%signal.signal_type.Q_codes.code_lengths[i])) + 1
+            Q_val = xor(Q_val, Q_codes.codes[i][prn][code_idx])
+        end
+        if Q_val < 1
+            Q_val = -1
+        end
+    end
+    return I_val + Q_val*1im
+end
+
+
+#------------------------------------------------------------------------------
+#                             OLD IMPLEMENTATON
+#------------------------------------------------------------------------------
+
+
+"""
         calc_code_val(signal::L1CASignal, t)
 
 Calculates the value of the L1 C/A code with
