@@ -47,10 +47,6 @@ doppler2chips(signal::ReplicaSignals, doppler_curve,
 function doppler2chips(signal::ReplicaSignals, doppler_curve,
                        doppler_t; Δt=doppler_t[2]-doppler_t[1],
                        N=length(doppler_curve))
-function doppler2chips(doppler_curve, chipping_rates, sig_freq, f_if, t;
-                       Δt=t[2]-t[1], N=length(doppler_curve),
-                       chip_init=zeros(length(chipping_rates)),
-                       ϕ_init=0.)
       ϕ_init = signal.ϕ
       f_if = signal.f_if
       sig_freq = signal.signal_type.signal_freq
@@ -118,6 +114,17 @@ function doppler2chips(doppler_curve, chipping_rates, sig_freq, f_if, t;
       end
       ϕs_sitp = CubicSplineInterpolation(t_range, ϕs)
       return (code_chip_I_sitp, code_chip_Q_sitp, ϕs_sitp)
+end
+
+
+"""
+
+"""
+function get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
+    code_chip_I, code_chip_Q, get_ϕs = doppler2chips(signal, doppler_curve,
+                                                     doppler_t)
+    get_code_val(t) = calc_code_val(signal, t, code_chips_I, code_chip_Q)
+    return (get_code_val, get_ϕ)
 end
 
 
