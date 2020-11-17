@@ -61,7 +61,7 @@ end
 `channel` can be either `"I"`, `"Q"`, or `"both"`.
 """
 function definecodetype(codes::Vector, chipping_rates::Vector{Float64},
-                        code_lengths::Vector{Int}, channel="both",
+                        code_lengths::Vector{Int}; channel="both",
                         databits=false)
     if ~isa(codes[1], Dict)
         error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
@@ -233,7 +233,6 @@ mutable struct ReplicaSignals{T1,T2,T3,T4,T5,T7} <: GNSSSignal
     phase_noise::Array{Float64,1}
     signal_type::T7
 end
-
 
 
 #------------------------------------------------------------------------------

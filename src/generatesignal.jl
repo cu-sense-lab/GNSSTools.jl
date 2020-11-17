@@ -155,6 +155,11 @@ function generatesignal!(signal::ReplicaSignals, isreplica::Bool)
 end
 
 
+#------------------------------------------------------------------------------
+#                             OLD IMPLEMENTATON
+#------------------------------------------------------------------------------
+
+
 """
     generatesignal!(signal::ReplicaSignal,
                     t_length=signal.t_length;

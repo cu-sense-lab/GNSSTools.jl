@@ -51,7 +51,9 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_cour
     # Wipeoff IF and course Doppler from data and multiply by replica
     # sig = data.data.*exp.(-2π.*(data.f_if+fd_course).*data.t.*1im).*replica.data
     @threads for i in 1:replica.sample_num
-        @inbounds replica.data[i] = data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
+        # @inbounds replica.data[i] = data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
+        @inbounds replica.data[i] = data.data[i]*cis(-2π*(data.f_if+fd_course+0.5*fd_rate*data.t[i])*data.t[i])*replica.data[i]
+        # @inbounds replica.data[i] = data.data[i]*replica.data[i]
     end
     # Perform in place FFT of `replica.data`
     fft!(replica.data)
@@ -157,7 +159,8 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     # Wipeoff IF and course Doppler from data and multiply by replica
     # sig = data.data.*exp.(-2π.*(data.f_if+fd_course).*data.t.*1im).*replica.data
     @threads for i in 1:replica.sample_num
-        @inbounds replica.data[i] = data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
+        # @inbounds replica.data[i] = data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
+        @inbounds replica.data[i] = data.data[i]*cis(-2π*(data.f_if+fd_course+0.5*fd_rate*data.t[i])*data.t[i])*replica.data[i]
     end
     # Perform in place FFT of `replica.data`
     fft!(replica.data)

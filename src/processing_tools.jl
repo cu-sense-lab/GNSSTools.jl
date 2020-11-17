@@ -46,7 +46,7 @@ function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
     # `σω` is the uncertainty of the Doppler rate. It is set to 1000Hz/s
     # by default.
     results = fineacquisition(signal, replicalong, prn, fd_est,
-                              n0_est, Val(:fft); σω=σω)
+                              n0_est, Val(:fft); σω=σω, fd_rate=fd_rate)
     # Peform tracking on signal using the initial estimates and
     # uncertainties calculated above.
     trackresults = trackprn(signal, replica, prn, results.phi_init,
