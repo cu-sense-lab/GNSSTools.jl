@@ -38,6 +38,95 @@
 
 
 """
+doppler2chips(signal::ReplicaSignals, doppler_curve,
+              doppler_t; Δt=doppler_t[2]-doppler_t[1],
+              N=length(doppler_curve))
+
+`M` should be an integer multiple of `N`
+"""
+function doppler2chips(signal::ReplicaSignals, doppler_curve,
+                       doppler_t; Δt=doppler_t[2]-doppler_t[1],
+                       N=length(doppler_curve))
+function doppler2chips(doppler_curve, chipping_rates, sig_freq, f_if, t;
+                       Δt=t[2]-t[1], N=length(doppler_curve),
+                       chip_init=zeros(length(chipping_rates)),
+                       ϕ_init=0.)
+      ϕ_init = signal.ϕ
+      f_if = signal.f_if
+      sig_freq = signal.signal_type.signal_freq
+      include_I = signal.signal_type.include_I
+      include_Q = signal.signal_type.include_Q
+      chipping_rates_I = signal.signal_type.I_codes.chipping_rates
+      chipping_rates_Q = signal.signal_type.Q_codes.chipping_rates
+      chip_init_I = signal.init_code_phases_I
+      chip_init_Q = signal.init_code_phases_Q
+      t_range = range(doppler_t[1], doppler_t[end]; length=length(doppler_t))
+      code_chips_I = zeros(N, length(signal.signal_type.I_codes.code_num))
+      code_chips_Q = zeros(N, length(signal.signal_type.Q_codes.code_num))
+      f_code_d_I_sitps = []
+      f_code_d_Q_sitps = []
+      # I channel
+      if include_I
+          for i in 1:signal.signal_type.I_codes.code_num
+              chipping_rate = chipping_rates_I[i]
+              code_chips[1,i] = chip_init_I[i]
+              f_code_d = chipping_rate .* (1 .+ doppler_curve./sig_freq)
+              push!(f_code_d_I_sitps, CubicSplineInterpolation(t_range, f_code_d))
+          end
+      end
+      # Q channel
+      if include_Q
+          for i in 1:signal.signal_type.Q_codes.code_num
+              chipping_rate = chipping_rates_Q[i]
+              code_chips[1,i] = chip_init_Q[i]
+              f_code_d = chipping_rate .* (1 .+ doppler_curve./sig_freq)
+              push!(f_code_d_Q_sitps, CubicSplineInterpolation(t_range, f_code_d))
+          end
+      end
+      ϕs = zeros(N)
+      ϕs[1] = ϕ_init
+      doppler_curve_rad = (f_if .+ doppler_curve).*2π
+      doppler_sitp = CubicSplineInterpolation(t_range, doppler_curve_rad)
+      for i in 2:N
+          # I Channel
+          if include_I
+              for j in 1:signal.signal_type.I_codes.code_num
+                  code_chips_I[i,j] = code_chips_I[i-1,j] + quadgk(f_code_d_I_sitps[j],
+                                                                   (i-2)*Δt+doppler_t[1],
+                                                                   (i-1)*Δt+doppler_t[1])[1]
+              end
+          end
+          # Q Channel
+          if include_Q
+              for j in 1:signal.signal_type.Q_codes.code_num
+                  code_chips_Q[i,j] = code_chips_Q[i-1,j] + quadgk(f_code_d_Q_sitps[j],
+                                                                   (i-2)*Δt+doppler_t[1],
+                                                                   (i-1)*Δt+doppler_t[1])[1]
+              end
+          end
+          ϕs[i] = ϕs[i-1] + quadgk(doppler_sitp, (i-2)*Δt+doppler_t[1], (i-1)*Δt+doppler_t[1])[1]
+      end
+      code_chip_I_sitp = Array{typeof(doppler_sitp)}(undef, length(signal.signal_type.I_codes.code_num))
+      code_chip_Q_sitp = Array{typeof(doppler_sitp)}(undef, length(signal.signal_type.Q_codes.code_num))
+      # I channel
+      for i in 1:signal.signal_type.I_codes.code_num
+          code_chip_I_sitp[i] = CubicSplineInterpolation(t_range, view(code_chips_I, :, i))
+      end
+      # Q channel
+      for i in 1:signal.signal_type.Q_codes.code_num
+          code_chip_Q_sitp[i] = CubicSplineInterpolation(t_range, view(code_chips_Q, :, i))
+      end
+      ϕs_sitp = CubicSplineInterpolation(t_range, ϕs)
+      return (code_chip_I_sitp, code_chip_Q_sitp, ϕs_sitp)
+end
+
+
+#------------------------------------------------------------------------------
+#                             OLD IMPLEMENTATON
+#------------------------------------------------------------------------------
+
+
+"""
 doppler2chips(doppler_curve, chipping_rates, sig_freq, t;
               Δt=t[2]-t[1], N=length(doppler_curve),
               chip_init=zeros(length(chipping_rates)),
