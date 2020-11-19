@@ -60,14 +60,18 @@ end
 
 `channel` can be either `"I"`, `"Q"`, or `"both"`.
 """
-function definecodetype(codes::Vector, chipping_rates::Vector{Float64},
-                        code_lengths::Vector{Int}; channel="both",
-                        databits=false)
+function definecodetype(codes::Vector, chipping_rates::Vector{Float64};
+                        channel="both", databits=missing)
     if ~isa(codes[1], Dict)
         error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
     end
-    code_num = length(codes)
-    include_codes = fill(true, code_num)
+    if ismissing(databits)
+        code_num = length(codes)
+        N = code_num
+    else
+        code_num = length(codes) + 1
+        N = code_num - 1
+    end
     if channel == "I"
         channel = 1 + 0im
         name = "I"
@@ -83,19 +87,41 @@ function definecodetype(codes::Vector, chipping_rates::Vector{Float64},
     code_keys = collect(keys(codes[1]))
     dict_type = Dict{eltype(code_keys),Vector{eltype(codes[1][code_keys[1]])}}
     signal_codes = Vector{dict_type}(undef, code_num)
-    for i in 1:code_num
+    code_lengths = Array{Int}(undef, code_num)
+    for i in 1:N
         if isa(codes[i], Dict)
             signal_codes[i] = codes[i]
+            code_lengths[i] = length(codes[i][collect(keys(codes[i]))[1]])
         else
             code = dict_type()
+            code_lengths[i] = length(codes[i])
             for code_key in code_keys
                 code[code_key] = codes[i]
             end
             signal_codes[i] = code
         end
     end
+    if ~ismissing(databits)
+        push!(chipping_rates, databits[2])
+        included_databits = true
+        databit_codes = databits[1]
+        if isa(databit_codes, Dict)
+            signal_codes[code_num] = databit_codes
+            code_lengths[code_num] = length(databit_codes[collect(keys(databit_codes))[1]])
+        else
+            code = dict_type()
+            code_lengths[code_num] = length(databit_codes)
+            for code_key in code_keys
+                code[code_key] = databit_codes
+            end
+            signal_codes[code_num] = code
+        end
+    else
+        included_databits = false
+    end
+    include_codes = fill(true, code_num)
     return CodeType(name, code_num, signal_codes, chipping_rates, code_lengths,
-                    channel, include_codes, databits)
+                    channel, include_codes, included_databits)
 end
 
 
@@ -106,11 +132,10 @@ end
 `channel` can be either `"I"`, `"Q"`, or `"both"`.
 """
 function definecodetype(code::Dict, chipping_rate::Float64,
-                        code_length::Int, channel="both")
+                        channel="I"; databits=missing)
     if ~isa(code, Dict)
         error("Code given must be in the form of a dictionary.")
     end
-    code_num = 1
     include_code = true
     if channel == "I"
         channel = 1 + 0im
@@ -124,8 +149,35 @@ function definecodetype(code::Dict, chipping_rate::Float64,
     else
         error("Invalid channel specified.")
     end
-    return CodeType(name, code_num, [code], chipping_rate, code_length,
-                    channel, include_code, false)
+    code_keys = collect(keys(code))
+    dict_type = Dict{eltype(code_keys),Vector{eltype(code[code_keys[1]])}}
+    code_length = length(code[code_keys[1]])
+    if ~ismissing(databits)
+        code_num = 2
+        signal_codes = Vector{dict_type}(undef, code_num)
+        signal_codes[1] = code
+        chipping_rate = [chipping_rate, databits[2]]
+        included_databits = true
+        databit_codes = databits[1]
+        if isa(databit_codes, Dict)
+            signal_codes[code_num] = databit_codes
+            code_length = [code_length, length(databit_codes[code_keys[1]])]
+        else
+            code = dict_type()
+            code_length = [code_length, length(databit_codes)]
+            for code_key in code_keys
+                code[code_key] = databit_codes
+            end
+            signal_codes[code_num] = code
+        end
+    else
+        code_num = 1
+        included_databits = false
+        signal_codes = [code]
+    end
+    include_codes = fill(true, code_num)
+    return CodeType(name, code_num, signal_codes, chipping_rate, code_length,
+                    channel, include_code, included_databits)
 end
 
 
