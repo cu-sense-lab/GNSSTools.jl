@@ -81,31 +81,35 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     @threads for i in 1:N
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
-        code_val = get_code_val(t)
+        code_val, code_ϕ = get_code_val(t)
         if include_carrier & include_thermal_noise & include_phase_noise
             # Calculate code value with carrier, thermal and phase noise
             ϕ = get_ϕ(t)
             ϕ_noise = phase_noise[i]
-            @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise) +
+            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise) +
+            #                            noise_amp * thermal_noise[i]
+            @inbounds signal.data[i] = carrier_amp * cis(ϕ+ϕ_noise+code_ϕ) +
                                        noise_amp * thermal_noise[i]
         elseif include_carrier & include_thermal_noise & ~include_phase_noise
             # Calculate code value with carrier and noise
             ϕ = get_ϕ(t)
-            @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
+            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
+            #                            noise_amp * thermal_noise[i]
+            @inbounds signal.data[i] = carrier_amp * cis(ϕ+code_ϕ) +
                                        noise_amp * thermal_noise[i]
+        elseif include_carrier & ~include_thermal_noise & include_phase_noise
+            # Calculate code value with noise and no carrier
+            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise)
+            @inbounds signal.data[i] = carrier_amp * cis(ϕ+ϕ_noise+code_ϕ)
         elseif include_carrier & ~include_thermal_noise & ~include_phase_noise
             # Calculate code value with carrier and no noise
             ϕ = get_ϕ(t)
-            @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ)
-        elseif ~include_carrier & include_thermal_noise & ~include_phase_noise
-            # Calculate code value with noise and no carrier
-            @inbounds signal.data[i] = code_val + noise_amp * thermal_noise[i]
-        elseif include_carrier & ~include_thermal_noise & include_phase_noise
-            # Calculate code value with noise and no carrier
-            @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise)
+            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ)
+            @inbounds signal.data[i] = carrier_amp * cis(ϕ+code_ϕ)
         else
             # Calculate code value only
-            @inbounds signal.data[i] = complex(float(code_val))
+            # @inbounds signal.data[i] = complex(float(code_val))
+            @inbounds signal.data[i] = cis(code_ϕ)
         end
     end
     # Quantize signal
@@ -143,12 +147,14 @@ function generatesignal!(signal::ReplicaSignals, isreplica::Bool)
     @threads for i in 1:signal.sample_num
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
-        code_val = calc_code_val(signal, t)
+        code_val, code_ϕ = calc_code_val(signal, t)
         if noexp
-            @inbounds signal.data[i] = complex(float(code_val))
+            # @inbounds signal.data[i] = complex(float(code_val))
+            @inbounds signal.data[i] = cis(code_ϕ)
         else
-            @inbounds signal.data[i] = (code_val *
-                                        exp((2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ)*1im))
+            # @inbounds signal.data[i] = (code_val *
+            #                             cis(2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ))
+            @inbounds signal.data[i] = cis(2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ + code_ϕ)
         end
     end
     return signal
