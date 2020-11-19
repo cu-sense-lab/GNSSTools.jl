@@ -9,7 +9,7 @@ function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
                  fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
                  cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=2,
                  state_num=3, fd_rate=0., figsize=missing, saveto=missing,
-                 show_plot=true)
+                 show_plot=true, fine_acq_method=:fft)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
@@ -45,8 +45,17 @@ function process(signal::GNSSSignal, signal_type, prn; σω=1000.,
     # for the states and measurements (`P` and `R`, respectively).
     # `σω` is the uncertainty of the Doppler rate. It is set to 1000Hz/s
     # by default.
-    results = fineacquisition(signal, replicalong, prn, fd_est,
-                              n0_est, Val(:fft); σω=σω, fd_rate=fd_rate)
+    if fine_acq_method == :fft
+        results = fineacquisition(signal, replicalong, prn, fd_est,
+                                  n0_est, Val(fine_acq_method); σω=σω,
+                                  fd_rate=fd_rate)
+    elseif fine_acq_method == :carrier
+        results = fineacquisition(signal, replica, prn, fd_est,
+                                  n0_est, Val(fine_acq_method); σω=σω,
+                                  fd_rate=fd_rate)
+    else
+        error("Invalid value for argument `fine_acq_method`.")
+    end
     # Peform tracking on signal using the initial estimates and
     # uncertainties calculated above.
     trackresults = trackprn(signal, replica, prn, results.phi_init,
