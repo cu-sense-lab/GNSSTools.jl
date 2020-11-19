@@ -21,7 +21,7 @@ end
 
 
 """
-    fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
+    fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
                     n₀_idx_course, type::Val{:fft}; fd_rate=0.,
                     t_length=replica.t_length, freq_lim=10000.,
                     σω=10., err_bin_num_ϕ=1, err_bin_num_f=2)
@@ -127,6 +127,111 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_cour
     return FineAcquisitionResults(prn, String(:fft), fd_course, fd_rate, n₀_idx_course,
                                   t_length, fd_fine, fd_est, ϕ_init, "N/A", P, R)
 end
+
+
+"""
+    fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
+                    n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
+                    t_length=replica.t_length, freq_lim=50000., M=10,
+                    σω=1000.)
+
+Performs an carrier based fine acquisition on `data`.
+`replica` decides what signal type to use and the length of each `M` segment.
+
+`M` is the multiple of the length of replica to be used for fine acquisition.
+"""
+function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
+                         n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
+                         t_length=replica.t_length, freq_lim=50000., M=10,
+                         σω=1000.)
+    # Check that there are at least M replica signals that can fit in time
+    # into data.
+    Mblocks = floor(Int, data.sample_num/replica.sample_num)
+    if Mblocks < M
+        error("Data must be at least $(M*replica.t_length) seconds long.")
+    end
+    # Samples per `M` data segment
+    N = replica.sample_num
+    # Set ϕ_init and ϕ
+    ϕ_init = 0.
+    ϕ = Array{Float64}(undef, M)
+    ϕi = 0.
+    for i in 1:M
+        # Generate replica
+        # Set signal parameters
+        definesignal!(replica;
+                      prn=prn, f_d=fd_course,
+                      fd_rate=fd_rate, ϕ=0, f_if=0.,
+                      # include_carrier=true,
+                      # include_noise=false,
+                      # include_adc=false,
+                      code_start_idx=n₀_idx_course,
+                      noexp=true,
+                      isreplica=true)
+        # Generate signal
+        generatesignal!(replica, replica.isreplica)
+        # Get a `view` of the current data segment and its corresponding time array
+        datasegment = view(data.data, (i-1)*N+1:i*N)
+        ts = view(data.t, (i-1)*N+1:i*N)
+        # Wipeoff IF and course Doppler from data
+        @threads for j in 1:replica.sample_num
+            @inbounds replica.data[j] = datasegment[j]*cis(-2π*(data.f_if+fd_course+0.5*fd_rate*ts[j])*ts[j])*replica.data[j]
+        end
+        # Perform in place fft operation
+        fft!(replica.data)
+        # Get FFT peak value
+        pk_idx = argmax(abs2.(replica.data))
+        # Take square root of `pk`
+        pk = replica.data[pk_idx]
+        # Calculate ϕ for current processing block
+        ϕi = atan(imag(pk), real(pk))
+        @inbounds ϕ[i] = ϕi
+        if i == 1
+            @inbounds ϕ_init = ϕi
+        end
+    end
+    # Take the difference between ϕs & check and correct phase values if > than π
+    dϕ = diff(ϕ)
+    for i in 1:M-1
+        if dϕ[i] > π
+            dϕ[i] -= 2π
+        elseif dϕ[i] < -π
+            dϕ[i] += 2π
+        else
+            # Do nothing. Within bounds.
+        end
+    end
+    # Compute variance from average phase change
+    # dϕvar = var(dϕ)
+    dϕvar = abs2.(dϕ)
+    # Find the maxumum variance and omit from fine Doppler fequency calculation
+    maxvaridx = argmax(dϕvar)
+    # Take the mean while ommitting the largest phase change in `dϕ`
+    dϕavg = 0.
+    for i in 1:M-1
+        if i != maxvaridx
+            dϕavg += dϕ[i]
+        end
+    end
+    dϕavg /= (M-2)
+    # Calculate the fine Doppler frequency
+    f_s = replica.f_s
+    fd_fine = dϕavg/(2π*N/f_s)
+    fd_est = fd_course + fd_fine
+    dϕ_init_err = std([dϕ[1:maxvaridx-1]; dϕ[maxvaridx+1:end]])
+    fd_err = dϕ_init_err/(2π*N/f_s)
+    definesignal!(replica; isreplica=false)
+    P = diagm([dϕ_init_err^2, fd_err^2, σω^2])
+    R = [dϕ_init_err^2]
+    # Return `FineAcquisitionResults` struct
+    return FineAcquisitionResults(prn, String(:carrier), fd_course, fd_rate, n₀_idx_course,
+                                  t_length, fd_fine, fd_est, ϕ_init, "N/A", P, R)
+end
+
+
+#------------------------------------------------------------------------------
+#                             OLD IMPLEMENTATON
+#------------------------------------------------------------------------------
 
 
 """
@@ -239,7 +344,8 @@ end
 """
     fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                     n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
-                    t_length=replica.t_length, freq_lim=50000., M=1)
+                    t_length=replica.t_length, freq_lim=50000., M=10,
+                    σω=1000.)
 
 Performs an carrier based fine acquisition on `data`.
 `replica` decides what signal type to use and the length of each `M` segment.
@@ -248,79 +354,88 @@ Performs an carrier based fine acquisition on `data`.
 """
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
-                         t_length=replica.t_length, freq_lim=50000., M=1)
-    # Check that the data length is at least 2x greater than the size of `replica`
-    Mblocks = Int64(floor(data.sample_num)/(M*replica.sample_num))
-    if Mblocks < 2
-        errmsg = string("Cannot perform carrier based fine acquisition on data",
-                        "\n`data.t_length` must be at least ≳ 2(`replica.t_length`).")
-        error(errmsg)
+                         t_length=replica.t_length, freq_lim=50000., M=10,
+                         σω=1000.)
+    # Check that there are at least M replica signals that can fit in time
+    # into data.
+    Mblocks = floor(Int, data.sample_num/replica.sample_num)
+    if Mblocks < M
+        error("Data must be at least $(M*replica.t_length) seconds long.")
     end
     # Samples per `M` data segment
     N = replica.sample_num
     # Set ϕ_init and ϕ
     ϕ_init = 0.
-    ϕ = Array{Float64}(undef, Mblocks)
-    for i in 1:Mblocks
+    ϕ = Array{Float64}(undef, M)
+    ϕi = 0.
+    for i in 1:M
         # Generate replica
         # Set signal parameters
         definesignal!(replica;
                       prn=prn, f_d=fd_course,
-                      fd_rate=fd_rate, ϕ=0., f_if=0.,
-                      include_carrier=true,
-                      include_noise=false,
-                      include_adc=false,
+                      fd_rate=fd_rate, ϕ=0, f_if=0.,
+                      # include_carrier=true,
+                      # include_noise=false,
+                      # include_adc=false,
                       code_start_idx=n₀_idx_course,
+                      noexp=true,
                       isreplica=true)
         # Generate signal
-        generatesignal!(replica)
+        generatesignal!(replica, replica.isreplica)
         # Get a `view` of the current data segment and its corresponding time array
         datasegment = view(data.data, (i-1)*N+1:i*N)
         ts = view(data.t, (i-1)*N+1:i*N)
         # Wipeoff IF and course Doppler from data
-        @threads for i in 1:replica.sample_num
-            @inbounds data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
+        @threads for j in 1:replica.sample_num
+            @inbounds replica.data[j] = datasegment[j]*cis(-2π*(data.f_if+fd_course+0.5*fd_rate*ts[j])*ts[j])*replica.data[j]
         end
         # Perform in place fft operation
         fft!(replica.data)
         # Get FFT peak value
-        pk = maximum(abs2.(replica.data))
+        pk_idx = argmax(abs2.(replica.data))
         # Take square root of `pk`
-        pk = sqrt(pk)
+        pk = replica.data[pk_idx]
         # Calculate ϕ for current processing block
-        @inbounds ϕ[i] = atan(imag(pk), real(pk))
+        ϕi = atan(imag(pk), real(pk))
+        @inbounds ϕ[i] = ϕi
         if i == 1
-            @inbounds ϕ_init = atan(imag(pk)/real(pk))
+            @inbounds ϕ_init = ϕi
         end
     end
     # Take the difference between ϕs & check and correct phase values if > than π
     dϕ = diff(ϕ)
-    for i in 1:Mblocks-1
+    for i in 1:M-1
         if dϕ[i] > π
             dϕ[i] -= 2π
-        elseif dϕ[i] < π
+        elseif dϕ[i] < -π
             dϕ[i] += 2π
         else
             # Do nothing. Within bounds.
         end
     end
     # Compute variance from average phase change
-    dϕvar = var(dϕ)
+    # dϕvar = var(dϕ)
+    dϕvar = abs2.(dϕ)
     # Find the maxumum variance and omit from fine Doppler fequency calculation
     maxvaridx = argmax(dϕvar)
     # Take the mean while ommitting the largest phase change in `dϕ`
     dϕavg = 0.
-    for i in 1:Mblocks-1
+    for i in 1:M-1
         if i != maxvaridx
             dϕavg += dϕ[i]
         end
     end
-    dϕavg /= (Mblocks-2)
+    dϕavg /= (M-2)
     # Calculate the fine Doppler frequency
+    f_s = replica.f_s
     fd_fine = dϕavg/(2π*N/f_s)
     fd_est = fd_course + fd_fine
+    dϕ_init_err = std([dϕ[1:maxvaridx-1]; dϕ[maxvaridx+1:end]])
+    fd_err = dϕ_init_err/(2π*N/f_s)
     definesignal!(replica; isreplica=false)
+    P = diagm([dϕ_init_err^2, fd_err^2, σω^2])
+    R = [dϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:carrier), fd_course, fd_rate, n₀_idx_course,
-                                  t_length, fd_fine, fd_est, ϕ_init, M)
+                                  t_length, fd_fine, fd_est, ϕ_init, "N/A", P, R)
 end
