@@ -118,7 +118,7 @@ end
 
 
 """
-
+    get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
 """
 function get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
     code_chip_I, code_chip_Q, get_ϕs = doppler2chips(signal, doppler_curve,
