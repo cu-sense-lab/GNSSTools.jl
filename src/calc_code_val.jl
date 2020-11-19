@@ -54,7 +54,9 @@ function calc_code_val(signal::ReplicaSignals, t)
             Q_val = -1
         end
     end
-    return I_val + Q_val*1im
+    code_ϕ = atan(Q_val, I_val)
+    code_val = I_val + Q_val*1im
+    return (code_val, code_ϕ)
 end
 
 
@@ -113,7 +115,9 @@ function calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
             Q_val = -1
         end
     end
-    return I_val + Q_val*1im
+    code_ϕ = atan(Q_val, I_val)
+    code_val = I_val + Q_val*1im
+    return (code_val, code_ϕ)
 end
 
 
