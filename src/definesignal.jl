@@ -136,6 +136,7 @@ function definesignal!(signal::ReplicaSignals;
     # each channel and their initial code phases
     f_s = signal.f_s
     signal_type = signal.signal_type
+    sample_num = signal.sample_num
     sig_freq = signal_type.sig_freq
     I_codes = signal_type.I_codes
     Q_codes = signal_type.Q_codes
@@ -186,7 +187,7 @@ function definesignal!(signal::ReplicaSignals;
     if new_phase_noise
         randn!(signal.phase_noise)
         phase_noise = generate_phase_noise!(signal.phase_noise,
-                                            imag.(signal.thermal_noise),
+                                            randn(Float64, sample_num),
                                             scale=phase_noise_scaler)
     end
     signal.name = name
