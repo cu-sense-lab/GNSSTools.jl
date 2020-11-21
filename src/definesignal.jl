@@ -92,8 +92,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
     else
         thermal_noise = randn(Complex{Float64}, sample_num)
         phase_noise = randn(Float64, sample_num)
-        phase_noise = generate_phase_noise!(phase_noise, randn(Float64, sample_num),
-                                            scale=phase_noise_scaler)
+        generate_phase_noise!(phase_noise, sample_num; scale=phase_noise_scaler)
     end
     return ReplicaSignals(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
                           CN0, ϕ, nADC, code_start_idx, init_code_phases_I,
@@ -186,9 +185,7 @@ function definesignal!(signal::ReplicaSignals;
     end
     if new_phase_noise
         randn!(signal.phase_noise)
-        phase_noise = generate_phase_noise!(signal.phase_noise,
-                                            randn(Float64, sample_num),
-                                            scale=phase_noise_scaler)
+        generate_phase_noise!(signal.phase_noise, sample_num; scale=phase_noise_scaler)
     end
     signal.name = name
     signal.prn = prn
