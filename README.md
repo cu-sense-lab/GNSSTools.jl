@@ -1,14 +1,5 @@
 # GNSSTools
 
-```math
-\frac{1}{2} = \alpha
-```
-
-$$ \alpha = \beta $$
-
-$ \alpha = \beta $
-
-
 A general Julia package for working with GNSS data. Support course acquisition for L5Q signals. New will signals will be added on an as needed basis. Local signal generation and course acquisition methods support multithreading. See instructions for installing this package.
 
 **NOTE:** This is a private repo, but you should still have access to it if logged in. Contact me if you don't.
