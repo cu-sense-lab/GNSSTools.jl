@@ -20,7 +20,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                       code_start_idx=1., include_databits_I=true,
                       include_databits_Q=true, include_phase_noise=true,
                       phase_noise_scaler=1/10, name="custom",
-                      skip_noise_generation=false)
+                      skip_noise_generation=false, allocate_noise_vectors=true)
     sample_num = Int(f_s * t_length)
     # Generate time vector
     t = calctvector(sample_num, f_s)
@@ -87,8 +87,13 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
     noexp = false
     # Generate thermal noise and phase noise
     if skip_noise_generation
-        thermal_noise = Array{Complex{Float64}}(undef, 0)
-        phase_noise = Array{Float64}(undef, 0)
+        if allocate_noise_vectors
+            thermal_noise = Array{Complex{Float64}}(undef, sample_num)
+            phase_noise = Array{Float64}(undef, sample_num)
+        else
+            thermal_noise = Array{Complex{Float64}}(undef, 0)
+            phase_noise = Array{Float64}(undef, 0)
+        end
     else
         thermal_noise = randn(Complex{Float64}, sample_num)
         phase_noise = randn(Float64, sample_num)
@@ -130,7 +135,8 @@ function definesignal!(signal::ReplicaSignals;
                        include_phase_noise=signal.include_phase_noise,
                        phase_noise_scaler=1/10, name=signal.name,
                        new_thermal_noise=false, new_phase_noise=false,
-                       isreplica=signal.isreplica, noexp=signal.noexp)
+                       isreplica=signal.isreplica, noexp=signal.noexp,
+                       new_databits=false)
     # Calculate code chipping rates with Doppler applied for all codes on
     # each channel and their initial code phases
     f_s = signal.f_s
@@ -157,6 +163,16 @@ function definesignal!(signal::ReplicaSignals;
             else
                 signal.signal_type.I_codes.include_codes[end] = true
             end
+            if new_databits
+                prn_keys = collect(keys(I_codes.codes[1]))
+                if I_codes.similar_databits
+                    rand!(signal.signal_type.I_codes.codes[end][prn_keys[1]], 0:1)
+                else
+                    for key in prn_keys
+                        rand!(signal.signal_type.I_codes.codes[end][key], 0:1)
+                    end
+                end
+            end
         end
     end
     if signal_type.include_Q
@@ -176,6 +192,16 @@ function definesignal!(signal::ReplicaSignals;
                 signal.signal_type.Q_codes.include_codes[end] = false
             else
                 signal.signal_type.Q_codes.include_codes[end] = true
+            end
+            if new_databits
+                prn_keys = collect(keys(Q_codes.codes[1]))
+                if Q_codes.similar_databits
+                    rand!(signal.signal_type.Q_codes.codes[end][prn_keys[1]], 0:1)
+                else
+                    for key in prn_keys
+                        rand!(signal.signal_type.Q_codes.codes[end][key], 0:1)
+                    end
+                end
             end
         end
     end
