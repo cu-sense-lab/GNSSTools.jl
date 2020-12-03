@@ -21,6 +21,7 @@ module GNSSTools
     using Interpolations
     using QuadGK
     using HDF5
+    using StatsBase
     using PyPlot
 
     pygui(true)
@@ -47,13 +48,14 @@ module GNSSTools
     include("doppler_tools.jl")
     include("processing_tools.jl")
     include("demos.jl")
+    include("benchmarks.jl")
 
     export Rₑ
     export L1_freq
     export l1ca_code_length
     export l1ca_db_chipping_rate
     export l1ca_chipping_rate
-    export l1ca_codes
+    export l1ca_codes, define_l1ca_code_type
     export L5_freq
     export L5_code_length
     export nh10_code_length
@@ -105,5 +107,6 @@ module GNSSTools
     export generate_phase_noise, plot_spectrum
     export calc_code_val
     export process
+    export CN0_monte_carlo
 
 end # module
