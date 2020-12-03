@@ -131,3 +131,12 @@ Dictionary containing the L1 C/A
 codes.
 """
 const l1ca_codes = gen_l1ca_codes()
+
+
+function define_l1ca_code_type(t_length; databits=true)
+    databits = rand(0:1, ceil(Int, l1ca_db_chipping_rate*t_length))
+    I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate;
+                             databits=[databits, l1ca_db_chipping_rate])
+    signal_type = definesignaltype(I_codes, L1_freq, "I")
+    return signal_type
+end
