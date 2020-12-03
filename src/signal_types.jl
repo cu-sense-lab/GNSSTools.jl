@@ -34,6 +34,7 @@ struct CodeType{T1,T2,T3,T4,T5,T6}
     databits::Bool         # Flag for if there are databits present in code
                            # Databits are assumed to be last entry in the
                            # vector of codes given to definecodetype funciton.
+    similar_databits::Bool # True if databits are similar for all PRNs
 end
 
 
@@ -106,9 +107,11 @@ function definecodetype(codes::Vector, chipping_rates::Vector{Float64};
         included_databits = true
         databit_codes = databits[1]
         if isa(databit_codes, Dict)
+            similar_databits = false
             signal_codes[code_num] = databit_codes
             code_lengths[code_num] = length(databit_codes[collect(keys(databit_codes))[1]])
         else
+            similar_databits = true
             code = dict_type()
             code_lengths[code_num] = length(databit_codes)
             for code_key in code_keys
@@ -118,10 +121,11 @@ function definecodetype(codes::Vector, chipping_rates::Vector{Float64};
         end
     else
         included_databits = false
+        similar_databits = false
     end
     include_codes = fill(true, code_num)
     return CodeType(name, code_num, signal_codes, chipping_rates, code_lengths,
-                    channel, include_codes, included_databits)
+                    channel, include_codes, included_databits, similar_databits)
 end
 
 
@@ -160,9 +164,11 @@ function definecodetype(code::Dict, chipping_rate::Float64,
         included_databits = true
         databit_codes = databits[1]
         if isa(databit_codes, Dict)
+            similar_databits = false
             signal_codes[code_num] = databit_codes
             code_length = [code_length, length(databit_codes[code_keys[1]])]
         else
+            similar_databits = true
             code = dict_type()
             code_length = [code_length, length(databit_codes)]
             for code_key in code_keys
@@ -174,10 +180,11 @@ function definecodetype(code::Dict, chipping_rate::Float64,
         code_num = 1
         included_databits = false
         signal_codes = [code]
+        similar_databits = false
     end
     include_codes = fill(true, code_num)
     return CodeType(name, code_num, signal_codes, chipping_rate, code_length,
-                    channel, include_code, included_databits)
+                    channel, include_codes, included_databits, similar_databits)
 end
 
 
