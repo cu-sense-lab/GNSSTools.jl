@@ -34,7 +34,7 @@ end
 """
     generate_phase_noise!(noise, N=length(noise); scale=1/10)
 """
-function generate_phase_noise!(noise, N=length(noise); scale=1/10)
+function generate_phase_noise!(noise, N=length(noise)::Int; scale=1/10)
     noise_temp = randn(N)
     n = 2
     sampled_noise_T = Array{Int}(undef, 0)
@@ -66,7 +66,7 @@ end
 """
     generate_phase_noise!(noise, temp_noise; scale=1/10)
 """
-function generate_phase_noise!(noise, noise_temp; scale=1/10)
+function generate_phase_noise!(noise, noise_temp::Vector; scale=1/10)
     n = 2
     sampled_noise_T = Array{Int}(undef, 0)
     N = length(noise)
