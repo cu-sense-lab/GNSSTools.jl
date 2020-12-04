@@ -1,8 +1,25 @@
 """
     CodeType
 
-Struct for holding parms for a
-given code type. Specific for a channel I or Q.
+Struct for holding parms for a custum code type for either the `I` or `Q`
+channel
+
+Fields:
+
+- `name::String`: name of signal type (default = channel (`I`, `Q`, or `IQ`))
+- `code_num::Int`: number of codes, including databits, on channel
+- `codes::Array{Dict,1}`: array of dictionaries, where each dictionary is a
+                          layer of code
+- `chipping_rates::Array{Float,1}`: array of chipping rates in Hz for each code
+- `channel::Complex{Int}`: complex number used to define the channel of the codes
+    * set to `1+0im` if the channel is `I`
+    * set to `0+1im` if the channel is `Q`
+    * set to `1+1im` if the channel is `both`
+- `include_codes::Array{Bool,1}`: array of `Bool` flags for each code to indicate
+                                  whether a given code is being used
+- `databits::Bool`: `Bool` flag to specify whether databits used in the set of codes
+    * if `True`, databits are the last code in `CodeType.codes` array
+- `similar_databits::Bool`: set to true if the databits are the same for all PRNs
 """
 struct CodeType{T1,T2,T3,T4,T5,T6}
     name::String           # Name of signal type (i.e. "l1ca" or "l5i" or "l5q")
@@ -42,6 +59,18 @@ end
     SignalType
 
 Holds common parms for a signal including its codes for each channel.
+
+Fields:
+
+- `name:String`: name of the signal type
+- `I_codes::CodeType`: Custum codes for the I channel of the signal
+    * set to `missing` if no `I_codes` given
+- `Q_codes::CodeType`: Custum codes for the Q channel of the signal
+    * set to `missing` if no `I_codes` given
+- `sig_freq::Float64`: carrier frequency of the signal in Hz
+- `B::Float64`: maximum bandwidth of all codes in Hz
+- `include_I::Bool`: set to `True` if `I_codes` is given
+- `include_Q::Bool`: set to `True` if `Q_codes` is given
 """
 struct SignalType{T1,T2,T3,T4,T5}
     name::T1
@@ -55,11 +84,32 @@ end
 
 
 """
-    definecodetype(codes::Vector, chipping_rates::Vector{Float64},
-                   code_lengths::Vector{Int}, channel="both",
-                   databits=false)
+    definecodetype(codes::Vector, chipping_rates::Vector{Float64};
+                   channel="both", databits=missing)
 
-`channel` can be either `"I"`, `"Q"`, or `"both"`.
+Defines a `CodeType` struct that represents the codes of a signal on a
+given channel, `I`, `Q`, or `both`.
+
+Arguments:
+
+`codes::Vector`: array of codes, `not including databits`
+    * the code is considered the primary code `(NOTE: this must be a dictionary)`
+    * dictionary keys are the PRN numbers
+    * all other codes after can be either dictionaries or arrays
+    * if the code is an array, it is assumed that that layer of code is the
+      same for all PRNs
+`chipping_rates::Vector{Float}`: array of chipping rates for codes above, `not
+                                 including databits`
+`channel::String`: `[DEPRICATED]` the channel that the code will be on
+    * can be either set to `I`, `Q`, or `both`
+`databits::Vector (if given)`: if specified by user, must be a two element array
+                               where the first element is the databits as either
+                               a dictionary or array and the second element is
+                               the chipping rate in Hz of the databits
+
+Returns:
+
+- `CodeType` structure
 """
 function definecodetype(codes::Vector, chipping_rates::Vector{Float64};
                         channel="both", databits=missing)
@@ -131,9 +181,26 @@ end
 
 """
     definecodetype(code::Dict, chipping_rate::Float64,
-                   code_length::Int, channel="both")
+                   channel="both"; databits=missing)
 
-`channel` can be either `"I"`, `"Q"`, or `"both"`.
+Defines a `CodeType` struct that represents the codes of a signal on a
+given channel, `I`, `Q`, or `both`.
+
+Arguments:
+
+`code::Dict`: dictionary of primary codes where the keys are the PRN numbers
+`chipping_rate::Vector{Float}`: array of chipping rates for codes above, `not
+                                 including databits`
+`channel::String`: `[DEPRICATED]` the channel that the code will be on
+    * can be either set to `I`, `Q`, or `both`
+`databits::Vector (if given)`: if specified by user, must be a two element array
+                               where the first element is the databits as either
+                               a dictionary or array and the second element is
+                               the chipping rate in Hz of the databits
+
+Returns:
+
+- `CodeType` structure
 """
 function definecodetype(code::Dict, chipping_rate::Float64,
                         channel="I"; databits=missing)
@@ -191,6 +258,16 @@ end
 """
     definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
                      name="custom")
+
+Defines a signal type with `CodeType` structs defined for both the `I` and `Q`
+channels.
+
+Arguments:
+
+- `I_codes::CodeType`: Custum codes for the I channel of the signal
+- `Q_codes::CodeType`: Custum codes for the Q channel of the signal
+- `sig_freq::Float64`: carrier frequency of signal in Hz
+- `name::String`: name of signal type (default is `custom`)
 """
 function definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
                           name="custom")
@@ -202,7 +279,17 @@ end
 
 
 """
-    definesignaltype(codes::CodeType, sig_freq; name="custom")
+    definesignaltype(codes::CodeType, sig_freq, channel="I"; name="custom")
+
+Defines a signal type with a `CodeType` struct defined for either the `I`, `Q`,
+or `both` channels.
+
+Arguments:
+
+- `codes::CodeType`: Custum codes for either the `I`, `Q`, or `both` channels
+- `sig_freq::Float64`: carrier frequency of signal in Hz
+- `channel::String`: set to either `I`, `Q`, or `both` (default is `I`)
+- `name::String`: name of signal type (default is `custom`)
 """
 function definesignaltype(codes::CodeType, sig_freq, channel="I"; name="custom")
     B = maximum(codes.chipping_rates)
@@ -233,6 +320,22 @@ abstract type GNSSSignal end
     Data
 
 Structure for holding GNSS signal data.
+
+Fields:
+
+- `file_name::String`: name of data file
+- `f_s::Float64`: sampling rate of data in Hz
+- `f_if::Float64`: IF frequency of data in Hz
+- `t_length::Float64`: length of data loaded in seconds
+- `start_data_idx::Int64`: starting index in the data file
+- `t::Array{Float64,1}`: time vector to accompany data
+- `data::Array{Complex{Float64},1}`: loaded data from data file
+- `data_type::String`
+- `data_start_time::T1`
+- `site_loc_lla::T2`
+- `sample_num::Int64`
+- `total_data_length::Float64`
+- `nADC::Int64`
 """
 struct GNSSData{T1,T2} <: GNSSSignal
     file_name::String
