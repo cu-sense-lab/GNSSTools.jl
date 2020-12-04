@@ -11,7 +11,8 @@ Fields:
 - `codes::Array{Dict,1}`: array of dictionaries, where each dictionary is a
                           layer of code
 - `chipping_rates::Array{Float,1}`: array of chipping rates in Hz for each code
-- `channel::Complex{Int}`: complex number used to define the channel of the codes
+- `channel::Complex{Int}`: `[NOT USED]` complex number used to define the
+                           channel of the codes
     * set to `1+0im` if the channel is `I`
     * set to `0+1im` if the channel is `Q`
     * set to `1+1im` if the channel is `both`
@@ -330,12 +331,21 @@ Fields:
 - `start_data_idx::Int64`: starting index in the data file
 - `t::Array{Float64,1}`: time vector to accompany data
 - `data::Array{Complex{Float64},1}`: loaded data from data file
-- `data_type::String`
-- `data_start_time::T1`
-- `site_loc_lla::T2`
-- `sample_num::Int64`
-- `total_data_length::Float64`
-- `nADC::Int64`
+- `data_type::String`: a `Symbol` type either `:sc4` or `:sc8` for 4 and 8 bit
+                       comeplex data, respectively
+- `data_start_time::T1`: `Tuple` of length 6
+    * format is `(year, month, day, hour, minute, second)`
+    * everything other than `second` must be an integer
+    * `second` can be an integer or float
+- `site_loc_lla::T2`: data collection site location
+    * format is `(latitude, longitude, height)`
+    * `latitude` and `longitude` are in degrees
+    * `height` is in meters
+- `sample_num::Int64`: number of data samples in `Data.data`
+- `total_data_length::Float64`: total length of data file in seconds
+- `nADC::Int64`: bit depth of data
+    * `sc4` is 4 bit
+    * `sc8` is 8 bit
 """
 struct GNSSData{T1,T2} <: GNSSSignal
     file_name::String
@@ -357,9 +367,43 @@ end
 """
     ReplicaSignals
 
-A abstract struct for the replica signal
-structs. For use when specifying types
-for method arguments.
+A abstract struct for the replica signal structs. For use when custom signal
+types are defined.
+
+Fields:
+
+- `name::String`
+- `prn::Int64`
+- `f_s::Float64`
+- `t_length::Float64`
+- `f_if::Float64`
+- `f_d::Float64`
+- `fd_rate::Float64`
+- `Tsys::Float64`
+- `CN0::Float64`
+- `ϕ::Float64`
+- `nADC::Int64`
+- `code_start_idx::Float64`
+- `init_code_phases_I::T1`
+- `init_code_phases_Q::T2`
+- `t::Array{Float64,1}`
+- `data::Array{Complex{Float64},1}`
+- `include_carrier::Bool`
+- `include_adc::Bool`
+- `include_thermal_noise::Bool`
+- `include_databits_I::Bool`
+- `include_phase_noise::Bool`
+- `f_code_d_I::T2`
+- `f_code_dd_I::T3`
+- `f_code_d_Q::T4`
+- `f_code_dd_Q::T5`
+- `sample_num::Int64`
+- `isreplica::Bool`
+- `noexp::Bool`
+- `thermal_noise::Array{Complex{Float64},1}`
+- `phase_noise::Array{Float64,1}`
+- `signal_type::T7`
+
 """
 mutable struct ReplicaSignals{T1,T2,T3,T4,T5,T7} <: GNSSSignal
     name::String
