@@ -77,27 +77,31 @@ end
 
 """
     definecodetype(codes::Vector, chipping_rates::Vector{Float64};
-                   channel="both", databits=missing)
+                   databits=missing, name="custom")
 
 Defines a `CodeType` struct that represents the codes of a signal on a
 given channel, `I`, `Q`, or `both`.
 
-Arguments:
+Required Arguments:
 
-`codes::Vector`: array of codes, `not including databits`
+- `codes::Vector`: array of codes, `not including databits`
     * the code is considered the primary code `(NOTE: this must be a dictionary)`
     * dictionary keys are the PRN numbers
     * all other codes after can be either dictionaries or arrays
     * if the code is an array, it is assumed that that layer of code is the
       same for all PRNs
-`chipping_rates::Vector{Float}`: array of chipping rates for codes above, `not
-                                 including databits`
-`channel::String`: `[DEPRICATED]` the channel that the code will be on
-    * can be either set to `I`, `Q`, or `both`
-`databits::Vector (if given)`: if specified by user, must be a two element array
-                               where the first element is the databits as either
-                               a dictionary or array and the second element is
-                               the chipping rate in Hz of the databits
+- `chipping_rates::Vector{Float}`: array of chipping rates for codes above, `not
+                                   including databits`
+
+Optional Arguments:
+
+
+- `databits::Vector`: if specified by user, must be a two element
+                      array where the first element is the databits
+                      as either a dictionary or array and the second
+                      element is the chipping rate in Hz of the
+                      databits
+- `name::String`: name of code type (default is `custom`)
 
 Returns:
 
@@ -172,23 +176,25 @@ end
 
 
 """
-    definecodetype(code::Dict, chipping_rate::Float64,
-                   channel="both"; databits=missing)
+    definecodetype(code::Dict, chipping_rate::Float64;
+                   databits=missing, name="custom")
 
 Defines a `CodeType` struct that represents the codes of a signal on a
 given channel, `I`, `Q`, or `both`.
 
-Arguments:
+Required Arguments:
 
-`code::Dict`: dictionary of primary codes where the keys are the PRN numbers
-`chipping_rate::Vector{Float}`: array of chipping rates for codes above, `not
-                                 including databits`
-`channel::String`: `[DEPRICATED]` the channel that the code will be on
-    * can be either set to `I`, `Q`, or `both`
-`databits::Vector (if given)`: if specified by user, must be a two element array
-                               where the first element is the databits as either
-                               a dictionary or array and the second element is
-                               the chipping rate in Hz of the databits
+- `code::Dict`: dictionary of primary codes where the keys are the PRN numbers
+- `chipping_rate::Float`: chipping rate in Hz for the primary code above
+
+Optional Arguments:
+
+- `databits::Vector`: if specified by user, must be a two element
+                      array where the first element is the databits
+                      as either a dictionary or array and the second
+                      element is the chipping rate in Hz of the
+                      databits
+- `name::String`: name of code type (default is `custom`)
 
 Returns:
 
@@ -249,11 +255,14 @@ end
 Defines a signal type with `CodeType` structs defined for both the `I` and `Q`
 channels.
 
-Arguments:
+Required Arguments:
 
 - `I_codes::CodeType`: Custum codes for the I channel of the signal
 - `Q_codes::CodeType`: Custum codes for the Q channel of the signal
 - `sig_freq::Float64`: carrier frequency of signal in Hz
+
+Optional Arguments:
+
 - `name::String`: name of signal type (default is `custom`)
 
 Returns:
@@ -276,10 +285,13 @@ end
 Defines a signal type with a `CodeType` struct defined for either the `I`, `Q`,
 or `both` channels.
 
-Arguments:
+Required Arguments:
 
 - `codes::CodeType`: Custum codes for either the `I`, `Q`, or `both` channels
 - `sig_freq::Float64`: carrier frequency of signal in Hz
+
+Optional Arguments:
+
 - `channel::String`: set to either `I`, `Q`, or `both` (default is `I`)
 - `name::String`: name of signal type (default is `custom`)
 
