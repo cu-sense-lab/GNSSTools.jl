@@ -45,12 +45,12 @@ function fix_format_in_files(directory, folders)
         folers = [folders]
     end
     for folder in folders
-        src = string(directory, "\\", folder[1])
-        dest = string(directory, "\\", folder[2])
+        src = string(directory, "/", folder[1])
+        dest = string(directory, "/", folder[2])
         files = readdir(src)
         for file in files
             if endswith(file, ".md")
-                fix_eq_format(string(dest, "\\", file))
+                fix_eq_format(string(dest, "/", file))
             end
         end
     end
@@ -67,7 +67,7 @@ makedocs(sitename="GNSSTools Documentation",
 
 # Correct equation format in Markdown files
 @info "Correcting equations."
-directory = string(pwd(), "\\docs")
+directory = string(pwd(), "/docs")
 folders = [("src", build_name),
-           ("src\\API", string(build_name, "\\API"))]
+           ("src/API", string(build_name, "/API"))]
 fix_format_in_files(directory, folders)

@@ -417,9 +417,9 @@ Fields:
 - `code_start_idx::Float64`: index in `ReplicaSignals.data` where all codes in
                              signal start
 - `init_code_phases_I::T1`: array of initial code phases for all I channel codes
-    * set to `missing` if no I channel codes exist
+    * vector length is set to 0 if there are no I channel codes
 - `init_code_phases_Q::T2`: array of initial code phases for all Q channel codes
-    * set to `missing` if no Q channel codes exist
+    * vector length is set to 0 if there are no Q channel codes
 - `t::Array{Float64,1}`: time vector from 0 to `t_length` in seconds
 - `data::Array{Complex{Float64},1}`: where the signal raw I/Q samples are stored
 - `include_carrier::Bool`: flag for if signal will be modulated onto a carrier
