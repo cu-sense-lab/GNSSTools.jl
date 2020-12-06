@@ -152,8 +152,41 @@ end
                   include_databits_Q=true, include_phase_noise=true,
                   phase_noise_scaler=1/10, name="custom")
 
-Define properties of locally generated generic signal
+Redefine properties of locally generated generic signal
 based off its type, PRN, etc.
+
+Required Arguments:
+
+- `signal::ReplicaSignals`
+
+Optional Arguments:
+
+- `prn`
+- `f_if`
+- `f_d`
+- `fd_rate`
+- `Tsys`
+- `CN0`
+- `phi`
+- `nADC`
+- `include_carrier`
+- `include_adc`
+- `include_thermal_noise`
+- `code_start_idx`
+- `include_databits_I`
+- `include_databits_Q`
+- `include_phase_noise`
+- `phase_noise_scaler`
+- `name`
+- `new_thermal_noise`
+- `new_phase_noise`
+- `isreplica`
+- `noexp`
+- `new_databits`
+
+Returns and Modifies:
+
+- `ReplicaSignals` struct `signal`
 """
 function definesignal!(signal::ReplicaSignals;
                        prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
