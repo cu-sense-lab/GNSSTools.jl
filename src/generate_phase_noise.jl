@@ -93,20 +93,3 @@ function generate_phase_noise!(noise, noise_temp::Vector; scale=1/10)
     view(noise, 1:N) .*= scale_factor
     return noise
 end
-
-
-"""
-    plot_spectrum(x)
-"""
-function plot_spectrum(x, f_s, flog=false)
-    N = length(x)
-    t_length = N/f_s
-    freqs = f = Array(0:1/t_length:f_s/2)
-    X = 20*log10.(abs2.(fft(x)))[1:length(freqs)]
-    fig = figure()
-    ax = fig.add_subplot(1, 1, 1)
-    if flog
-        ax.set_xscale("log")
-    end
-    plot(freqs, X)
-end
