@@ -6,16 +6,11 @@ channel
 
 Fields:
 
-- `name::String`: name of signal type (default = channel (`I`, `Q`, or `IQ`))
+- `name::String`: name of code type
 - `code_num::Int`: number of codes, including databits, on channel
 - `codes::Array{Dict,1}`: array of dictionaries, where each dictionary is a
                           layer of code
 - `chipping_rates::Array{Float,1}`: array of chipping rates in Hz for each code
-- `channel::Complex{Int}`: `[NOT USED]` complex number used to define the
-                           channel of the codes
-    * set to `1+0im` if the channel is `I`
-    * set to `0+1im` if the channel is `Q`
-    * set to `1+1im` if the channel is `both`
 - `include_codes::Array{Bool,1}`: array of `Bool` flags for each code to indicate
                                   whether a given code is being used
 - `databits::Bool`: `Bool` flag to specify whether databits used in the set of codes
@@ -23,7 +18,7 @@ Fields:
 - `similar_databits::Bool`: set to true if the databits are the same for all PRNs
 """
 struct CodeType{T1,T2,T3,T4,T5,T6}
-    name::String           # Name of signal type (i.e. "l1ca" or "l5i" or "l5q")
+    name::String           # Name of code type
     code_num::T1           # Number of codes in signal type
                            # Includes primary, secondary, and nav codes
     codes::T2              # Vector of dictionaries
@@ -37,12 +32,6 @@ struct CodeType{T1,T2,T3,T4,T5,T6}
                            # first code in `codes`.
     chipping_rates::T3     # Vector of chipping rates of length `code_num`
     code_lengths::T4       # Vector of code lengths of length `code_num`
-    channel::String        # Whether signal is on the I or Q channel
-                           # If signal is on I, `channel = "I"`
-                           # If signal is on Q, `channel = "Q"`
-                           # If signal is on both, `channel = "both"`
-                           # `channel` is multiplied on resulting code value
-                           # during signal generation
     include_codes::T6      # Bool vector of length `code_num`
                            # Used to determine if a given code is used for
                            # signal generation.
@@ -115,7 +104,7 @@ Returns:
 - `CodeType` structure
 """
 function definecodetype(codes::Vector, chipping_rates::Vector{Float64};
-                        channel="both", databits=missing, name="custom")
+                        databits=missing, name="custom")
     # Check that the first code in `codes`, the primary code, is a Dict
     if ~isa(codes[1], Dict)
         error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
@@ -178,7 +167,7 @@ function definecodetype(codes::Vector, chipping_rates::Vector{Float64};
     end
     include_codes = fill(true, code_num)
     return CodeType(name, code_num, signal_codes, chipping_rates, code_lengths,
-                    channel, include_codes, included_databits, similar_databits)
+                    include_codes, included_databits, similar_databits)
 end
 
 
@@ -205,8 +194,8 @@ Returns:
 
 - `CodeType` structure
 """
-function definecodetype(code::Dict, chipping_rate::Float64,
-                        channel="I"; databits=missing, name="custom")
+function definecodetype(code::Dict, chipping_rate::Float64;
+                        databits=missing, name="custom")
     # Check that the first code in `codes`, the primary code, is a Dict
     if ~isa(code, Dict)
         error("Code given must be in the form of a dictionary.")
@@ -249,7 +238,7 @@ function definecodetype(code::Dict, chipping_rate::Float64,
     end
     include_codes = fill(true, code_num)
     return CodeType(name, code_num, signal_codes, chipping_rate, code_length,
-                    channel, include_codes, included_databits, similar_databits)
+                    include_codes, included_databits, similar_databits)
 end
 
 
