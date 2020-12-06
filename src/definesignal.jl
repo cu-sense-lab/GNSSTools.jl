@@ -71,6 +71,8 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                       include_databits_Q=true, include_phase_noise=true,
                       phase_noise_scaler=1/10, name="custom",
                       skip_noise_generation=false, allocate_noise_vectors=true)
+    # Obtain sample number based off the sampling frequency and duration of
+    # signal
     sample_num = Int(f_s * t_length)
     # Generate time vector
     t = calctvector(sample_num, f_s)
@@ -79,6 +81,8 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
     sig_freq = signal_type.sig_freq
     I_codes = signal_type.I_codes
     Q_codes = signal_type.Q_codes
+    # Get adjusted code chipping rates and chipping rate rates for I channel
+    # codes
     if signal_type.include_I
         f_code_d_I = Array{Float64}(undef, I_codes.code_num)
         f_code_dd_I = Array{Float64}(undef, I_codes.code_num)
@@ -101,10 +105,13 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
             end
         end
     else
+        # Set these vectors to zero length if there are no I channel codes
         f_code_d_I = Array{Float64}(undef, 0)
         f_code_dd_I = Array{Float64}(undef, 0)
         init_code_phases_I = Array{Float64}(undef, 0)
     end
+    # Get adjusted code chipping rates and chipping rate rates for Q channel
+    # codes
     if signal_type.include_Q
         f_code_d_Q = Array{Float64}(undef, Q_codes.code_num)
         f_code_dd_Q = Array{Float64}(undef, Q_codes.code_num)
@@ -127,6 +134,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
             end
         end
     else
+        # Set these vectors to zero length if there are no Q channel codes
         f_code_d_Q = Array{Float64}(undef, 0)
         f_code_dd_Q = Array{Float64}(undef, 0)
         init_code_phases_Q = Array{Float64}(undef, 0)
@@ -138,14 +146,22 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
     # Generate thermal noise and phase noise
     if allocate_noise_vectors
         if skip_noise_generation
+            # Space for thermal and phase noise vectors are allocated. User can
+            # use `definesignal!(signal; new_thermal_noise=true, new_phase_noise=true)`
+            # to generate the noise in the vectors.
             thermal_noise = Array{Complex{Float64}}(undef, sample_num)
             phase_noise = Array{Float64}(undef, sample_num)
         else
+            # Generate thermal and phase noise. Thermal noise is unscaled
+            # but is scaled in `generatesignal!` when the signal is generated.
+            # Phase noise is scaled based off the value of `phase_noise_scaler`.
             thermal_noise = randn(Complex{Float64}, sample_num)
             phase_noise = randn(Float64, sample_num)
             generate_phase_noise!(phase_noise, sample_num; scale=phase_noise_scaler)
         end
     else
+        # Create 0 sized thermal and phase noise vectors and set the
+        # `include_thermal_noise` and `include_phase_noise` flags to `false`.
         thermal_noise = Array{Complex{Float64}}(undef, 0)
         phase_noise = Array{Float64}(undef, 0)
         include_thermal_noise = false
