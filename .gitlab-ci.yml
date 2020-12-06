@@ -1,5 +1,17 @@
 image: julia:1.5                # image comes from Docker hub
 
+# before_script:
+#   - RUNNER_TOKEN=6f5b49f5
+#   - BUILD_DIR=/home/user/builds/$RUNNER_TOKEN/0
+#   - cd $BUILD_DIR
+#   - CLONE_DIR="$BUILD_DIR/$CI_PROJECT_PATH"
+#   - rm -rf $CLONE_DIR
+#   - mkdir -p $CLONE_DIR
+#   - git clone git@192.168.3.66:taylors6/picbl-i2c.git $CLONE_DIR -b $CI_COMMIT_REF_NAME
+#   - cd $CLONE_DIR
+#   - git submodule update --init
+#   - git status
+
 before_script:
   # workaround for https://github.com/JuliaDocs/Documenter.jl/issues/686
   - apt-get -qq update; apt-get -y install git
