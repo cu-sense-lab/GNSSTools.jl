@@ -37,10 +37,10 @@ struct CodeType{T1,T2,T3,T4,T5,T6}
                            # first code in `codes`.
     chipping_rates::T3     # Vector of chipping rates of length `code_num`
     code_lengths::T4       # Vector of code lengths of length `code_num`
-    channel::T5            # Whether signal is on the I or Q channel
-                           # If signal is on I, `channel = 1 + 0im`
-                           # If signal is on Q, `channel = 0 + 1im`
-                           # If signal is on both, `channel = 1 + 1im`
+    channel::String        # Whether signal is on the I or Q channel
+                           # If signal is on I, `channel = "I"`
+                           # If signal is on Q, `channel = "Q"`
+                           # If signal is on both, `channel = "both"`
                            # `channel` is multiplied on resulting code value
                            # during signal generation
     include_codes::T6      # Bool vector of length `code_num`
@@ -69,16 +69,18 @@ Fields:
 - `Q_codes::CodeType`: Custum codes for the Q channel of the signal
     * set to `missing` if no `I_codes` given
 - `sig_freq::Float64`: carrier frequency of the signal in Hz
-- `B::Float64`: maximum bandwidth of all codes in Hz
+- `B_I::Float64`: maximum bandwidth of all I channel codes in Hz
+- `B_Q::Float64`: maximum bandwidth of all Q channel codes in Hz
 - `include_I::Bool`: set to `True` if `I_codes` is given
 - `include_Q::Bool`: set to `True` if `Q_codes` is given
 """
-struct SignalType{T1,T2,T3,T4,T5}
+struct SignalType{T1,T2,T3,T4,T5,T6}
     name::T1
     I_codes::T2
     Q_codes::T3
     sig_freq::T4
-    B::T5
+    B_I::T5
+    B_Q::T6
     include_I::Bool
     include_Q::Bool
 end
@@ -113,10 +115,12 @@ Returns:
 - `CodeType` structure
 """
 function definecodetype(codes::Vector, chipping_rates::Vector{Float64};
-                        channel="both", databits=missing)
+                        channel="both", databits=missing, name="custom")
+    # Check that the first code in `codes`, the primary code, is a Dict
     if ~isa(codes[1], Dict)
         error("Primary code must be a dictionary of codes. The primary code is the first index of `codes`.")
     end
+    # Setup for if there is or isn't databits
     if ismissing(databits)
         code_num = length(codes)
         N = code_num
@@ -124,23 +128,19 @@ function definecodetype(codes::Vector, chipping_rates::Vector{Float64};
         code_num = length(codes) + 1
         N = code_num - 1
     end
-    if channel == "I"
-        channel = 1 + 0im
-        name = "I"
-    elseif channel == "Q"
-        channel = 0 + 1im
-        name = "Q"
-    elseif channel == "both"
-        channel = 1 + 1im
-        name = "IQ"
-    else
-        error("Invalid channel specified.")
-    end
+    # Obtain the dictionary keys from the primary code and create Vector of
+    # codes of the same dictionary type
     code_keys = collect(keys(codes[1]))
     dict_type = Dict{eltype(code_keys),Vector{eltype(codes[1][code_keys[1]])}}
     signal_codes = Vector{dict_type}(undef, code_num)
     code_lengths = Array{Int}(undef, code_num)
+    # Loop through codes and convert non-dict items to dictionaries
     for i in 1:N
+        # Check if item in vector is a dictionary.
+        # If it is, it is placed into `signal_codes[i]`, otherwise, it is
+        # assumed that the item in the `codes` vector is a single code
+        # that is applied to all PRNs. It is then copied into a dictionary
+        # and associated with all dictionary keys, the PRN numbers.
         if isa(codes[i], Dict)
             signal_codes[i] = codes[i]
             code_lengths[i] = length(codes[i][collect(keys(codes[i]))[1]])
@@ -153,6 +153,8 @@ function definecodetype(codes::Vector, chipping_rates::Vector{Float64};
             signal_codes[i] = code
         end
     end
+    # Repeat the above process for databits, if they are given. The same
+    # treatment above is used for the databits.
     if ~ismissing(databits)
         push!(chipping_rates, databits[2])
         included_databits = true
@@ -204,26 +206,21 @@ Returns:
 - `CodeType` structure
 """
 function definecodetype(code::Dict, chipping_rate::Float64,
-                        channel="I"; databits=missing)
+                        channel="I"; databits=missing, name="custom")
+    # Check that the first code in `codes`, the primary code, is a Dict
     if ~isa(code, Dict)
         error("Code given must be in the form of a dictionary.")
     end
+    # Obtain the dictionary keys from the primary code and create Vector of
+    # codes of the same dictionary type
     include_code = true
-    if channel == "I"
-        channel = 1 + 0im
-        name = "I"
-    elseif channel == "Q"
-        name = "Q"
-        channel = 0 + 1im
-    elseif channel == "both"
-        channel = 1 + 1im
-        name = "IQ"
-    else
-        error("Invalid channel specified.")
-    end
     code_keys = collect(keys(code))
     dict_type = Dict{eltype(code_keys),Vector{eltype(code[code_keys[1]])}}
     code_length = length(code[code_keys[1]])
+    # Check if databit codes given is a dictionary or array.
+    # If it is, it is placed into `signal_codes[2]`, otherwise, it is
+    # assumed that is a single that is applied to all PRNs. It is then copied
+    # into a dictionary and associated with all dictionary keys, the PRN numbers.
     if ~ismissing(databits)
         code_num = 2
         signal_codes = Vector{dict_type}(undef, code_num)
@@ -276,10 +273,11 @@ Returns:
 """
 function definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
                           name="custom")
+    # Determine maximum bandwidth for I channel codes
     B_I = maximum(I_codes.chipping_rates)
+    # Determine maximum bandwidth for Q channel codes
     B_Q = maximum(Q_codes.chipping_rates)
-    B = max(B_I, B_Q)
-    return SignalType(name, I_codes, Q_codes, sig_freq, B, true, true)
+    return SignalType(name, I_codes, Q_codes, sig_freq, B_I, B_Q, true, true)
 end
 
 
@@ -301,13 +299,14 @@ Returns:
 - `SignalType` struct
 """
 function definesignaltype(codes::CodeType, sig_freq, channel="I"; name="custom")
+    # Determine maximum bandwidth for codes
     B = maximum(codes.chipping_rates)
     if channel == "both"
-        return SignalType(name, codes, codes, sig_freq, B, true, true)
+        return SignalType(name, codes, codes, sig_freq, B, B, true, true)
     elseif channel == "I"
-        return SignalType(name, codes, missing, sig_freq, B, true, false)
+        return SignalType(name, codes, missing, sig_freq, B, missing, true, false)
     elseif channel == "Q"
-        return SignalType(name, missing, codes, sig_freq, B, false, true)
+        return SignalType(name, missing, codes, sig_freq, missing, B, false, true)
     else
         error("Invalid channel specified.")
     end
