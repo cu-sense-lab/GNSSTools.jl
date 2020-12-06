@@ -269,6 +269,10 @@ Arguments:
 - `Q_codes::CodeType`: Custum codes for the Q channel of the signal
 - `sig_freq::Float64`: carrier frequency of signal in Hz
 - `name::String`: name of signal type (default is `custom`)
+
+Returns:
+
+- `SignalType` struct
 """
 function definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
                           name="custom")
@@ -291,6 +295,10 @@ Arguments:
 - `sig_freq::Float64`: carrier frequency of signal in Hz
 - `channel::String`: set to either `I`, `Q`, or `both` (default is `I`)
 - `name::String`: name of signal type (default is `custom`)
+
+Returns:
+
+- `SignalType` struct
 """
 function definesignaltype(codes::CodeType, sig_freq, channel="I"; name="custom")
     B = maximum(codes.chipping_rates)
@@ -309,10 +317,8 @@ end
 """
     GNSSSignal
 
-The most general type of
-signal type used in `GNSSTools`.
-Used for both `GNSSData` and
-`ReplicaSignal` structs.
+The most general type of signal type used in `GNSSTools`. Used for both
+`GNSSData` and `ReplicaSignals` structs.
 """
 abstract type GNSSSignal end
 
@@ -328,7 +334,7 @@ Fields:
 - `f_s::Float64`: sampling rate of data in Hz
 - `f_if::Float64`: IF frequency of data in Hz
 - `t_length::Float64`: length of data loaded in seconds
-- `start_data_idx::Int64`: starting index in the data file
+- `start_data_idx::Int`: starting index in the data file
 - `t::Array{Float64,1}`: time vector to accompany data
 - `data::Array{Complex{Float64},1}`: loaded data from data file
 - `data_type::String`: a `Symbol` type either `:sc4` or `:sc8` for 4 and 8 bit
@@ -337,13 +343,15 @@ Fields:
     * format is `(year, month, day, hour, minute, second)`
     * everything other than `second` must be an integer
     * `second` can be an integer or float
+    * set to `missing` if no start time given
 - `site_loc_lla::T2`: data collection site location
     * format is `(latitude, longitude, height)`
     * `latitude` and `longitude` are in degrees
     * `height` is in meters
-- `sample_num::Int64`: number of data samples in `Data.data`
+    * set to `missing` if no site location given
+- `sample_num::Int`: number of data samples in `Data.data`
 - `total_data_length::Float64`: total length of data file in seconds
-- `nADC::Int64`: bit depth of data
+- `nADC::Int`: bit depth of data
     * `sc4` is 4 bit
     * `sc8` is 8 bit
 """
@@ -352,62 +360,83 @@ struct GNSSData{T1,T2} <: GNSSSignal
     f_s::Float64
     f_if::Float64
     t_length::Float64
-    start_data_idx::Int64
+    start_data_idx::Int
     t::Array{Float64,1}
     data::Array{Complex{Float64},1}
     data_type::String
     data_start_time::T1
     site_loc_lla::T2
-    sample_num::Int64
+    sample_num::Int
     total_data_length::Float64
-    nADC::Int64
+    nADC::Int
 end
 
 
 """
     ReplicaSignals
 
-A abstract struct for the replica signal structs. For use when custom signal
-types are defined.
+A abstract struct for the replica signal structs.
 
 Fields:
 
-- `name::String`
-- `prn::Int64`
-- `f_s::Float64`
-- `t_length::Float64`
-- `f_if::Float64`
-- `f_d::Float64`
-- `fd_rate::Float64`
-- `Tsys::Float64`
-- `CN0::Float64`
-- `ϕ::Float64`
-- `nADC::Int64`
-- `code_start_idx::Float64`
-- `init_code_phases_I::T1`
-- `init_code_phases_Q::T2`
-- `t::Array{Float64,1}`
-- `data::Array{Complex{Float64},1}`
-- `include_carrier::Bool`
-- `include_adc::Bool`
-- `include_thermal_noise::Bool`
-- `include_databits_I::Bool`
-- `include_phase_noise::Bool`
-- `f_code_d_I::T2`
-- `f_code_dd_I::T3`
-- `f_code_d_Q::T4`
-- `f_code_dd_Q::T5`
-- `sample_num::Int64`
-- `isreplica::Bool`
-- `noexp::Bool`
-- `thermal_noise::Array{Complex{Float64},1}`
-- `phase_noise::Array{Float64,1}`
-- `signal_type::T7`
+- `name::String`: name of replica signal
+- `prn::Int`: code PRN to be generated
+- `f_s::Float64`: receiver sampling rate of signal in Hz
+- `t_length::Float64`: data length in seconds
+- `f_if::Float64`: IF frequency in Hz
+- `f_d::Float64`: initial carrier Doppler frequency in Hz
+- `fd_rate::Float64`: initial carrier Doppler frequency rate in Hz
+- `Tsys::Float64`: receiver noise temperature in Kelvin
+- `CN0::Float64`: signal carrier to noise ratio (C/N₀)
+- `phi::Float64`: initial carrier phase in radians
+- `nADC::Int64`: bit depth of receiver
+- `code_start_idx::Float64`: index in `ReplicaSignals.data` where all codes in
+                             signal start
+- `init_code_phases_I::T1`: array of initial code phases for all I channel codes
+    * set to `missing` if no I channel codes exist
+- `init_code_phases_Q::T2`: array of initial code phases for all Q channel codes
+    * set to `missing` if no Q channel codes exist
+- `t::Array{Float64,1}`: time vector from 0 to `t_length` in seconds
+- `data::Array{Complex{Float64},1}`: where the signal raw I/Q samples are stored
+- `include_carrier::Bool`: flag for if signal will be modulated onto a carrier
+- `include_adc::Bool`: flag for if signal will undergo ADC quantization
+- `include_thermal_noise::Bool`: flag for if thermal noise will be added
+- `include_databits_I::Bool`: flag for if databits on the I channel will be put
+                              onto signal
+- `include_databits_Q::Bool`: flag for if databits on the Q channel will be put
+                              onto signal
+- `include_phase_noise::Bool`: flag for if phase noise will be added onto signal
+- `f_code_d_I::T2`: adjusted chipping rate due to Doppler frequency for I
+                    channel codes
+    * set to `missing` if there are no I channel codes
+- `f_code_dd_I::T3`: adjusted chipping rate rate due to Doppler frequency rate
+                     for I channel codes
+    * set to `missing` if there are no I channel codes
+- `f_code_d_Q::T4`: adjusted chipping rate due to Doppler frequency for Q
+                    channel codes
+    * set to `missing` if there are no Q channel codes
+- `f_code_dd_Q::T5`: adjusted chipping rate rate due to Doppler frequency rate
+                     for Q channel codes
+    * set to `missing` if there are no Q channel codes
+- `sample_num::Int`: number of raw I/Q samples in `ReplicaSignals.data`
+- `isreplica::Bool`: flag used to specify that a given `ReplicaSignals` struct
+                     will be used as a replica for signal processing
+    * if `True`, a `ReplicaSignals` struct will not have noise added onto it
+      and will not undergo ADC quantization
+    * signal generation will be done using the second method of `generatesignal!`,
+      `generatesignal!(signal::ReplicaSignals, isreplica::Bool)`
+- `noexp::Bool`: used only if second method of `generatesignal!`, discussed
+                 above, is used
+    * does not modulate codes onto carrier
+- `thermal_noise::Array{Complex{Float64},1}`: contains pre-build thermal noise
+                                              vector
+- `phase_noise::Array{Float64,1}`: contains pre-build phase noise vector
+- `signal_type::T7`: a `SignalType` struct that was used to define the signal
 
 """
 mutable struct ReplicaSignals{T1,T2,T3,T4,T5,T7} <: GNSSSignal
     name::String
-    prn::Int64
+    prn::Int
     f_s::Float64
     t_length::Float64
     f_if::Float64
@@ -415,8 +444,8 @@ mutable struct ReplicaSignals{T1,T2,T3,T4,T5,T7} <: GNSSSignal
     fd_rate::Float64
     Tsys::Float64
     CN0::Float64
-    ϕ::Float64
-    nADC::Int64
+    phi::Float64
+    nADC::Int
     code_start_idx::Float64
     init_code_phases_I::T1
     init_code_phases_Q::T2
@@ -432,7 +461,7 @@ mutable struct ReplicaSignals{T1,T2,T3,T4,T5,T7} <: GNSSSignal
     f_code_dd_I::T3
     f_code_d_Q::T4
     f_code_dd_Q::T5
-    sample_num::Int64
+    sample_num::Int
     isreplica::Bool
     noexp::Bool
     thermal_noise::Array{Complex{Float64},1}

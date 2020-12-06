@@ -30,7 +30,7 @@ function generatesignal!(signal::ReplicaSignals,
     f_if = signal.f_if
     f_d = signal.f_d
     fd_rate = signal.fd_rate
-    ϕ_init = signal.ϕ
+    ϕ_init = signal.phi
     if ismissing(doppler_curve)
         get_ϕ(t) = 2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ_init
         get_code_val(t) = calc_code_val(signal, t)
@@ -142,7 +142,7 @@ function generatesignal!(signal::ReplicaSignals, isreplica::Bool)
     f_d = signal.f_d
     f_if = signal.f_if
     fd_rate = signal.fd_rate
-    ϕ = signal.ϕ
+    ϕ = signal.phi
     noexp = signal.noexp
     @threads for i in 1:signal.sample_num
         @inbounds t = signal.t[i]

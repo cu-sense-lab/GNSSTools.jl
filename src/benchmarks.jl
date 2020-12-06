@@ -55,7 +55,7 @@ function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I
         f_d = sample(doppler_hist.edges[1], doppler_weights)
         fd_center = fd_center = round(f_d/Δfd)*Δfd
         fd_rate = sample(doppler_rate_hist.edges[1], doppler_rate_weights)
-        definesignal!(signal; f_d=f_d, fd_rate=fd_rate, ϕ=ϕ[i],
+        definesignal!(signal; f_d=f_d, fd_rate=fd_rate, phi=ϕ[i],
                       code_start_idx=code_start_idx[i], new_databits=true,
                       new_thermal_noise=true, new_phase_noise=true,)
         generatesignal!(signal)

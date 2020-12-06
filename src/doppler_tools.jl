@@ -47,7 +47,7 @@ doppler2chips(signal::ReplicaSignals, doppler_curve,
 function doppler2chips(signal::ReplicaSignals, doppler_curve,
                        doppler_t; Δt=doppler_t[2]-doppler_t[1],
                        N=length(doppler_curve))
-      ϕ_init = signal.ϕ
+      ϕ_init = signal.phi
       f_if = signal.f_if
       sig_freq = signal.signal_type.signal_freq
       include_I = signal.signal_type.include_I

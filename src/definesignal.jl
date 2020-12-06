@@ -6,16 +6,33 @@
                  f_if=0., f_d=0., fd_rate=0., Tsys=535.,
                  CN0=45., ϕ=0., nADC=4, include_carrier=true,
                  include_adc=true, include_thermal_noise=true,
-                 code_start_idx=1, include_databits_I=true,
+                 code_start_idx=1., include_databits_I=true,
                  include_databits_Q=true, include_phase_noise=true,
-                 phase_noise_scaler=1/10, name="custom")
+                 phase_noise_scaler=1/10, name="custom",
+                 skip_noise_generation=false, allocate_noise_vectors=true)
 
 Define properties of locally generated generic signal
 based off its type, PRN, etc.
+
+Required Arguments:
+
+- `signal_type::SignalType`
+- `f_s`:
+- `t_length`
+
+Optional Arguments:
+
+- `prn`
+- `f_if`
+- `f_d`
+- `fd_rate`
+- `Tsys`
+- `CN0`
+- `phi`
 """
 function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                       f_if=0., f_d=0., fd_rate=0., Tsys=535.,
-                      CN0=45., ϕ=0., nADC=4, include_carrier=true,
+                      CN0=45., phi=0., nADC=4, include_carrier=true,
                       include_adc=true, include_thermal_noise=true,
                       code_start_idx=1., include_databits_I=true,
                       include_databits_Q=true, include_phase_noise=true,
@@ -100,7 +117,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
         generate_phase_noise!(phase_noise, sample_num; scale=phase_noise_scaler)
     end
     return ReplicaSignals(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
-                          CN0, ϕ, nADC, code_start_idx, init_code_phases_I,
+                          CN0, phi, nADC, code_start_idx, init_code_phases_I,
                           init_code_phases_Q, t, data, include_carrier,
                           include_adc, include_thermal_noise, include_databits_I,
                           include_databits_Q, include_phase_noise, f_code_d_I,
@@ -125,7 +142,7 @@ based off its type, PRN, etc.
 function definesignal!(signal::ReplicaSignals;
                        prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
                        fd_rate=signal.fd_rate, Tsys=signal.Tsys,
-                       CN0=signal.CN0, ϕ=signal.ϕ, nADC=signal.nADC,
+                       CN0=signal.CN0, phi=signal.phi, nADC=signal.nADC,
                        include_carrier=signal.include_carrier,
                        include_adc=signal.include_adc,
                        include_thermal_noise=signal.include_thermal_noise,
@@ -220,7 +237,7 @@ function definesignal!(signal::ReplicaSignals;
     signal.fd_rate = fd_rate
     signal.Tsys = Tsys
     signal.CN0 = CN0
-    signal.ϕ = ϕ
+    signal.phi = phi
     signal.nADC = nADC
     signal.code_start_idx = code_start_idx
     signal.include_carrier = include_carrier
