@@ -11,36 +11,51 @@
                  phase_noise_scaler=1/10, name="custom",
                  skip_noise_generation=false, allocate_noise_vectors=true)
 
+
 Define properties of locally generated generic signal
 based off its type, PRN, etc.
 
+
 Required Arguments:
 
-- `signal_type::SignalType`
-- `f_s`:
-- `t_length`
+- `signal_type::SignalType`: user defined signal type
+    * see `definecodetype` and `definesignaltype`
+- `f_s`: signal sampling frequency in Hz
+- `t_length`: signal length in seconds
+
 
 Optional Arguments:
 
-- `prn`
-- `f_if`
-- `f_d`
-- `fd_rate`
-- `Tsys`
-- `CN0`
-- `phi`
-- `nADC`
-- `include_carrier`
-- `include_adc`
-- `include_thermal_noise`
-- `code_start_idx`
-- `include_databits_I`
-- `include_databits_Q`
-- `include_phase_noise`
-- `phase_noise_scaler`
-- `name`
-- `skip_noise_generation`
-- `allocate_noise_vectors`
+- `prn`: satellite PRN number `(default = 1)`
+- `f_if`: IF frequency in Hz `(default = 0Hz)`
+- `f_d`: signal Doppler frequency in Hz `(default = 0Hz)`
+- `fd_rate`: signal Doppler rate in Hz/s `(default = 0Hz/s)`
+- `Tsys`: receiver noise temperature in Kelvin `(default = 535K)`
+- `CN0`: signal carrier-to-noise ratio (C/N₀) `(default = 45dB⋅Hz)`
+- `phi`: initial carrier phase in rad `(default = 0rad)`
+- `nADC`: receiver bit depth `(default = 4 bits)`
+- `include_carrier`: flag for modulating codes onto carrier `(default = true)`
+- `include_adc`: flag for performing ADC quantization on signal `(default = true)`
+- `include_thermal_noise`: flag for including thermal noise in signal generation
+                           `(default = true)`
+- `code_start_idx`: starting index in `ReplicaSignals.data` where all codes
+                    start `(default = 1)`
+- `include_databits_I`: flag for including I channel databits in simulated signal
+                        `(default = true)`
+- `include_databits_Q`: flag for including Q channel databits in simulated signal
+                        `(default = true)`
+- `include_phase_noise`: flag for including phase noise `(default = true)`
+- `phase_noise_scaler`: standard deviation of phase noise in rad
+                        `(default = 1/10rad)`
+- `name`: name of signal `(default = custom)`
+- `skip_noise_generation`: flag for skipping thermal and phase noise generation
+                           `(default = false)`
+- `allocate_noise_vectors`: flag for allocating memory for thermal and phase
+                            noise vectors `(default = true)`
+    * if set to `true`, thermal and phase noise vectors have the same length as
+      `ReplicaSignals.data` vector
+    * if set to `false`, thermal and phase noise vectors have length set to 0
+
 
 Returns:
 
@@ -144,49 +159,82 @@ end
 
 
 """
-    definesignal!(signal::ReplicaSignals; prn=1,
-                  f_if=0., f_d=0., fd_rate=0., Tsys=535.,
-                  CN0=45., ϕ=0., nADC=4, include_carrier=true,
-                  include_adc=true, include_thermal_noise=true,
-                  code_start_idx=1, include_databits_I=true,
-                  include_databits_Q=true, include_phase_noise=true,
-                  phase_noise_scaler=1/10, name="custom")
+    definesignal!(signal::ReplicaSignals;
+                  prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
+                  fd_rate=signal.fd_rate, Tsys=signal.Tsys,
+                  CN0=signal.CN0, phi=signal.phi, nADC=signal.nADC,
+                  include_carrier=signal.include_carrier,
+                  include_adc=signal.include_adc,
+                  include_thermal_noise=signal.include_thermal_noise,
+                  code_start_idx=signal.code_start_idx,
+                  include_databits_I=signal.include_databits_I,
+                  include_databits_Q=signal.include_databits_Q,
+                  include_phase_noise=signal.include_phase_noise,
+                  phase_noise_scaler=1/10, name=signal.name,
+                  new_thermal_noise=false, new_phase_noise=false,
+                  isreplica=signal.isreplica, noexp=signal.noexp,
+                  new_databits=false)
+
 
 Redefine properties of locally generated generic signal
 based off its type, PRN, etc.
 
+
 Required Arguments:
 
+- `signal::ReplicaSignals`: the signal already defined by the user using
+                            `definesignal`
+
+
+Optional Arguments with Defaults Equal to `signal` Field Values:
+
+- `prn`: satellite PRN number
+- `f_if`: IF frequency in Hz
+- `f_d`: signal Doppler frequency in Hz
+- `fd_rate`: signal Doppler rate in Hz/s
+- `Tsys`: receiver noise temperature in Kelvin
+- `CN0`: signal carrier-to-noise ratio (C/N₀)
+- `phi`: initial carrier phase in rad
+- `nADC`: receiver bit depth
+- `include_carrier`: flag for modulating codes onto carrier
+- `include_adc`: flag for performing ADC quantization on signal
+- `include_thermal_noise`: flag for including thermal noise in signal generation
+- `code_start_idx`: starting index in `ReplicaSignals.data` where all codes
+                    start
+- `include_databits_I`: flag for including I channel databits in simulated signal
+- `include_databits_Q`: flag for including Q channel databits in simulated signal
+- `include_phase_noise`: flag for including phase noise
+- `name`: name of signal
+- `isreplica`: flag to identify whether signal is being for processing
+    * replica signals being used for processing simulated or real signals
+      should not include any noise source
+    * this is usually set to `true` when being used by processing functions
+      such as `courseacquisition!`, `fineacquisition`, and `trackprn`, only if
+      this signal structure is being used as the replica signal, and is NOT
+      the signal being processed
+    * if `true`, a `ReplicaSignals` struct will not have noise added onto it
+      and will not undergo ADC quantization
+    * signal generation will be done using the second method of `generatesignal!`,
+      `generatesignal!(signal::ReplicaSignals, isreplica::Bool)`
+- `noexp`: used only if second method of `generatesignal!`, discussed
+           above, is used
+    * does not modulate codes onto carrier
+
+
+Other Optional Arguments:
+
+- `phase_noise_scaler`: standard deviation of phase noise in rad
+                        `(default = 1/10rad)`
+- `new_thermal_noise`: flag to generate new phase noise for signal
+                       `(default = false)`
+- `new_phase_noise`: flag to generate new phase noise for signal
+                     `(default = false)`
+- `new_databits`: flag to generate new databits for signal `(default = false)`
+
+
+Modifies and Returns:
+
 - `signal::ReplicaSignals`
-
-Optional Arguments:
-
-- `prn`
-- `f_if`
-- `f_d`
-- `fd_rate`
-- `Tsys`
-- `CN0`
-- `phi`
-- `nADC`
-- `include_carrier`
-- `include_adc`
-- `include_thermal_noise`
-- `code_start_idx`
-- `include_databits_I`
-- `include_databits_Q`
-- `include_phase_noise`
-- `phase_noise_scaler`
-- `name`
-- `new_thermal_noise`
-- `new_phase_noise`
-- `isreplica`
-- `noexp`
-- `new_databits`
-
-Returns and Modifies:
-
-- `ReplicaSignals` struct `signal`
 """
 function definesignal!(signal::ReplicaSignals;
                        prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,

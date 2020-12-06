@@ -1,8 +1,10 @@
 """
     CodeType
 
+
 Struct for holding parms for a custum code type for either the `I` or `Q`
 channel
+
 
 Fields:
 
@@ -14,7 +16,7 @@ Fields:
 - `include_codes::Array{Bool,1}`: array of `Bool` flags for each code to indicate
                                   whether a given code is being used
 - `databits::Bool`: `Bool` flag to specify whether databits used in the set of codes
-    * if `True`, databits are the last code in `CodeType.codes` array
+    * if `true`, databits are the last code in `CodeType.codes` array
 - `similar_databits::Bool`: set to true if the databits are the same for all PRNs
 """
 struct CodeType{T1,T2,T3,T4,T5,T6}
@@ -48,7 +50,9 @@ end
 """
     SignalType
 
+
 Holds common parms for a signal including its codes for each channel.
+
 
 Fields:
 
@@ -60,8 +64,8 @@ Fields:
 - `sig_freq::Float64`: carrier frequency of the signal in Hz
 - `B_I::Float64`: maximum bandwidth of all I channel codes in Hz
 - `B_Q::Float64`: maximum bandwidth of all Q channel codes in Hz
-- `include_I::Bool`: set to `True` if `I_codes` is given
-- `include_Q::Bool`: set to `True` if `Q_codes` is given
+- `include_I::Bool`: set to `true` if `I_codes` is given
+- `include_Q::Bool`: set to `true` if `Q_codes` is given
 """
 struct SignalType{T1,T2,T3,T4,T5,T6}
     name::T1
@@ -79,8 +83,10 @@ end
     definecodetype(codes::Vector, chipping_rates::Vector{Float64};
                    databits=missing, name="custom")
 
+
 Defines a `CodeType` struct that represents the codes of a signal on a
 given channel, `I`, `Q`, or `both`.
+
 
 Required Arguments:
 
@@ -93,8 +99,8 @@ Required Arguments:
 - `chipping_rates::Vector{Float}`: array of chipping rates for codes above, `not
                                    including databits`
 
-Optional Arguments:
 
+Optional Arguments:
 
 - `databits::Vector`: if specified by user, must be a two element
                       array where the first element is the databits
@@ -102,6 +108,7 @@ Optional Arguments:
                       element is the chipping rate in Hz of the
                       databits
 - `name::String`: name of code type (default is `custom`)
+
 
 Returns:
 
@@ -179,13 +186,16 @@ end
     definecodetype(code::Dict, chipping_rate::Float64;
                    databits=missing, name="custom")
 
+
 Defines a `CodeType` struct that represents the codes of a signal on a
 given channel, `I`, `Q`, or `both`.
+
 
 Required Arguments:
 
 - `code::Dict`: dictionary of primary codes where the keys are the PRN numbers
 - `chipping_rate::Float`: chipping rate in Hz for the primary code above
+
 
 Optional Arguments:
 
@@ -195,6 +205,7 @@ Optional Arguments:
                       element is the chipping rate in Hz of the
                       databits
 - `name::String`: name of code type (default is `custom`)
+
 
 Returns:
 
@@ -252,8 +263,10 @@ end
     definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
                      name="custom")
 
+
 Defines a signal type with `CodeType` structs defined for both the `I` and `Q`
 channels.
+
 
 Required Arguments:
 
@@ -261,9 +274,11 @@ Required Arguments:
 - `Q_codes::CodeType`: Custum codes for the Q channel of the signal
 - `sig_freq::Float64`: carrier frequency of signal in Hz
 
+
 Optional Arguments:
 
 - `name::String`: name of signal type (default is `custom`)
+
 
 Returns:
 
@@ -282,18 +297,22 @@ end
 """
     definesignaltype(codes::CodeType, sig_freq, channel="I"; name="custom")
 
+
 Defines a signal type with a `CodeType` struct defined for either the `I`, `Q`,
 or `both` channels.
+
 
 Required Arguments:
 
 - `codes::CodeType`: Custum codes for either the `I`, `Q`, or `both` channels
 - `sig_freq::Float64`: carrier frequency of signal in Hz
 
+
 Optional Arguments:
 
 - `channel::String`: set to either `I`, `Q`, or `both` (default is `I`)
 - `name::String`: name of signal type (default is `custom`)
+
 
 Returns:
 
@@ -317,6 +336,7 @@ end
 """
     GNSSSignal
 
+
 The most general type of signal type used in `GNSSTools`. Used for both
 `GNSSData` and `ReplicaSignals` structs.
 """
@@ -326,7 +346,9 @@ abstract type GNSSSignal end
 """
     Data
 
+
 Structure for holding GNSS signal data.
+
 
 Fields:
 
@@ -375,7 +397,9 @@ end
 """
     ReplicaSignals
 
+
 A abstract struct for the replica signal structs.
+
 
 Fields:
 
@@ -408,20 +432,20 @@ Fields:
 - `include_phase_noise::Bool`: flag for if phase noise will be added onto signal
 - `f_code_d_I::T2`: adjusted chipping rate due to Doppler frequency for I
                     channel codes
-    * set to `missing` if there are no I channel codes
+    * vector length is set to 0 if there are no I channel codes
 - `f_code_dd_I::T3`: adjusted chipping rate rate due to Doppler frequency rate
                      for I channel codes
-    * set to `missing` if there are no I channel codes
+    * vector length is set to 0 if there are no I channel codes
 - `f_code_d_Q::T4`: adjusted chipping rate due to Doppler frequency for Q
                     channel codes
-    * set to `missing` if there are no Q channel codes
+    * vector length is set to 0 if there are no Q channel codes
 - `f_code_dd_Q::T5`: adjusted chipping rate rate due to Doppler frequency rate
                      for Q channel codes
-    * set to `missing` if there are no Q channel codes
+    * vector length is set to 0 if there are no Q channel codes
 - `sample_num::Int`: number of raw I/Q samples in `ReplicaSignals.data`
 - `isreplica::Bool`: flag used to specify that a given `ReplicaSignals` struct
                      will be used as a replica for signal processing
-    * if `True`, a `ReplicaSignals` struct will not have noise added onto it
+    * if `true`, a `ReplicaSignals` struct will not have noise added onto it
       and will not undergo ADC quantization
     * signal generation will be done using the second method of `generatesignal!`,
       `generatesignal!(signal::ReplicaSignals, isreplica::Bool)`
@@ -430,7 +454,13 @@ Fields:
     * does not modulate codes onto carrier
 - `thermal_noise::Array{Complex{Float64},1}`: contains pre-build thermal noise
                                               vector
+    * if `allocate_noise_vectors` is set to `for variable
+
+    endalse` in `definesignal` method,
+      the size of this vector is 0, indicating that it will not be used
 - `phase_noise::Array{Float64,1}`: contains pre-build phase noise vector
+    * if `allocate_noise_vectors` is set to `false` in `definesignal` method,
+      the size of this vector is 0, indicating that it will not be used
 - `signal_type::T7`: a `SignalType` struct that was used to define the signal
 
 """
