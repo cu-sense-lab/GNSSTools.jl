@@ -139,7 +139,9 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
         f_code_dd_Q = Array{Float64}(undef, 0)
         init_code_phases_Q = Array{Float64}(undef, 0)
     end
-    # Allocate space for signal
+    # Allocate space for signal. No simulated data is stored in yet. After
+    # define the signal, user can use `generatesignal!(signal)` to generate
+    # the I/Q samples which will be stored in `ReplicaSignals.data`.
     data = Array{Complex{Float64}}(undef, sample_num)
     isreplica = false
     noexp = false
@@ -279,6 +281,8 @@ function definesignal!(signal::ReplicaSignals;
     sig_freq = signal_type.sig_freq
     I_codes = signal_type.I_codes
     Q_codes = signal_type.Q_codes
+    # Get adjusted code chipping rates and chipping rate rates for I channel
+    # codes
     if signal_type.include_I
         for i in 1:signal_type.I_codes.code_num
             # I channel
@@ -297,11 +301,20 @@ function definesignal!(signal::ReplicaSignals;
             else
                 signal.signal_type.I_codes.include_codes[end] = true
             end
+            # Generate new databits for I channel if `new_databits` flag is
+            # `true`
             if new_databits
                 prn_keys = collect(keys(I_codes.codes[1]))
+
                 if I_codes.similar_databits
+                    # If one array of databits was used for all PRNs, then the
+                    # databit arrays for all PRNs are references to the same
+                    # one. Therefore, changing one, will change them all.
                     rand!(signal.signal_type.I_codes.codes[end][prn_keys[1]], 0:1)
                 else
+                    # If a dictionary of databits was given instead, then each
+                    # databit array is different. They are then separately
+                    # regenerated.
                     for key in prn_keys
                         rand!(signal.signal_type.I_codes.codes[end][key], 0:1)
                     end
@@ -309,6 +322,8 @@ function definesignal!(signal::ReplicaSignals;
             end
         end
     end
+    # Get adjusted code chipping rates and chipping rate rates for Q channel
+    # codes
     if signal_type.include_Q
         for i in 1:signal_type.Q_codes.code_num
             # Q channel
@@ -321,6 +336,8 @@ function definesignal!(signal::ReplicaSignals;
                                                              f_code_dd, f_s,
                                                              code_start_idx)
         end
+        # Generate new databits for Q channel if `new_databits` flag is
+        # `true`
         if Q_codes.databits
             if ~include_databits_Q
                 signal.signal_type.Q_codes.include_codes[end] = false
@@ -330,16 +347,23 @@ function definesignal!(signal::ReplicaSignals;
             if new_databits
                 prn_keys = collect(keys(Q_codes.codes[1]))
                 if Q_codes.similar_databits
+                    # If one array of databits was used for all PRNs, then the
+                    # databit arrays for all PRNs are references to the same
+                    # one. Therefore, changing one, will change them all.
                     rand!(signal.signal_type.Q_codes.codes[end][prn_keys[1]], 0:1)
                 else
                     for key in prn_keys
+                        # If a dictionary of databits was given instead, then each
+                        # databit array is different. They are then separately
+                        # regenerated.
                         rand!(signal.signal_type.Q_codes.codes[end][key], 0:1)
                     end
                 end
             end
         end
     end
-    # Generate thermal noise and phase noise
+    # Generate new thermal noise and phase noise vectors if `new_thermal_noise`
+    # and/or `new_phase_noise` flags are set to `true`
     if new_thermal_noise
         randn!(signal.thermal_noise)
     end

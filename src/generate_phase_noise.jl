@@ -52,5 +52,5 @@ end
     generate_phase_noise!(noise, temp_noise; scale=1/10)
 """
 function generate_phase_noise!(noise, noise_temp::Vector; scale=1/10)
-    return voss(noise, noise_temp, scale, N)
+    return voss(noise, noise_temp, scale, length(noise))
 end

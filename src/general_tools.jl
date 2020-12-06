@@ -1,8 +1,28 @@
 """
     AmultB2D!(A, B, Asize=size(A))
 
-Multiply contents of A in place with contents of B.
-Both A and B should be 2D arrays and be the same size.
+
+Multiply contents of A in place with contents of B. Both A and B should be 2D
+arrays and be the same size.
+
+
+Required Arguments:
+
+- `A::Array{T,2}`: 2D dimmensional array, `A`, with element type `T`, which can
+                   any type such that all elements of `A` are of type `T`
+- `B::Array{T,2}`: 2D dimmensional array, `B`, with element type `T`, which can
+                   any type such that all elements of `B` are of type `T`
+
+
+Optional Arguments:
+
+- `Asize::Tuple(Int,Int)`: size of array `A`, assuming that `B` is the same size
+                           size as `A` `(default = size(A))`
+
+
+Modifies in Place and Returns:
+
+- `A::Array{T,2}`
 """
 function AmultB2D!(A, B, Asize=size(A))
     @inbounds for i in 1:Asize[1]
@@ -17,8 +37,28 @@ end
 """
     AmultB1D!(A, B, Asize=size(A))
 
-Multiply contents of A in place with contents of B.
-Both A and B should be 1D arrays and be the same size.
+
+Multiply contents of A in place with contents of B. Both A and B should be 1D
+arrays and be the same size.
+
+
+Required Arguments:
+
+- `A::Array{T,1}`: 1D dimmensional array, `A`, with element type `T`, which can
+                   any type such that all elements of `A` are of type `T`
+- `B::Array{T,1}`: 1D dimmensional array, `B`, with element type `T`, which can
+                   any type such that all elements of `B` are of type `T`
+
+
+Optional Arguments:
+
+- `Asize::Int`: size of array `A`, assuming that `B` is the same size
+                size as `A` `(default = size(A)[1])`
+
+
+Modifies in Place and Returns:
+
+- `A::Array{T,1}`
 """
 function AmultB1D!(A, B, Asize=size(A)[1])
     @threads for i in 1:Asize
@@ -31,8 +71,30 @@ end
 """
     conjAmultB1D!(A, B, Asize=size(A))
 
-Multiply contents of conj(A) in place with contents of B.
-Both A and B should be 1D arrays and be the same size.
+
+Multiply contents of conj(A) in place with contents of B. Both A and B should
+be 1D arrays and be the same size.
+
+
+Required Arguments:
+
+- `A::Array{Complex{T},1}`: 1D dimmensional array, `A`, with element type `T`,
+                            which can any type such that all elements of `A`
+							are of type `T`
+- `B::Array{Complex{T},1}`: 1D dimmensional array, `B`, with element type `T`,
+                            which can any type such that all elements of `B`
+							are of type `T`
+
+
+Optional Arguments:
+
+- `Asize::Int`: size of array `A`, assuming that `B` is the same size
+                size as `A` `(default = size(A)[1])`
+
+
+Modifies in Place and Returns:
+
+- `A::Array{Complex{T},1}`
 """
 function conjAmultB1D!(A, B, Asize=size(A)[1])
     @threads for i in 1:Asize
@@ -45,8 +107,25 @@ end
 """
     conjA!(A, Asize=size(A))
 
-Takes the conjugate of A in place.
-A should be a 1D array.
+
+Takes the conjugate of A in place. A should be a 1D array.
+
+
+Required Arguments:
+
+- `A::Array{Complex{T},1}`: 1D dimmensional array, `A`, with element type `T`,
+                            which can any type such that all elements of `A`
+							are of type `T`
+
+
+Optional Arguments:
+
+- `Asize::Int`: size of array `A` `(default = size(A)[1])`
+
+
+Modifies in Place and Returns:
+
+- `A::Array{Complex{T},1}`
 """
 function conjA!(A, Asize=size(A)[1])
     @threads for i in 1:Asize
@@ -77,12 +156,25 @@ end
 """
     fft_correlate(data, reference)
 
-Calculate the cyclical FFT based correlation
-between the data and the reference signal.
+
+Calculate the cyclical FFT based correlation between the data and the reference
+signal.
+
+
+Required Arguments:
+
+- `data::Array{Complex{T},N}`: original `N` dimmensional data signal of element
+                               type `Complex{T}` where `T` is the type of the
+							   elements of `data`
+- `reference::Array{Complex{T},N}`: `N` dimmensional reference signal of element
+                                    type `Complex{T}` where `T` is the type of
+									the elements of `data`
+
 
 Returns:
 
-- Array containing the correlation result
+- `Array{Complex{Float64},N}`: `N` dimmensional array containing the correlation
+                               result
 """
 function fft_correlate(data, reference)
     return ifft(conj!(fft(reference)).*fft(data))
@@ -108,9 +200,28 @@ const gnsstypes = Dict(Val{:l5q}() => "l5q",
     calcinitcodephase(code_length, f_code_d, f_code_dd,
                       f_s, code_start_idx)
 
-Calculates the initial code phase of a given code
-where f_d and fd_rate are the Doppler affected
-code frequency and code frequency rate, respectively.
+
+Calculates the initial code phase of a given code where f_d and fd_rate are the
+Doppler affected code frequency and code frequency rate, respectively. The
+returned value is the fractional index location in the original code vector in
+`CodeType.codes[i]`, where `i` is the current code being processed.
+
+
+Required Arguments:
+
+**NOTE:** Arguments can be either `Float64` or `Int`.
+
+- `code_length`: number of bits in code
+- `f_code_d`: Doppler adjusted code chipping rate in Hz
+- `f_code_dd`: Doppler rate adjusted code chipping rate rate in Hz
+- `f_s`: sampling rate of data in Hz
+- `code_start_idx`: index in `ReplicaSignals.data` where all layers of code
+                    start
+
+
+Returns:
+
+- `Float64`: Fractional code index location
 """
 function calcinitcodephase(code_length, f_code_d, f_code_dd,
                            f_s, code_start_idx)
@@ -123,10 +234,26 @@ end
 """
     calccodeidx(init_chip, f_code_d, f_code_dd, t, code_length)
 
+
 Calculates the index in the codes for a given t.
+
+
+Required Arguments:
+
+**NOTE:** Arguments can be either `Float64` or `Int`.
+
+- `init_chip`: initial code phase at `t=0s` returned from `calcinitcodephase`
+- `f_code_d`: Doppler adjusted code chipping rate in Hz
+- `f_code_dd`: Doppler rate adjusted code chipping rate rate in Hz
+- `t`: current time elapsed in seconds
+- `code_length`: number of bits in code
+
+
+Returns:
+
+- `Int`: the current code index at a given `t`
 """
-function calccodeidx(init_chip, f_code_d, f_code_dd,
-                     t, code_length)
+function calccodeidx(init_chip, f_code_d, f_code_dd, t, code_length)
     return Int(floor(init_chip+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
 end
 
