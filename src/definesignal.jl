@@ -55,6 +55,8 @@ Optional Arguments:
     * if set to `true`, thermal and phase noise vectors have the same length as
       `ReplicaSignals.data` vector
     * if set to `false`, thermal and phase noise vectors have length set to 0
+      and the `include_thermal_noise` and `include_phase_noise` flags are set
+      to `false`
 
 
 Returns:
@@ -141,6 +143,8 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
         else
             thermal_noise = Array{Complex{Float64}}(undef, 0)
             phase_noise = Array{Float64}(undef, 0)
+            include_thermal_noise = false
+            include_phase_noise = true
         end
     else
         thermal_noise = randn(Complex{Float64}, sample_num)
