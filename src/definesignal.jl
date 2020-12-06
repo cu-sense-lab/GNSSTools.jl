@@ -29,6 +29,22 @@ Optional Arguments:
 - `Tsys`
 - `CN0`
 - `phi`
+- `nADC`
+- `include_carrier`
+- `include_adc`
+- `include_thermal_noise`
+- `code_start_idx`
+- `include_databits_I`
+- `include_databits_Q`
+- `include_phase_noise`
+- `phase_noise_scaler`
+- `name`
+- `skip_noise_generation`
+- `allocate_noise_vectors`
+
+Returns:
+
+- `ReplicaSignals` struct
 """
 function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                       f_if=0., f_d=0., fd_rate=0., Tsys=535.,
@@ -250,6 +266,11 @@ function definesignal!(signal::ReplicaSignals;
     signal.noexp = noexp
     return signal
 end
+
+
+#------------------------------------------------------------------------------
+#                             OLD IMPLEMENTATON
+#------------------------------------------------------------------------------
 
 
 ##################################################################
