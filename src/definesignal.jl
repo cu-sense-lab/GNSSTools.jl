@@ -136,20 +136,20 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
     isreplica = false
     noexp = false
     # Generate thermal noise and phase noise
-    if skip_noise_generation
-        if allocate_noise_vectors
+    if allocate_noise_vectors
+        if skip_noise_generation
             thermal_noise = Array{Complex{Float64}}(undef, sample_num)
             phase_noise = Array{Float64}(undef, sample_num)
         else
-            thermal_noise = Array{Complex{Float64}}(undef, 0)
-            phase_noise = Array{Float64}(undef, 0)
-            include_thermal_noise = false
-            include_phase_noise = true
+            thermal_noise = randn(Complex{Float64}, sample_num)
+            phase_noise = randn(Float64, sample_num)
+            generate_phase_noise!(phase_noise, sample_num; scale=phase_noise_scaler)
         end
     else
-        thermal_noise = randn(Complex{Float64}, sample_num)
-        phase_noise = randn(Float64, sample_num)
-        generate_phase_noise!(phase_noise, sample_num; scale=phase_noise_scaler)
+        thermal_noise = Array{Complex{Float64}}(undef, 0)
+        phase_noise = Array{Float64}(undef, 0)
+        include_thermal_noise = false
+        include_phase_noise = true
     end
     return ReplicaSignals(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
                           CN0, phi, nADC, code_start_idx, init_code_phases_I,
