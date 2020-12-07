@@ -35,7 +35,7 @@ end
 
 
 """
-    AmultB1D!(A, B, Asize=size(A))
+    AmultB1D!(A::Vector, B::Vector, Asize=size(A)[1])
 
 
 Multiply contents of A in place with contents of B. Both A and B should be 1D
@@ -60,7 +60,7 @@ Modifies in Place and Returns:
 
 - `A::Array{T,1}`
 """
-function AmultB1D!(A, B, Asize=size(A)[1])
+function AmultB1D!(A::Vector, B::Vector, Asize=size(A)[1])
     @threads for i in 1:Asize
         @inbounds A[i] = A[i] * B[i]
     end
@@ -96,7 +96,7 @@ Modifies in Place and Returns:
 
 - `A::Array{Complex{T},1}`
 """
-function conjAmultB1D!(A, B, Asize=size(A)[1])
+function conjAmultB1D!(A::Vector, B::Vector, Asize=size(A)[1])
     @threads for i in 1:Asize
         @inbounds A[i] = conj(A[i]) * B[i]
     end
@@ -127,7 +127,7 @@ Modifies in Place and Returns:
 
 - `A::Array{Complex{T},1}`
 """
-function conjA!(A, Asize=size(A)[1])
+function conjA!(A::Vector, Asize=size(A)[1])
     @threads for i in 1:Asize
         @inbounds A[i] = conj(A[i])
     end
@@ -152,7 +152,7 @@ Returns:
 
 - `Float64`: the SNR of the peak in `x` in dB
 """
-function calcsnr(x)
+function calcsnr(x::Vector)
     N = length(x)
     amplitude = sqrt(maximum(abs2.(x)))
     PS = 2*amplitude^2
@@ -175,12 +175,12 @@ signal.
 
 Required Arguments:
 
-- `data::Array{Complex{T},N}`: original `N` dimmensional data signal of element
-                               type `Complex{T}` where `T` is the type of the
-							   elements of `data`
-- `reference::Array{Complex{T},N}`: `N` dimmensional reference signal of element
-                                    type `Complex{T}` where `T` is the type of
-									the elements of `data`
+- `data::Array{T,N}`: original `N` dimmensional data signal of element
+                      type `T` where `T` is the type of the
+					  elements of `data`
+- `reference::Array{T,N}`: `N` dimmensional reference signal of element
+                           type `T` where `T` is the type of
+						   the elements of `data`
 
 
 Returns:
@@ -209,7 +209,8 @@ const gnsstypes = Dict(Val{:l5q}() => "l5q",
 
 
 """
-    calcinitcodephase(code_length, f_code_d, f_code_dd, f_s, code_start_idx)
+	calcinitcodephase(code_length::Int, f_code_d::Number, f_code_dd::Number,
+					  f_s::Number, code_start_idx::Number)
 
 
 Calculates the initial code phase of a given code where f_d and fd_rate are the
@@ -222,20 +223,21 @@ Required Arguments:
 
 **NOTE:** Arguments can be either `Float64` or `Int`.
 
-- `code_length`: number of bits in code
-- `f_code_d`: Doppler adjusted code chipping rate in Hz
-- `f_code_dd`: Doppler rate adjusted code chipping rate rate in Hz
-- `f_s`: sampling rate of data in Hz
-- `code_start_idx`: index in `ReplicaSignals.data` where all layers of code
-                    start
+- `code_length::Int`: number of bits in code
+- `f_code_d::Number`: Doppler adjusted code chipping rate in Hz
+- `f_code_dd::Number`: Doppler rate adjusted code chipping rate rate in Hz
+- `f_s::Number`: sampling rate of data in Hz
+- `code_start_idx::Number`: index in `ReplicaSignals.data` where all layers of
+                            code start
 
 
 Returns:
 
 - `Float64`: Fractional code index location
 """
-function calcinitcodephase(code_length, f_code_d, f_code_dd,
-                           f_s, code_start_idx)
+function calcinitcodephase(code_length::Int, f_code_d::Number,
+	                       f_code_dd::Number, f_s::Number,
+						   code_start_idx::Number)
     t₀ = (code_start_idx-1)/f_s
     init_phase = -f_code_d*t₀ - 0.5*f_code_dd*t₀^2
     return (init_phase%code_length + code_length)%code_length
@@ -243,7 +245,8 @@ end
 
 
 """
-    calccodeidx(init_chip, f_code_d, f_code_dd, t, code_length)
+	calccodeidx(init_chip::Number, f_code_d::Number, f_code_dd::Number,
+				t::Number, code_length::Int)
 
 
 Calculates the index in the codes for a given t.
@@ -251,12 +254,11 @@ Calculates the index in the codes for a given t.
 
 Required Arguments:
 
-**NOTE:** Unless specified, arguments can be either `Float64` or `Int`.
-
-- `init_chip`: initial code phase at `t=0s` returned from `calcinitcodephase`
-- `f_code_d`: Doppler adjusted code chipping rate in Hz
-- `f_code_dd`: Doppler rate adjusted code chipping rate rate in Hz
-- `t`: current time elapsed in seconds
+- `init_chip::Number`: initial code phase at `t=0s` returned from
+                       `calcinitcodephase`
+- `f_code_d::Number`: Doppler adjusted code chipping rate in Hz
+- `f_code_dd::Number`: Doppler rate adjusted code chipping rate rate in Hz
+- `t::Number`: current time elapsed in seconds
 - `code_length::Int`: number of bits in code
 
 
@@ -264,13 +266,15 @@ Returns:
 
 - `Int`: the current code index at a given `t`
 """
-function calccodeidx(init_chip, f_code_d, f_code_dd, t, code_length::Int)
+function calccodeidx(init_chip::Number, f_code_d::Number, f_code_dd::Number,
+	                 t::Number, code_length::Int)
     return Int(floor(init_chip+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
 end
 
 
 """
-	calc_doppler_code_rate(f_code, f_carrier, f_d, fd_rate)
+	calc_doppler_code_rate(f_code::Number, f_carrier::Number, f_d::Number,
+						   fd_rate::Number)
 
 
 Calculates the adjusted code chipping rate and chipping rate rate based off the
@@ -279,10 +283,10 @@ Doppler and Doppler rate.
 
 Required Arguments:
 
-- `f_code`: chipping rate of code with no Doppler and Doppler rate in Hz
-- `f_carrier`: carrier frequency of signal in Hz
-- `f_d`: Doppler frequency in Hz
-- `fd_rate`: Doppler frequency rate in Hz
+- `f_code::Number`: chipping rate of code with no Doppler and Doppler rate in Hz
+- `f_carrier::Number`: carrier frequency of signal in Hz
+- `f_d::Number`: Doppler frequency in Hz
+- `fd_rate::Number`: Doppler frequency rate in Hz
 
 
 Returns:
@@ -291,7 +295,8 @@ Returns:
 	* `f_code_d`: Doppler adjusted code chipping rate in Hz
 	* `f_code_dd`: Doppler rate adjusted code chipping rate rate in Hz
 """
-function calc_doppler_code_rate(f_code, f_carrier, f_d, fd_rate)
+function calc_doppler_code_rate(f_code::Number, f_carrier::Number, f_d::Number,
+	                            fd_rate::Number)
 	f_code_d = f_code*(1. + f_d/f_carrier)
 	f_code_dd = f_code*fd_rate/f_carrier
 	return (f_code_d, f_code_dd)
@@ -299,7 +304,7 @@ end
 
 
 """
-    calctvector(N::Int, f_s)
+    calctvector(N::Int, f_s::Number)
 
 
 Generates an `N` long time vector with time spacing `Δt` or `1/f_s`.
@@ -308,7 +313,7 @@ Generates an `N` long time vector with time spacing `Δt` or `1/f_s`.
 Required Arguments:
 
 - `N::Int`: length of the time vector
-- `f_s`: sampling rate of signal in Hz
+- `f_s::Number`: sampling rate of signal in Hz
 
 
 Returns:
@@ -316,7 +321,7 @@ Returns:
 - `t::Array{Float64,1}`: time vector of length `N` and spacing of `1/f_s`
                          seconds
 """
-function calctvector(N::Int, f_s)
+function calctvector(N::Int, f_s::Number)
     # Generate time vector
     t = Array{Float64}(undef, N)
     @threads for i in 1:N
