@@ -138,7 +138,19 @@ end
 """
     calcsnr(x)
 
+
 Calculates the SNR of the correlation peak in `x`.
+
+
+Required Arguments:
+
+- `x::Array{T,1}`: 1 dimmenstional array of type `T`, where `T` is the type of
+                   all the array elements
+
+
+Returns:
+
+- `Float64`: the SNR of the peak in `x` in dB
 """
 function calcsnr(x)
     N = length(x)
@@ -184,8 +196,8 @@ end
 """
     gnsstypes
 
-Dictionary containing the qyuivalent strings for each
-type used in `GNSSTools`.
+
+Dictionary containing the qyuivalent strings for each type used in `GNSSTools`.
 """
 const gnsstypes = Dict(Val{:l5q}() => "l5q",
                        Val{:l5i}() => "l5i",
@@ -197,8 +209,7 @@ const gnsstypes = Dict(Val{:l5q}() => "l5q",
 
 
 """
-    calcinitcodephase(code_length, f_code_d, f_code_dd,
-                      f_s, code_start_idx)
+    calcinitcodephase(code_length, f_code_d, f_code_dd, f_s, code_start_idx)
 
 
 Calculates the initial code phase of a given code where f_d and fd_rate are the
@@ -240,31 +251,72 @@ Calculates the index in the codes for a given t.
 
 Required Arguments:
 
-**NOTE:** Arguments can be either `Float64` or `Int`.
+**NOTE:** Unless specified, arguments can be either `Float64` or `Int`.
 
 - `init_chip`: initial code phase at `t=0s` returned from `calcinitcodephase`
 - `f_code_d`: Doppler adjusted code chipping rate in Hz
 - `f_code_dd`: Doppler rate adjusted code chipping rate rate in Hz
 - `t`: current time elapsed in seconds
-- `code_length`: number of bits in code
+- `code_length::Int`: number of bits in code
 
 
 Returns:
 
 - `Int`: the current code index at a given `t`
 """
-function calccodeidx(init_chip, f_code_d, f_code_dd, t, code_length)
+function calccodeidx(init_chip, f_code_d, f_code_dd, t, code_length::Int)
     return Int(floor(init_chip+f_code_d*t+0.5*f_code_dd*t^2)%code_length)+1
 end
 
 
 """
-    calctvector(N, f_s)
+	calc_doppler_code_rate(f_code, f_carrier, f_d, fd_rate)
 
-Generates a `N` long time vector
-with time spacing `Δt` or `1/f_s`.
+
+Calculates the adjusted code chipping rate and chipping rate rate based off the
+Doppler and Doppler rate.
+
+
+Required Arguments:
+
+- `f_code`: chipping rate of code with no Doppler and Doppler rate in Hz
+- `f_carrier`: carrier frequency of signal in Hz
+- `f_d`: Doppler frequency in Hz
+- `fd_rate`: Doppler frequency rate in Hz
+
+
+Returns:
+
+- `(f_code_d::Float64, f_code_dd::Float64)::Tuple` where
+	* `f_code_d`: Doppler adjusted code chipping rate in Hz
+	* `f_code_dd`: Doppler rate adjusted code chipping rate rate in Hz
 """
-function calctvector(N, f_s)
+function calc_doppler_code_rate(f_code, f_carrier, f_d, fd_rate)
+	f_code_d = f_code*(1. + f_d/f_carrier)
+	f_code_dd = f_code*fd_rate/f_carrier
+	return (f_code_d, f_code_dd)
+end
+
+
+"""
+    calctvector(N::Int, f_s)
+
+
+Generates an `N` long time vector with time spacing `Δt` or `1/f_s`.
+
+
+Required Arguments:
+
+- `N::Int`: length of the time vector
+- `f_s`: sampling rate of signal in Hz
+
+
+Returns:
+
+- `t::Array{Float64,1}`: time vector of length `N` and spacing of `1/f_s`
+                         seconds
+"""
+function calctvector(N::Int, f_s)
     # Generate time vector
     t = Array{Float64}(undef, N)
     @threads for i in 1:N
@@ -275,11 +327,25 @@ end
 
 
 """
-    meshgrid(x, y)
+    meshgrid(x::Vector, y::Vector)
 
-Generate a meshgrid the way Python would in Numpy.
+
+Generate a meshgrid the way Numpy would in Python.
+
+
+Required Arguments:
+
+- `x::Vector{T}`, 1D array of element type `T`
+- `y::Vector{T}`, 1D array of element type `T`
+
+
+Returns:
+
+- `(X, Y)::Tuple` where
+	* `X::Array{eltype(x),2}`: 2D array of size `(length(y), length(x))`
+	* `Y::Array{eltype(y),2}`: 2D array of size `(length(y), length(x))`
 """
-function meshgrid(x, y)
+function meshgrid(x::Vector, y::Vector)
     xsize = length(x)
     ysize = length(y)
     X = Array{eltype(x)}(undef, ysize, xsize)
@@ -437,19 +503,29 @@ end
 
 
 """
-	calc_doppler_code_rate(f_code, f_carrier, f_d)
-"""
-function calc_doppler_code_rate(f_code, f_carrier, f_d, fd_rate)
-	f_code_d = f_code*(1. + f_d/f_carrier)
-	f_code_dd = f_code*fd_rate/f_carrier
-	return (f_code_d, f_code_dd)
-end
+    plot_spectrum(x::Vector, f_s, log_freq::Bool=false)
 
 
+Plot a spectrum of the time domain data `x` with frequency range determined
+by the sampling rate, `f_s`.
+
+
+Required Arguments:
+
+- `x::Vector{T}`: 1D array with element types `T`
+- `f_s::Number`: sampling rate of `x`
+
+
+Optional Arguments:
+
+- `log_freq::Bool`: flag for if plot shows linear frequency or `log10(freqs)`
+                    where `freqs` is the array of frequencies spanning
+					`(0, f_s/2) Hz`
+
+
+Displays plot of frequencies against power of `fft(x)`
 """
-    plot_spectrum(x)
-"""
-function plot_spectrum(x, f_s, flog=false)
+function plot_spectrum(x::Vector, f_s::Number, log_freq::Bool=false)
     N = length(x)
     t_length = N/f_s
     freqs = f = Array(0:1/t_length:f_s/2)
