@@ -65,7 +65,13 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     Tsys = signal.Tsys
     CN0 = signal.CN0
     f_s = signal.f_s
-    B = signal.signal_type.B
+    if ~signal.signal_type.include_I
+        B = signal.signal_type.B_Q
+    elseif ~signal.signal_type.include_Q
+        B = signal.signal_type.B_I
+    else
+        B = max(signal.signal_type.B_I, signal.signal_type.B_Q)
+    end
     nADC = signal.nADC
     include_carrier = signal.include_carrier
     include_thermal_noise = signal.include_thermal_noise

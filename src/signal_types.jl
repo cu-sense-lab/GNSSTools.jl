@@ -19,7 +19,7 @@ Fields:
     * if `true`, databits are the last code in `CodeType.codes` array
 - `similar_databits::Bool`: set to true if the databits are the same for all PRNs
 """
-struct CodeType{T1,T2,T3,T4,T5,T6}
+struct CodeType{T1,T2,T3,T4,T5}
     name::String           # Name of code type
     code_num::T1           # Number of codes in signal type
                            # Includes primary, secondary, and nav codes
@@ -34,7 +34,7 @@ struct CodeType{T1,T2,T3,T4,T5,T6}
                            # first code in `codes`.
     chipping_rates::T3     # Vector of chipping rates of length `code_num`
     code_lengths::T4       # Vector of code lengths of length `code_num`
-    include_codes::T6      # Bool vector of length `code_num`
+    include_codes::T5      # Bool vector of length `code_num`
                            # Used to determine if a given code is used for
                            # signal generation.
                            # Will be used in `calc_code_val` method to determine
