@@ -1,10 +1,30 @@
 """
         calc_code_val(signal::ReplicaSignals, t)
 
-Calculates the value of the generic code with
-parameters defined by `signal` at a time
-specified by `t` in seconds. Returns a
-complex Int value that is either -1 or 1.
+Calculates the value of the generic code with parameters defined by `signal` at
+a time specified by `t` in seconds. Returns a Complex{Int} value that is either
+-1 or 1 and a phase in `rad`. Use the `code_ϕ`, or carrier phase` result to
+perform QPSK correctly.
+
+
+Required Arguments:
+
+- `signal::ReplicaSignals`: struct containing signal data and parameters
+- `t::Float64`: current time in seconds
+
+
+Returns:
+
+- `(code_val, code_ϕ)::Tuple` where
+    * `code_val::Complex{Int}`: unnormalized complex number with the values of
+                                the I and Q channel codes being the real and
+                                imaginary parts of this value, respectivly
+    * `code_ϕ::Float64`: the carrier phase in `rad` corresponding to the values
+                         of the I and Q channel codes
+
+```math
+    code_\\ϕ = \\atan\\left(\\frac{Q_val}{I_val}\\right)
+```
 """
 function calc_code_val(signal::ReplicaSignals, t)
     prn = signal.prn
