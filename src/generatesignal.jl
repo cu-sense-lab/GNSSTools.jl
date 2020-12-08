@@ -26,7 +26,7 @@ Optional Arguments:
 
 - `t_length::Float64`: signal generation length in seconds
                        `(default = signal.t_length)`
-- `doppler_curve::Vector`: Doppler frequency curve to use instead of
+- `doppler_curve::Vector`: Doppler frequency curve in Hz to use instead of
                            `signal.f_d` and `signal.fd_rate` parameters
                            `(default = missing)`
 - `doppler_t::Vector`: time vector in seconds corresponding to `doppler_curve`

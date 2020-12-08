@@ -1,6 +1,7 @@
 """
         calc_code_val(signal::ReplicaSignals, t)
 
+
 Calculates the value of the generic code with parameters defined by `signal` at
 a time specified by `t` in seconds. Returns a Complex{Int} value that is either
 -1 or 1 and a phase in `rad`. Use the `code_ϕ`, or carrier phase` result to
@@ -83,10 +84,43 @@ end
 """
         calc_code_val(signal::ReplicaSignals, t)
 
-Calculates the value of the generic code with
-parameters defined by `signal` at a time
-specified by `t` in seconds. Returns a
-complex Int value that is either -1 or 1.
+
+Calculates the value of the generic code with parameters defined by `signal` at
+a time specified by `t` in seconds. Returns a Complex{Int} value that is either
+-1 or 1 and a phase in `rad`. Use the `code_ϕ`, or carrier phase` result to
+perform QPSK correctly.
+
+This method accepts arrays `code_chips_I` and `code_chips_Q`, which are arrays
+containing interpolated functions that calculate the current code chip as a
+function of `t` in seconds. This method is used when the user supplies
+`generatesignal!` with `doppler_curve` and `doppler_t` arrays, where
+`doppler_curve` is assumed to be a non-linear Doppler frequency curve.
+
+
+Required Arguments:
+
+- `signal::ReplicaSignals`: struct containing signal data and parameters
+- `t::Float64`: current time in seconds
+- `code_chips_I::Vector{T}`: N element array containing interpolated functions
+                             that compute the current code chip for a given `t`
+                             for each code on the I channel
+- `code_chips_Q::Vector{T}`: M element array containing interpolated functions
+                             that compute the current code chip for a given `t`
+                             for each code on the Q channel
+
+
+Returns:
+
+- `(code_val, code_ϕ)::Tuple` where
+    * `code_val::Complex{Int}`: unnormalized complex number with the values of
+                                the I and Q channel codes being the real and
+                                imaginary parts of this value, respectivly
+    * `code_ϕ::Float64`: the carrier phase in `rad` corresponding to the values
+                         of the I and Q channel codes
+
+```math
+    code_\\phi = \\tan\\left(\\frac{Q}{I}\\right)^{-1}
+```
 """
 function calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
                        code_chips_Q::Vector{T}) where T
