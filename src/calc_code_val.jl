@@ -23,7 +23,7 @@ Returns:
                          of the I and Q channel codes
 
 ```math
-    code_\\ϕ = \\atan\\left(\\frac{Q_val}{I_val}\\right)
+    code_\\phi = \\atan\\left(\\frac{Q_val}{I_val}\\right)
 ```
 """
 function calc_code_val(signal::ReplicaSignals, t)
