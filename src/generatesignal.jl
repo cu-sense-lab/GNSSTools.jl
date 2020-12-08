@@ -4,19 +4,18 @@
                     doppler_curve=missing, doppler_t=missing,
                     message="Generating signal...")
 
-Generates local GNSS signal using paramters defined in a
-`ReplicaSignals` struct.
+Generates local GNSS signal using paramters defined in a `ReplicaSignals`
+struct.
 
-Generates a signal with carrier, ADC quantization, noise,
-and Neuman sequence.
+Generates a signal with carrier, ADC quantization, noise, and Neuman sequence.
 
-No need to specify `isreplica`. Set `isreplica` to `true` to
-use alternate method, which ignores all `Bool` flags in `signal`.
+No need to specify `isreplica`. Set `isreplica` to `true` to use alternate
+method, which ignores all `Bool` flags in `signal`.
 
-Specify `t_length` to be ≲ to `replica.t_length` for different
-signal generation lengths. **NOTE:** The size of the `replica.data`
-array will still be the same size. You will need to keep track
-of the `t_length` you passed to `generatesignal!`.
+Specify `t_length` to be ≲ to `replica.t_length` for different signal generation
+lengths. **NOTE:** The size of the `replica.data` array will still be the same
+size. You will need to keep track of the `t_length` you passed to
+`generatesignal!`.
 """
 function generatesignal!(signal::ReplicaSignals,
                          t_length=signal.t_length;
@@ -45,19 +44,32 @@ end
 """
     generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
 
-Generates local GNSS signal using paramters defined in a
-`ReplicaSignals` struct.
 
-Generates a signal with carrier, ADC quantization, noise,
-and Neuman sequence.
+Generates local GNSS signal using paramters defined in a `ReplicaSignals`
+struct.
 
-No need to specify `isreplica`. Set `isreplica` to `true` to
-use alternate method, which ignores all `Bool` flags in `signal`.
+Generates a signal with carrier, ADC quantization, noise, and Neuman sequence.
 
-Specify `t_length` to be ≲ to `replica.t_length` for different
-signal generation lengths. **NOTE:** The size of the `replica.data`
-array will still be the same size. You will need to keep track
-of the `t_length` you passed to `generatesignal!`.
+No need to specify `isreplica`. Set `isreplica` to `true` to use alternate
+method, which ignores all `Bool` flags in `signal`.
+
+Specify `t_length` to be ≲ to `replica.t_length` for different signal generation
+lengths. **NOTE:** The size of the `replica.data` array will still be the same
+size. You will need to keep track of the `t_length` you passed to
+`generatesignal!`.
+
+
+Required Arguments:
+
+- `signal::ReplicaSignals`:
+- `t_length::Float64`:
+- `get_code_val`:
+- `get_ϕ`:
+
+
+Modifies in Place and Returns:
+
+- `signal::ReplicaSignals`: 
 """
 function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     # Common parmeters used for entire signal
