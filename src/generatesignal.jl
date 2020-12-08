@@ -1,8 +1,7 @@
 """
-    generatesignal!(signal::ReplicaSignals,
-                    t_length=signal.t_length;
-                    doppler_curve=missing, doppler_t=missing,
-                    message="Generating signal...")
+    generatesignal!(signal::ReplicaSignals, t_length=signal.t_length;
+                    doppler_curve=missing, doppler_t=missing)
+
 
 Generates local GNSS signal using paramters defined in a `ReplicaSignals`
 struct.
@@ -16,11 +15,30 @@ Specify `t_length` to be ≲ to `replica.t_length` for different signal generati
 lengths. **NOTE:** The size of the `replica.data` array will still be the same
 size. You will need to keep track of the `t_length` you passed to
 `generatesignal!`.
+
+
+Required Arguments:
+
+- `signal::ReplicaSignals`: struct containing signal data and parameters
+
+
+Optional Arguments:
+
+- `t_length::Float64`: signal generation length in seconds
+                       `(default = signal.t_length)`
+- `doppler_curve::Vector`: Doppler frequency curve to use instead of
+                           `signal.f_d` and `signal.fd_rate` parameters
+                           `(default = missing)`
+- `doppler_t::Vector`: time vector in seconds corresponding to `doppler_curve`
+                       `(default = missing)`
+
+
+Modifies in Place:
+
+- `signal::ReplicaSignals`: generated signal data stored in `signal.data`
 """
-function generatesignal!(signal::ReplicaSignals,
-                         t_length=signal.t_length;
-                         doppler_curve=missing, doppler_t=missing,
-                         message="Generating signal...")
+function generatesignal!(signal::ReplicaSignals, t_length=signal.t_length;
+                         doppler_curve=missing, doppler_t=missing)
     # Common parmeters used for entire signal
     prn = signal.prn
     Tsys = signal.Tsys
@@ -61,15 +79,20 @@ size. You will need to keep track of the `t_length` you passed to
 
 Required Arguments:
 
-- `signal::ReplicaSignals`:
-- `t_length::Float64`:
-- `get_code_val`:
-- `get_ϕ`:
+- `signal::ReplicaSignals`: struct containing signal data and parameters
+- `t_length::Float64`: signal generation length in seconds
+- `get_code_val`: a function that calculates the current code value for a given
+                  `t`
+    * Required Arguments:
+        - `t::Float64`: current time in seconds
+- `get_ϕ`: a function that calculates the current carrier phase for a given `t`
+    * Required Arguments:
+        - `t::Float64`: current time in seconds
 
 
 Modifies in Place and Returns:
 
-- `signal::ReplicaSignals`: 
+- `signal::ReplicaSignals`: generated signal data stored in `signal.data`
 """
 function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     # Common parmeters used for entire signal
@@ -144,6 +167,7 @@ end
 """
     generatesignal!(signal::ReplicaSignals, isreplica::Bool)
 
+
 Generates local GNSS signal using paramters defined in a
 `ReplicaSignals` struct.
 
@@ -153,6 +177,18 @@ and Neuman sequence.
 This version is used only when `isreplica` is set to `true`
 in `signal` and ignores all the `include_*` flags in `signal`.
 Exponential without the amplitude is included automatically.
+
+
+Required Arguments:
+
+- `signal::ReplicaSignals`: struct containing signal data and parameters
+- `isreplica::Bool`: typically set to `true` and clarifies that `signal` is
+                     being used for processing only with no noise added
+
+
+Modifies in Place and Returns:
+
+- `signal::ReplicaSignals`: generated signal data stored in `signal.data`
 """
 function generatesignal!(signal::ReplicaSignals, isreplica::Bool)
     # Common parmeters used for entire signal
