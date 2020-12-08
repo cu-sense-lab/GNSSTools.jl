@@ -76,6 +76,10 @@ lengths. **NOTE:** The size of the `replica.data` array will still be the same
 size. You will need to keep track of the `t_length` you passed to
 `generatesignal!`.
 
+`get_code_val` and `get_ϕ` are both only functions of `t`, where `t` is in
+seconds. They return the current code value for all codes and carrier phase,
+respectively.
+
 
 Required Arguments:
 
