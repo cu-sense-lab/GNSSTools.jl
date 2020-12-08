@@ -22,6 +22,9 @@ Returns:
     * `code_ϕ::Float64`: the carrier phase in `rad` corresponding to the values
                          of the I and Q channel codes
 
+```math
+    code_\\phi = \\tan\\left(\\frac{Q}{I}\\right)^{-1}
+```
 """
 function calc_code_val(signal::ReplicaSignals, t)
     prn = signal.prn
