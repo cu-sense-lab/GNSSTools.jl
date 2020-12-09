@@ -170,35 +170,35 @@ Returns:
                          of the I and Q channel codes
 
 
- The carrier phase value for a given set of I and Q channel code values at a
- given time `t` is given by:
+The carrier phase value for a given set of I and Q channel code values at a
+given time `t` is given by:
 
- ```math
-     code_\\phi = \\tan\\left(\\frac{Q}{I}\\right)^{-1}
- ```
+```math
+    code_\\phi = \\tan\\left(\\frac{Q}{I}\\right)^{-1}
+```
 
- where for codes on **both** the I and Q channel the phase is:
+where for codes on **both** the I and Q channel the phase is:
 
- | I Code Value  | Q Code Value  | Phase (degrees)  |
- |--------------:|--------------:|-----------------:|
- | 1             | 1             | 45               |
- | -1            | 1             | 135              |
- | -1            | -1            | 225              |
- | 1             | -1            | 315              |
+| I Code Value  | Q Code Value  | Phase (degrees)  |
+|--------------:|--------------:|-----------------:|
+| 1             | 1             | 45               |
+| -1            | 1             | 135              |
+| -1            | -1            | 225              |
+| 1             | -1            | 315              |
 
- and for codes on **only** the I channel:
+and for codes on **only** the I channel:
 
- | I Code Value  | Q Code Value  | Phase (degrees)  |
- |--------------:|--------------:|-----------------:|
- | 1             | 0             | 0                |
- | -1            | 0             | 180              |
+| I Code Value  | Q Code Value  | Phase (degrees)  |
+|--------------:|--------------:|-----------------:|
+| 1             | 0             | 0                |
+| -1            | 0             | 180              |
 
- and for codes on **only** the Q channel:
+and for codes on **only** the Q channel:
 
- | I Code Value  | Q Code Value  | Phase (degrees) |
- |--------------:|--------------:|----------------:|
- | 0             | 1             | 90              |
- | 0             | -1            | 270             |
+| I Code Value  | Q Code Value  | Phase (degrees) |
+|--------------:|--------------:|----------------:|
+| 0             | 1             | 90              |
+| 0             | -1            | 270             |
 """
 function calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
                        code_chips_Q::Vector{T}) where T
