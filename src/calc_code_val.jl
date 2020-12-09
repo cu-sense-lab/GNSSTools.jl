@@ -23,16 +23,49 @@ Returns:
     * `code_ϕ::Float64`: the carrier phase in `rad` corresponding to the values
                          of the I and Q channel codes
 
+
+The carrier phase value for a given set of I and Q channel code values at a
+given time `t` is given by:
+
 ```math
     code_\\phi = \\tan\\left(\\frac{Q}{I}\\right)^{-1}
 ```
+
+where for codes on **both** the I and Q channel the phase is:
+
+| I Code Value  | Q Code Value  | Phase (degrees)  |
+|--------------:|--------------:|-----------------:|
+| 1             | 1             | 45               |
+| -1            | 1             | 135              |
+| -1            | -1            | 225              |
+| 1             | -1            | 315              |
+
+and for codes on **only** the I channel:
+
+| I Code Value  | Q Code Value  | Phase (degrees)  |
+|--------------:|--------------:|-----------------:|
+| 1             | 0             | 0                |
+| -1            | 0             | 180              |
+
+and for codes on **only** the Q channel:
+
+| I Code Value  | Q Code Value  | Phase (degrees) |
+|--------------:|--------------:|----------------:|
+| 0             | 1             | 90              |
+| 0             | -1            | 270             |
 """
 function calc_code_val(signal::ReplicaSignals, t)
     prn = signal.prn
     # I channel
     I_val = 0
+    # If I channel codes exist, XOR the value of each layer of code at a given
+    # `t` with the value of `I_val`
     if signal.signal_type.include_I
         I_codes = signal.signal_type.I_codes
+        # Determine whether databits are included in I channel and whether
+        # `include_databits_I` flag is true. If so, databits are XORed against
+        # the value of `I_val`. If this flag is set to false or if
+        # `signal.isreplica` is set to true, no databits are included.
         if I_codes.databits
             if ~signal.isreplica && signal.include_databits_I
                 code_num = I_codes.code_num
@@ -42,20 +75,30 @@ function calc_code_val(signal::ReplicaSignals, t)
         else
             code_num = I_codes.code_num
         end
+        # Loop through I channel codes and XORed current value at time `t` to
+        # value of `I_val`
         for i in 1:code_num
             code_idx = calccodeidx(signal.init_code_phases_I[i],
                                    signal.f_code_d_I[i], signal.f_code_dd_I[i],
                                    t, I_codes.code_lengths[i])
             I_val = xor(I_val, I_codes.codes[i][prn][code_idx])
         end
+        # Change from 0:1 state to -1:1 state. This prevensts divide over zero
+        # error in `atan` function at the end of this function.
         if I_val < 1
             I_val = -1
         end
     end
     # Q channel
     Q_val = 0
+    # If Q channel codes exist, XOR the value of each layer of code at a given
+    # `t` with the value of `Q_val`
     if signal.signal_type.include_Q
         Q_codes = signal.signal_type.Q_codes
+        # Determine whether databits are included in Q channel and whether
+        # `include_databits_Q` flag is true. If so, databits are XORed against
+        # the value of `Q_val`. If this flag is set to false or if
+        # `signal.isreplica` is set to true, no databits are included.
         if Q_codes.databits
             if ~signal.isreplica && signal.include_databits_Q
                 code_num = Q_codes.code_num
@@ -65,17 +108,25 @@ function calc_code_val(signal::ReplicaSignals, t)
         else
             code_num = Q_codes.code_num
         end
+        # Loop through Q channel codes and XORed current value at time `t` to
+        # value of `Q_val`
         for i in 1:code_num
             code_idx = calccodeidx(signal.init_code_phases_Q[i],
                                    signal.f_code_d_Q[i], signal.f_code_dd_Q[i],
                                    t, Q_codes.code_lengths[i])
             Q_val = xor(Q_val, Q_codes.codes[i][prn][code_idx])
         end
+        # Change from 0:1 state to -1:1 state. This prevensts divide over zero
+        # error in `atan` function at the end of this function.
         if Q_val < 1
             Q_val = -1
         end
     end
+    # Calculate the phase of the carrier based off the values of `Q_val` and
+    # `I_val`. This simulates a QPSK signal.
     code_ϕ = atan(Q_val, I_val)
+    # Construct a `Complex{Int}` that has the value of the I channel codes in
+    # `real(code_val)` and the value of the Q channel codes in `iamg(code_val)`.
     code_val = complex(I_val, Q_val)
     return (code_val, code_ϕ)
 end
@@ -118,17 +169,49 @@ Returns:
     * `code_ϕ::Float64`: the carrier phase in `rad` corresponding to the values
                          of the I and Q channel codes
 
-```math
-    code_\\phi = \\tan\\left(\\frac{Q}{I}\\right)^{-1}
-```
+ The carrier phase value for a given set of I and Q channel code values at a
+ given time `t` is given by:
+
+ ```math
+     code_\\phi = \\tan\\left(\\frac{Q}{I}\\right)^{-1}
+ ```
+
+ where for codes on **both** the I and Q channel the phase is:
+
+ | I Code Value  | Q Code Value  | Phase (degrees)  |
+ |--------------:|--------------:|-----------------:|
+ | 1             | 1             | 45               |
+ | -1            | 1             | 135              |
+ | -1            | -1            | 225              |
+ | 1             | -1            | 315              |
+
+ and for codes on **only** the I channel:
+
+ | I Code Value  | Q Code Value  | Phase (degrees)  |
+ |--------------:|--------------:|-----------------:|
+ | 1             | 0             | 0                |
+ | -1            | 0             | 180              |
+
+ and for codes on **only** the Q channel:
+
+ | I Code Value  | Q Code Value  | Phase (degrees) |
+ |--------------:|--------------:|----------------:|
+ | 0             | 1             | 90              |
+ | 0             | -1            | 270             |
 """
 function calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
                        code_chips_Q::Vector{T}) where T
     prn = signal.prn
     # I channel
     I_val = 0
+    # If I channel codes exist, XOR the value of each layer of code at a given
+    # `t` with the value of `I_val`
     if signal.signal_type.include_I
         I_codes = signal.signal_type.I_codes
+        # Determine whether databits are included in I channel and whether
+        # `include_databits_I` flag is true. If so, databits are XORed against
+        # the value of `I_val`. If this flag is set to false or if
+        # `signal.isreplica` is set to true, no databits are included.
         if I_codes.databits
             if ~signal.isreplica && signal.include_databits_I
                 code_num = I_codes.code_num
@@ -138,19 +221,29 @@ function calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
         else
             code_num = I_codes.code_num
         end
+        # Loop through I channel codes and XORed current value at time `t` to
+        # value of `I_val`
         for i in 1:code_num
             code_chip = code_chips_I[i](t)
             code_idx = Int(floor(code_chip%signal.signal_type.I_codes.code_lengths[i])) + 1
             I_val = xor(I_val, I_codes.codes[i][prn][code_idx])
         end
+        # Change from 0:1 state to -1:1 state. This prevensts divide over zero
+        # error in `atan` function at the end of this function.
         if I_val < 1
             I_val = -1
         end
     end
     # Q channel
     Q_val = 0
+    # If Q channel codes exist, XOR the value of each layer of code at a given
+    # `t` with the value of `Q_val`
     if signal.signal_type.include_Q
         Q_codes = signal.signal_type.Q_codes
+        # Determine whether databits are included in Q channel and whether
+        # `include_databits_Q` flag is true. If so, databits are XORed against
+        # the value of `Q_val`. If this flag is set to false or if
+        # `signal.isreplica` is set to true, no databits are included.
         if Q_codes.databits
             if ~signal.isreplica && signal.include_databits_Q
                 code_num = Q_codes.code_num
@@ -160,16 +253,24 @@ function calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
         else
             code_num = Q_codes.code_num
         end
+        # Loop through Q channel codes and XORed current value at time `t` to
+        # value of `Q_val`
         for i in 1:code_num
             code_chip = code_chips_Q[i](t)
             code_idx = Int(floor(code_chip%signal.signal_type.Q_codes.code_lengths[i])) + 1
             Q_val = xor(Q_val, Q_codes.codes[i][prn][code_idx])
         end
+        # Change from 0:1 state to -1:1 state. This prevensts divide over zero
+        # error in `atan` function at the end of this function.
         if Q_val < 1
             Q_val = -1
         end
     end
+    # Calculate the phase of the carrier based off the values of `Q_val` and
+    # `I_val`. This simulates a QPSK signal.
     code_ϕ = atan(Q_val, I_val)
+    # Construct a `Complex{Int}` that has the value of the I channel codes in
+    # `real(code_val)` and the value of the Q channel codes in `iamg(code_val)`.
     code_val = complex(I_val, Q_val)
     return (code_val, code_ϕ)
 end
