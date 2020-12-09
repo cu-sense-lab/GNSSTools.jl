@@ -133,7 +133,8 @@ end
 
 
 """
-        calc_code_val(signal::ReplicaSignals, t)
+    calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
+                  code_chips_Q::Vector{T}) where T
 
 
 Calculates the value of the generic code with parameters defined by `signal` at
