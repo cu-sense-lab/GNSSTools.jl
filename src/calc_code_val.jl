@@ -169,6 +169,7 @@ Returns:
     * `code_ϕ::Float64`: the carrier phase in `rad` corresponding to the values
                          of the I and Q channel codes
 
+
  The carrier phase value for a given set of I and Q channel code values at a
  given time `t` is given by:
 
