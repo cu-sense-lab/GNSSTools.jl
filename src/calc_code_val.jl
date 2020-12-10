@@ -1,5 +1,5 @@
 """
-        calc_code_val(signal::ReplicaSignals, t)
+    calc_code_val(signal::ReplicaSignals, t)
 
 
 Calculates the value of the generic code with parameters defined by `signal` at

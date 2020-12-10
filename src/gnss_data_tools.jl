@@ -18,7 +18,7 @@ Required Arguments:
 
 Returns:
 
--
+- 
 """
 function loaddata(data_type, file_name, f_s, f_if, t_length;
                   start_data_idx=1, site_loc_lla=missing,
