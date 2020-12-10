@@ -8,10 +8,8 @@ arrays and be the same size.
 
 Required Arguments:
 
-- `A::Array{T,2}`: 2D dimmensional array, `A`, with element type `T`, which can
-                   any type such that all elements of `A` are of type `T`
-- `B::Array{T,2}`: 2D dimmensional array, `B`, with element type `T`, which can
-                   any type such that all elements of `B` are of type `T`
+- `A::Array{T,2}`: 2D dimmensional array, `A`, with element type `T`
+- `B::Array{T,2}`: 2D dimmensional array, `B`, with element type `T`
 
 
 Optional Arguments:
@@ -44,10 +42,8 @@ arrays and be the same size.
 
 Required Arguments:
 
-- `A::Array{T,1}`: 1D dimmensional array, `A`, with element type `T`, which can
-                   any type such that all elements of `A` are of type `T`
-- `B::Array{T,1}`: 1D dimmensional array, `B`, with element type `T`, which can
-                   any type such that all elements of `B` are of type `T`
+- `A::Array{T,1}`: 1D dimmensional array, `A`, with element type `T`
+- `B::Array{T,1}`: 1D dimmensional array, `B`, with element type `T`
 
 
 Optional Arguments:
@@ -78,12 +74,8 @@ be 1D arrays and be the same size.
 
 Required Arguments:
 
-- `A::Array{Complex{T},1}`: 1D dimmensional array, `A`, with element type `T`,
-                            which can any type such that all elements of `A`
-							are of type `T`
-- `B::Array{Complex{T},1}`: 1D dimmensional array, `B`, with element type `T`,
-                            which can any type such that all elements of `B`
-							are of type `T`
+- `A::Array{Complex{T},1}`: 1D dimmensional array, `A`, with element type `T`
+- `B::Array{Complex{T},1}`: 1D dimmensional array, `B`, with element type `T`
 
 
 Optional Arguments:
@@ -113,9 +105,7 @@ Takes the conjugate of A in place. A should be a 1D array.
 
 Required Arguments:
 
-- `A::Array{Complex{T},1}`: 1D dimmensional array, `A`, with element type `T`,
-                            which can any type such that all elements of `A`
-							are of type `T`
+- `A::Array{Complex{T},1}`: 1D dimmensional array, `A`, with element type `T`
 
 
 Optional Arguments:
@@ -144,8 +134,7 @@ Calculates the SNR of the correlation peak in `x`.
 
 Required Arguments:
 
-- `x::Array{T,1}`: 1 dimmenstional array of type `T`, where `T` is the type of
-                   all the array elements
+- `x::Array{T,1}`: 1 dimmenstional array of type `T`
 
 
 Returns:
@@ -176,11 +165,9 @@ signal.
 Required Arguments:
 
 - `data::Array{T,N}`: original `N` dimmensional data signal of element
-                      type `T` where `T` is the type of the
-					  elements of `data`
+                      type `T`
 - `reference::Array{T,N}`: `N` dimmensional reference signal of element
-                           type `T` where `T` is the type of
-						   the elements of `data`
+                           type `T`
 
 
 Returns:

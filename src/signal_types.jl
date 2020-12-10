@@ -96,8 +96,8 @@ Required Arguments:
     * all other codes after can be either dictionaries or arrays
     * if the code is an array, it is assumed that that layer of code is the
       same for all PRNs
-- `chipping_rates::Vector{Float}`: array of chipping rates for codes above, `not
-                                   including databits`
+- `chipping_rates::Vector{Float}`: array of chipping rates for codes above,
+                                   `not including databits`
 
 
 Optional Arguments:
