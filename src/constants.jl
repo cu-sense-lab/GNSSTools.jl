@@ -175,6 +175,17 @@ const wgs84 = initWGS84()
 
 
 Parse the GPS data file from AGI. See function `getCurrentGPSNORADIDS` below.
+
+
+Required Arguments:
+
+- `data_file::String`: file name of data file
+
+
+Returns:
+
+- `GPSData::Dict`: multi-layer `Dict` containing the history of SVs for each PRN
+                   see `getCurrentGPSNORADIDS` for more detailed information
 """
 function parseGPSData(data_file)
     file = open(data_file, "r")
@@ -236,31 +247,87 @@ end
 
 
 """
-    getCurrentGPSNORADIDS()
+    getCurrentGPSNORADIDS(file_url)
+
 
 Download GPS SV data from AGI and parse. Returns a dictionary with historical
-SVs for each PRN.
+SVs for each PRN number.
 
 
 Required Arguments:
 
-- `file_url::String`:
+- `file_url::String`: the file URL `(Default = GPS_data_file_url)
+    * See `const GPS_data_file_url` below
+
+
+Returns:
+
+- `GPSData::Dict`: multi-layer `Dict` containing the history of SVs for each PRN
+    * top level is sorted by PRN number
+    * `GPSData[prn]` yields another set of dictionaries, sorted by SV
+    * `GPSData[prn][sv]` yields a `Dict` containing attributes for that specific
+      SV such as
+        + `"active"`: `Bool` value if set to `true`, indicates that SV is still
+                      in service and the fields `"end_week"`, `"end_toa"`,
+                      `"end_date"`, and `"end_julian_date"` are all set to
+                      `misssing`
+        + `"status"`: `String` that either says `"active"`, if `"active"` is
+                      `true` or `"Removed from almanac"` if it is `false`
+        + `"satnum"`: the SV catalog number for Space-Track
+        + `"block"`: the satellite version number
+        + `"start_week"`: GPS week when SV goes into service
+        + `"start_toa"`: GPS seconds in the week when SV goes into service
+        + `"start_date"`: `Tuple` in the format (year, month, day) representing
+                          the date when the SV goes into service
+        + `"start_julian_date"`: `"start_date"` above converted to the Julian
+                                 Date when the SV goes into service
+        + `"end_week"`: GPS week when SV goes out of service
+        + `"end_toa"`: GPS seconds in the week when SV goes out of service
+        + `"end_date"`: `Tuple` in the format (year, month, day) representing
+                        the date when the SV goes out of service
+        + `"end_julian_date"`: `"start_date"` above converted to the Julian
+                               Date when the SV goes out of service
 """
 function getCurrentGPSNORADIDS(file_url)
+    # Search for existing `.GNSSTools` folder in user home directory and create
+    # one if it does not already exist
     directory = string(homedir(), "/.GNSSTools")
     if ~isdir(directory)
         mkpath(directory)
     end
+    # Check for `GPSData.txt` file to parse and if it does not exist, download
+    # it from the url, `file_url`
     ids_file = string(directory, "/GPSData.txt")
     if ~isfile(ids_file)
         run(`curl -o $(ids_file) $(file_url)`);
     end
+    # Parse GPSData file and return the `Dict` containing the history of
+    # Sv usage of each PRN number
     GPSData = parseGPSData(ids_file)
     return GPSData
 end
 
 
+"""
+    GPS_data_file_url
+
+
+URL location of the historical and current GPS PRN data file which contains info
+on each SV that used each PRN number throughout the U.S. GPS constellation's
+history.
+
+url = `ftp://ftp.agi.com/pub/Catalog/Almanacs/SEM/GPSData.txt`
+"""
 const GPS_data_file_url = "ftp://ftp.agi.com/pub/Catalog/Almanacs/SEM/GPSData.txt"
 
 
+"""
+    GPSData
+
+
+Dictionary containing information about each SV that used each PRN numbers in
+the U.S. GPS constellation throughout its history. The format of the dictionary
+is `GPSData[prn][sv]["[parameter]"]`. See `getCurrentGPSNORADIDS` for more
+detail.
+"""
 const GPSData = getCurrentGPSNORADIDS(GPS_data_file_url)
