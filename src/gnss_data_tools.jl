@@ -2,11 +2,11 @@
     loaddata(data_type, file_name, f_s, f_if, t_length;
              start_data_idx=1, site_lla=missing, data_start_time=missing)
 
-Loads data from sc8 file and loads into GNSSData type struct.
+Loads data from `sc8` file and loads into `GNSSData` type struct.
 
-site_lla is [latitude, longitude, height] in degrees and meters
+`site_lla` is `[latitude, longitude, height]` in degrees and meters.
 
-data_start_time is [YYYY, MM, DD, HH, mm, ss], where "ss" is decimal
+`data_start_time` is `[YYYY, MM, DD, HH, mm, ss]`, where "ss" is decimal
 seconds.
 """
 function loaddata(data_type, file_name, f_s, f_if, t_length;
@@ -39,8 +39,7 @@ end
 """
 	reloaddata!(gnss_data::GNSSData, start_data_idx, sample_num)
 
-Reloads portion of data up to the length of the data array inside
-`gnss_data`.
+Reloads portion of data up to the length of the data array inside `gnss_data`.
 """
 function reloaddata!(gnss_data::GNSSData, start_data_idx,
 	                 sample_num=gnss_data.sample_num)
@@ -66,8 +65,7 @@ end
     readdatafile(data_type::Val{:sc8}, file_name, sample_num,
                  start_idx=0, message="Loading data...")
 
-Loads sc8 data files. First 8-bit number is real, second is
-imaginary.
+Loads sc8 data files. First 8-bit number is real, second is imaginary.
 """
 function readdatafile!(data, data_type::Val{:sc8}, file_name, sample_num,
                        start_idx=1, message="Loading data...")
@@ -88,9 +86,9 @@ end
     readdatafile(data_type::Val{:sc4}, file_name, sample_num,
                  start_idx=0, message="Loading data...")
 
-Loads sc8 data files. For each UInt8 number,
-the LSB is real and MSB is imaginary.
-"""
+Loads sc4 data files. For each UInt8 number, the LSB is real and MSB is
+imaginary.
+"""byte::UInt8
 function readdatafile!(data, data_type::Val{:sc4}, file_name, sample_num,
                        start_idx=1, message="Loading data...")
 	# Open file
@@ -109,7 +107,19 @@ end
 """
     bytetocomplex(byte::UInt8)
 
-Converts a UInt8 value to Complex{Int8}
+
+Converts a `UInt8` value to `Complex{Int8}`. Assumes that the LSB and MSB are the
+real and imaginary parts, respectively.
+
+
+Required Arguments:
+
+- `byte::UInt8`: a single byte to converted to `Complex{Int8}`
+
+
+Returns:
+
+- `Complex{Int8}`: complex number converted from `byte`
 """
 function bytetocomplex(byte::UInt8)
 	# Get unsigned I and Q values
@@ -129,7 +139,25 @@ end
 """
 	FileInfo
 
+
 Struct holding file name information.
+
+
+Fields:
+
+- `f_s::Float64`: sampling rate of signal in Hz
+- `f_if::Float64`: signal IF frequency in Hz
+- `f_center::Float64`: receiver center frequency in Hz
+- `sig_freq::Float64`: navigation band frequency in Hz
+                       (e.g. for L1, `sig_freq = L1_freq`)
+- `sigtype::T1`: `[DEPRICATED]`
+- `data_type::T2`: the data type of the data file which is either set to
+                   `Val(:sc4)` or `Val(:sc8)`
+- `timestamp::T3`: six element `Tuple` with format
+                   `(year, month, day, hour, minute, second)` where everything
+				   other than `second`, which can be either `Int` or `Float64`,
+				   is an Int
+- `timestamp_JD::Float64`: the Julia date of the timestamp
 """
 struct FileInfo{T1,T2,T3}
 	f_s::Float64
@@ -146,17 +174,39 @@ end
 """
 	data_info_from_name(file_name)
 
-Determine the IF and sampling frequency of the data
-from the file name. Looks for the following strings
-inside the file name:
 
-- `g1b1`: 25 Msps, centered at 1.57 GHz which contains GPS L1/Galileo E1bc/Beidou B1i
-- `g2r2`: 25 Msps, centered at 1.2375 GHz which contains GPS L2 and GLONASS L2
-	* `NOTE SUPPORTED`
-- `g5`: 25 Msps, centered at 1.17645 GHz which contains GPS L5/Galileo E5a
+Determine the IF and sampling frequency of the data from the file name. Looks
+for the following strings inside the file name:
 
-Returns the IF and sampling frequency in Hz in the order of (f_if, f_s, f_center,
-data_type). `data_type` is either `Val(:sc8)` or `Val(:sc4)`.
+- `g1b1`: 25 Msps, centered at 1.57 GHz which may contain the followin signals
+	* GPS L1
+	* Galileo E1bc
+	* Beidou B1i
+- `g2r2`: `[NOTE SUPPORTED]` 25 Msps, centered at 1.2375 GHz which may contain
+          the followin signals
+	* GPS L2
+	* GLONASS L2
+- `g5`: 25 Msps, centered at 1.17645 GHz which may contain the followin signals
+	* GPS L5
+	* Galileo E5a
+
+Also looks at the file name extension to determine the type of data stored in
+the file where
+
+- `.sc4`: 4-bit complex data where for each UInt8 number in the data file, the
+  LSB is real and MSB is imaginary
+- `.sc8`: 8-bit complex data where for each pair of Int8 numbers, the first
+  value is real and the second is imaginary
+
+
+Required Arguments:
+
+- `file_name::String`: the data file name to parse
+
+
+Returns:
+
+- `FileInfo` struct
 """
 function data_info_from_name(file_name)
 	# Get file type (8- or 4-bit complex)

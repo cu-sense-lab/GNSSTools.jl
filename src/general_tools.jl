@@ -368,10 +368,10 @@ end
 """
 	find_sequence(file_name, digit_nums, separators=missing)
 
-Find a number sequence in a file name. `digit_nums` can
-be a number or array.`separators` can also be either a
-number or array containing the characters such as `_` and `.`
-that may be between the numbers. Returns the string containing
+
+Find a number sequence in a file name. `digit_nums` can be a number or array.
+`separators` can also be either a number or array containing the characters such
+as `_` and `.` that may be between the numbers. Returns the string containing
 the sequence if found. Returns `missing` if not found.
 """
 function find_sequence(file_name, digit_nums, separators=missing)
@@ -424,8 +424,9 @@ end
 """
     find_and_get_timestamp(file_name)
 
-Find a sequency of 8 digits with `_` separating it from a sequence
-of 6 digits. Return the timestamp tuple.
+
+Find a sequency of 8 digits with `_` separating it from a sequence of 6 digits.
+Return the timestamp tuple.
 """
 function find_and_get_timestamp(file_name)
 	timestamp_string = find_sequence(file_name, [8, 6], "_")

@@ -272,10 +272,8 @@ end
 """
     getGPSSatnums(obs_time_JD, prns)
 
-Get the NORAD ID for each PRN for a given
-observationn time in Julian Days. Read
-from `GPSData` dictionary. Returns
-dictionary with keys being the prns
+Get the NORAD ID for each PRN for a given observationn time in Julian Days. Read
+from the `GPSData` dictionary. Returns dictionary with keys being the prns.
 """
 function getGPSSatnums(obs_time_JD, prns)
     gps_satnums = Dict{Int,Int}()
