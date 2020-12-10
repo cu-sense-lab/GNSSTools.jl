@@ -2,12 +2,23 @@
     loaddata(data_type, file_name, f_s, f_if, t_length;
              start_data_idx=1, site_lla=missing, data_start_time=missing)
 
+
 Loads data from `sc8` file and loads into `GNSSData` type struct.
 
 `site_lla` is `[latitude, longitude, height]` in degrees and meters.
 
-`data_start_time` is `[YYYY, MM, DD, HH, mm, ss]`, where "ss" is decimal
-seconds.
+`data_start_time` is `[year, month, day, hour, minute, seconds]`, where "ss" is
+decimal seconds.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function loaddata(data_type, file_name, f_s, f_if, t_length;
                   start_data_idx=1, site_loc_lla=missing,
@@ -39,7 +50,18 @@ end
 """
 	reloaddata!(gnss_data::GNSSData, start_data_idx, sample_num)
 
+
 Reloads portion of data up to the length of the data array inside `gnss_data`.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function reloaddata!(gnss_data::GNSSData, start_data_idx,
 	                 sample_num=gnss_data.sample_num)
@@ -65,7 +87,18 @@ end
     readdatafile(data_type::Val{:sc8}, file_name, sample_num,
                  start_idx=0, message="Loading data...")
 
-Loads sc8 data files. First 8-bit number is real, second is imaginary.
+
+Loads `sc8` data files. First 8-bit number is real, second is imaginary.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function readdatafile!(data, data_type::Val{:sc8}, file_name, sample_num,
                        start_idx=1, message="Loading data...")
@@ -86,9 +119,20 @@ end
     readdatafile(data_type::Val{:sc4}, file_name, sample_num,
                  start_idx=0, message="Loading data...")
 
-Loads sc4 data files. For each UInt8 number, the LSB is real and MSB is
+
+Loads `sc4` data files. For each UInt8 number, the LSB is real and MSB is
 imaginary.
-"""byte::UInt8
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
+"""
 function readdatafile!(data, data_type::Val{:sc4}, file_name, sample_num,
                        start_idx=1, message="Loading data...")
 	# Open file
@@ -140,7 +184,7 @@ end
 	FileInfo
 
 
-Struct holding file name information.
+`Struct` that holds data file information based off its file name.
 
 
 Fields:
@@ -158,6 +202,7 @@ Fields:
 				   other than `second`, which can be either `Int` or `Float64`,
 				   is an Int
 - `timestamp_JD::Float64`: the Julia date of the timestamp
+- `file_name::String`: file name of the data file
 """
 struct FileInfo{T1,T2,T3}
 	f_s::Float64
@@ -168,6 +213,7 @@ struct FileInfo{T1,T2,T3}
 	data_type::T2
 	timestamp::T3
 	timestamp_JD::Float64
+	file_name::String
 end
 
 
@@ -221,5 +267,5 @@ function data_info_from_name(file_name)
 	f_s, f_if, f_center, sig_freq, sigtype = get_signal_type(file_name)
 	timestamp, timestamp_JD = find_and_get_timestamp(file_name)
 	return FileInfo(f_s, f_if, f_center, sig_freq, sigtype, data_type,
-	                timestamp, timestamp_JD)
+	                timestamp, timestamp_JD, file_name)
 end
