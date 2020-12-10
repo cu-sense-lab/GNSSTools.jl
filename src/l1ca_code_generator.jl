@@ -1,7 +1,8 @@
 """
-    l1ca_code_rate
+    l1ca_chipping_rate
 
-L1 C/A Code chipping rate (Hz)
+
+L1 C/A Code chipping rate = `1.023e6Hz`
 """
 const l1ca_chipping_rate = 1.023e6  # Hz
 
@@ -9,7 +10,8 @@ const l1ca_chipping_rate = 1.023e6  # Hz
 """
     l1ca_chip_length
 
-L1 C/A code chip length in 1ms
+
+L1 C/A code chip length in 1ms = `1023`
 """
 const l1ca_code_length = 1023  # chips
 
@@ -17,8 +19,8 @@ const l1ca_code_length = 1023  # chips
 """
     l1ca_db_chipping_rate
 
-The chipping rate of the data bits
-for the L1 C/A code.
+
+The chipping rate of the data bits for the L1 C/A code = `50Hz`
 """
 const l1ca_db_chipping_rate = 50.  # Hz
 
@@ -26,9 +28,9 @@ const l1ca_db_chipping_rate = 50.  # Hz
 """
     l1ca_taps
 
-Dictionary containing the phase selector
-taps (columns 1 and 2) and the code chip
-delay amount in chips (column 3).
+
+Dictionary containing the phase selector taps (columns 1 and 2) and the code
+chip delay amount in chips (column 3). The dictionary keys represent the PRNs.
 """
 const l1ca_taps = Dict( 1 => (2,  6,   5),
                         2 => (3,  7,   6),
@@ -65,16 +67,25 @@ const l1ca_taps = Dict( 1 => (2,  6,   5),
 
 
 """
-    ca_code_chips(prn::Int64)
+    ca_code_chips(prn::Int)
 
-Generates the CA Code chip-by-chip sequence
-for a given GPS satellite PRN number.
+
+Generates the CA Code chip-by-chip sequence for a given GPS satellite PRN
+number.
+
+
+Required Arguments:
+
+- `prn::Int`: the pseudorandom noise (PRN) number, which is also related to the
+              satellite vehicle
+
 
 Returns:
 
-- ca_code: 1023-element Array of C/A code chips for PRN
+- `ca_code::Vector{Int}`: a 1023-element array of C/A code chips for the PRN
+                          number argument, `prn`
 """
-function ca_code_chips(prn::Int64)
+function ca_code_chips(prn::Int)
     # Initialize G1 and G2 registers to 1's
     G1 = ones(Int64, 10)
     G2 = ones(Int64, 10)
@@ -111,9 +122,15 @@ end
 """
     gen_l1ca_codes()
 
-Generates a dictionary containing all the
-L1 C/A codes for PRNS 1 through 32. The PRN
-number is the dictionary key.
+
+Generates a dictionary containing all the L1 C/A codes for PRNS 1 through 32.
+The PRN number is the dictionary key.
+
+
+Returns:
+
+- `l1ca_codes::Dict`: dictionary containing a 1023-element array of C/A code
+                      chips for each PRN
 """
 function gen_l1ca_codes()
     l1ca_codes = Dict{Int64, Array{Int64,1}}()
@@ -127,16 +144,51 @@ end
 """
     l1ca_codes
 
-Dictionary containing the L1 C/A
-codes.
+
+Constant dictionary containing the L1 C/A codes. The keys are the PRN numbers.
 """
 const l1ca_codes = gen_l1ca_codes()
 
 
+"""
+    define_l1ca_code_type(t_length; databits=true)
+
+
+Generates a `SignalType` struct which defines the L1 C/A code that can be used
+to define and generate L1 C/A signals. The databits generated are random.
+
+
+Required Arguments:
+
+- `t_length:Float64`: the length of the planned signal in seconds
+    * this argument is used only to generate a `Vector` of databits so they do
+      not repeat throughout the duration of the signal, once it is generated
+
+
+Optional Arguments:
+
+- `databits::Bool`: if `true`, a databit array is generated with a length in
+                    seconds defined by `t_length` and is inserted into the I
+                    channel of the signal type
+
+
+Returns:
+
+- `siganl_type::SignalType`: can be used in `definesignal` function to create
+                             a signal, which can be used with `generatesignal!`
+                             to generate the signal
+"""
 function define_l1ca_code_type(t_length; databits=true)
-    databits = rand(0:1, ceil(Int, l1ca_db_chipping_rate*t_length))
-    I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate;
-                             databits=[databits, l1ca_db_chipping_rate])
+    if databits
+        # Generate random databits
+        databits = rand(0:1, ceil(Int, l1ca_db_chipping_rate*t_length))
+        # Include databits in I channel codes
+        I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate;
+                                 databits=[databits, l1ca_db_chipping_rate])
+    else
+        # Define I channel codes without databits
+        I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate)
+    end
     signal_type = definesignaltype(I_codes, L1_freq, "I")
     return signal_type
 end
