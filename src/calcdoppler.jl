@@ -17,7 +17,8 @@ Required Arguments:
 - `gps_orb::OrbitPropagator`: GPS satellite `OrbitPropagator` struct
 - `sat_orb::OrbitPropagator`: second satellite `OrbitPropagator` struct
 - `julian_date::Float64`: Julian date
-- `eop`:
+- `eop`: Earth Orientation Parameters data which is required to convert to ECEF
+    * refer to `SatelliteToolbox` module for more info
 - `obs_ecef::Vector`: receiver ECEF position in meters with format `(x, y, z)`
 - `sig_freq::Float64`: signal carrier frequency in Hz
 
@@ -106,7 +107,8 @@ Required Arguments:
 
 - `orb::OrbitPropagator`: satellite `OrbitPropagator` struct
 - `julian_date::Float64`: Julian date
-- `eop`:
+- `eop`: Earth Orientation Parameters data which is required to convert to ECEF
+    * refer to `SatelliteToolbox` module for more info
 - `obs_ecef::Vector`: receiver ECEF position in meters with format `(x, y, z)`
 - `sig_freq::Float64`: signal carrier frequency in Hz
 
