@@ -13,12 +13,31 @@ decimal seconds.
 
 Required Arguments:
 
--
+- `data_type`: either `Val(:sc8)` or `Val(:sc4)` for 8-bit and 4-bit complex,
+               respectively
+- `file_name::String`: data file name
+- `f_s::Float64`: sampling rate of data in Hz
+- `f_if::Float64`: IF frequency of data in Hz
+- `t_length::Float64`: the length of data in seconds to be loaded
+
+
+Optional Arguments:
+
+- `start_data_idx::Int`: where the first data sample will be loaded in the data
+                         `(default = 1)`
+- `site_lla`: receiver LLA location in the format `(lat, lon, height)`
+	* `lat`, latitude, is in degrees
+	* `lon`, longitude, is in degrees
+	* `height` is in meters
+	* set to `missing` by default
+- `data_start_time`: data UTC start time `(year, month, day, hour, minute, seconds)`
+	* `seconds` can be `Int` or `Float64`, all others are `Int`
+	* set to `missing` by default
 
 
 Returns:
 
-- 
+- `GNSSData` struct
 """
 function loaddata(data_type, file_name, f_s, f_if, t_length;
                   start_data_idx=1, site_loc_lla=missing,
@@ -56,12 +75,16 @@ Reloads portion of data up to the length of the data array inside `gnss_data`.
 
 Required Arguments:
 
--
+- `gnss_data::GNSSData`: structure that holds loaded data from data files
+- `start_data_idx::Int`: where the first data sample will be loaded in the data
+- `sample_num::Int`: number of samples after `start_data_idx` to load into
+                     `gnss_data`
+    * must not be greater than `gnss_data.sample_num`
 
 
-Returns:
+Modifies in Place and Returns:
 
--
+- `gnss_data::GNSSData`
 """
 function reloaddata!(gnss_data::GNSSData, start_data_idx,
 	                 sample_num=gnss_data.sample_num)
@@ -84,8 +107,8 @@ end
 
 
 """
-    readdatafile(data_type::Val{:sc8}, file_name, sample_num,
-                 start_idx=0, message="Loading data...")
+	readdatafile!(data, data_type::Val{:sc8}, file_name, sample_num,
+				  start_idx=1)
 
 
 Loads `sc8` data files. First 8-bit number is real, second is imaginary.
@@ -93,15 +116,27 @@ Loads `sc8` data files. First 8-bit number is real, second is imaginary.
 
 Required Arguments:
 
--
+- `data::Vector{Complex{Int}}`: the complex data vector to store the new data
+- `data_type::Val{:sc8}`: only accepts `Val(:sc8)` to indicate data is 8-bit
+                          complex
+- `file_name::String`: data file name
+- `sample_num::Int`: `[NOT USED]` number of samples after `start_data_idx` to
+                     load
+
+
+Optional Arguments:
+
+- `start_idx::Int`: where the first data sample will be loaded in the data
 
 
 Returns:
 
--
+- `data::Vector{Complex{Int}}`: elements are replaced with new data
+- `end_idx::Int`: the last sample index loaded plus one
+- `:sc8::Symbol`: symbol which describes the type of data
 """
 function readdatafile!(data, data_type::Val{:sc8}, file_name, sample_num,
-                       start_idx=1, message="Loading data...")
+                       start_idx=1)
 	# Open file
 	f = open(file_name, "r")
 	# Go to start location
@@ -116,25 +151,39 @@ end
 
 
 """
-    readdatafile(data_type::Val{:sc4}, file_name, sample_num,
-                 start_idx=0, message="Loading data...")
+	readdatafile!(data, data_type::Val{:sc4}, file_name, sample_num,
+				  start_idx=1)
 
 
 Loads `sc4` data files. For each UInt8 number, the LSB is real and MSB is
 imaginary.
 
+**NOTE:** this method is slower than the version used for 8-bit complex data.
+
 
 Required Arguments:
 
--
+- `data::Vector{Complex{Int}}`: the complex data vector to store the new data
+- `data_type::Val{:sc4}`: only accepts `Val(:sc4)` to indicate data is 4-bit
+                          complex
+- `file_name::String`: data file name
+- `sample_num::Int`: `[NOT USED]` number of samples after `start_data_idx` to
+                     load
+
+
+Optional Arguments:
+
+- `start_idx::Int`: where the first data sample will be loaded in the data
 
 
 Returns:
 
--
+- `data::Vector{Complex{Int}}`: elements are replaced with new data
+- `end_idx::Int`: the last sample index loaded plus one
+- `:sc4::Symbol`: symbol which describes the type of data
 """
 function readdatafile!(data, data_type::Val{:sc4}, file_name, sample_num,
-                       start_idx=1, message="Loading data...")
+                       start_idx=1)
 	# Open file
 	f = open(file_name, "r")
 	# Go to start location
