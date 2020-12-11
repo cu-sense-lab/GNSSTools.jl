@@ -508,6 +508,11 @@ function trackprn(data, replica::ReplicaSignals, prn, ϕ_init, fd_init, n0_idx_i
 end
 
 
+#------------------------------------------------------------------------------
+#                             OLD IMPLEMENTATON
+#------------------------------------------------------------------------------
+
+
 """
     trackprn(data, replica::ReplicaSignal, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,

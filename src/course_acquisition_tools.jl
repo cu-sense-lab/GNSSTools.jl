@@ -1,8 +1,26 @@
 """
-    gencorrresult(fd_range, Δfd, sample_num)
+    gencorrresult(fd_range, Δfd, sample_num; iszeros=false)
 
-Generates a 2D `Array{Float64,2}` to store the
-cross correlation results output from courseacquisition
+
+Generates a 2D `Array{Float64,2}` to store the cross correlation results output
+from the `courseacquisition` function.
+
+
+Required Arguments:
+
+- `fd_range::Float64`: the range of Doppler plus minus the center frequency in Hz
+- `Δfd::Float64`: frequency bin width in Hz
+
+
+Optional Arguments:
+
+- `iszeros::Bool`: if `true`, sets contents of array to zero, otherwise its
+                   elements are set to `undef` `(default = false)`
+
+
+Returns:
+
+- `Array{Float64,2}`: 2D array to store acquistion result
 """
 function gencorrresult(fd_range, Δfd, sample_num; iszeros=false)
     if iszeros
@@ -17,26 +35,47 @@ end
     courseacquisition(data::GNSSSignal, replica::ReplicaSignals,
                       prn; fd_center=0., fd_range=5000.,
                       fd_rate=0., Δfd=1/replica.t_length,
-                      threads=nthreads(), message="Correlating...",
-                      operation="replace", start_idx=1,
-                      showprogressbar=true)
+                      threads=nthreads(), operation="replace",
+                      start_idx=1)
 
-Initializes `corr_result` array and runs `courseacquisition!` method.
-Returns `corr_result` and the course acquired code phase, Doppler
-frequency and SNR.
+
+Initializes `corr_result` array and runs `courseacquisition!` method. Returns
+`corr_result` and the course acquired code phase, Doppler frequency and SNR.
+
+
+Required Arguments:
+
+- `data::GNSSSignal`:
+- `replica::ReplicaSignals`:
+- `prn::Int`:
+
+
+Optional Arguments:
+
+- `fd_center::Float64`:
+- `fd_range::Float64`:
+- `fd_rate::Float64`:
+- `Δfd::Float64`:
+- `start_idx::Int`:
+
+
+Returns:
+
+- `corr_result::Array{Float64,2}`: 2D array to store acquistion result
+- `fd_est::Float64`: Doppler frequency bin corresponding to peak in Hz
+- `n0_est::Int`: index in data where code starts
+- `SNR_est::Float64`: SNR of the correlation peak in dB
 """
 function courseacquisition(data::GNSSSignal, replica::ReplicaSignals,
                            prn; fd_center=0., fd_range=5000.,
                            fd_rate=0., Δfd=1/replica.t_length,
-                           threads=nthreads(), message="Correlating...",
-                           operation="replace", start_idx=1,
-                           showprogressbar=true)
+                           start_idx=1)
     # Allocate space for correlation result
     corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
     # Perform course acquisition
     courseacquisition!(corr_result, data, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,
-                       fd_rate=fd_rate, Δfd=Δfd, threads=threads)
+                       fd_rate=fd_rate, Δfd=Δfd, start_idx=start_idx)
     n0_est, fd_est, SNR_est = course_acq_est(corr_result)
     return (corr_result, fd_est, n0_est, SNR_est)
 end
@@ -44,11 +83,11 @@ end
 
 """
     courseacquisition!(corr_result::Array{Float64,2},
-                       data, replica::ReplicaSignals,
+                       data::GNSSSignal, replica::ReplicaSignals,
                        prn; fd_center=0., fd_range=5000.,
-                       fd_rate=0., Δfd=1/data.t_length,
-                       threads=8, message="Correlating...",
+                       fd_rate=0., Δfd=1/replica.t_length,
                        operation="replace", start_idx=1)
+
 
 Performs course acquisition on either `GNSSData` or `ReplicaSignals`
 type struct using defined `ReplicaSignals` type struct. No need
@@ -64,14 +103,34 @@ Operates in place on `corr_result`.
 
 `corr_result` contains |conj(fft(replica)*fft(data)|² per
 Doppler bin.
+
+
+Required Arguments:
+
+- `corr_result::Array{Float64,2}`:
+- `data::Vector`:
+- `replica::ReplicaSignals`:
+- `prn::Int`:
+
+
+Optional Arguments:
+
+- `fd_center::Float64`:
+- `fd_range::Float64`:
+- `fd_rate::Float64`:
+- `Δfd::Float64`:
+- `start_idx::Int`:
+
+
+Modifies and Returns:
+
+- `corr_result::Array{Float64,2}`: 2D array to store acquistion result
 """
 function courseacquisition!(corr_result::Array{Float64,2},
                             data::GNSSSignal, replica::ReplicaSignals,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/replica.t_length,
-                            message="Correlating...",
-                            operation="replace", start_idx=1,
-                            showprogressbar=true)
+                            operation="replace", start_idx=1)
     # Number of data samples
     dsize = replica.sample_num
     # Pre-plan FFTs and IFFTs
@@ -85,10 +144,6 @@ function courseacquisition!(corr_result::Array{Float64,2},
     nADC = data.nADC
     # Number of Doppler bins
     doppler_bin_num = Int(fd_range/Δfd*2+1)
-    # Loading bar
-    if showprogressbar
-       p = Progress(doppler_bin_num, 1, message)
-    end
     @inbounds for i in 1:doppler_bin_num
         # Calculate Doppler frequency for `i` Doppler bin
         f_d = (fd_center-fd_range) + (i-1)*Δfd
@@ -124,10 +179,6 @@ function courseacquisition!(corr_result::Array{Float64,2},
                 @inbounds corr_result[i,j] *= abs2(replica.data[j])
             end
         end
-        # Update progress bar
-        if showprogressbar
-          next!(p)
-        end
     end
     # Set `isreplica` flag to false in `replica`
     definesignal!(replica, isreplica=false)
@@ -138,7 +189,22 @@ end
 """
     course_acq_est(corr_result)
 
-Calculate n₀_est, fd_esst, and SNR of the course acquisition peak.
+
+Estimate the code start index, Doppler frequency and peak SNR from the
+correlation result.
+
+
+Required Arguments:
+
+- `corr_result::Array{Float64,2}`: 2D array that contains course acquistion
+                                   result
+
+
+Returns:
+
+- `n0_est::Int`: index in data where code starts
+- `fd_est::Float64`: Doppler frequency bin corresponding to peak in Hz
+- `SNR_est::Float64`: SNR of the peak in dB
 """
 function course_acq_est(corr_result, fd_center, fd_range, Δfd)
     # Get peak maximum index location
