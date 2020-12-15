@@ -42,7 +42,23 @@ doppler2chips(signal::ReplicaSignals, doppler_curve,
               doppler_t; Δt=doppler_t[2]-doppler_t[1],
               N=length(doppler_curve))
 
+
 `M` should be an integer multiple of `N`
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function doppler2chips(signal::ReplicaSignals, doppler_curve,
                        doppler_t; Δt=doppler_t[2]-doppler_t[1],
@@ -119,6 +135,24 @@ end
 
 """
     get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
+
+
+#
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
     code_chip_I, code_chip_Q, get_ϕs = doppler2chips(signal, doppler_curve,

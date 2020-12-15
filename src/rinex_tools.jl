@@ -1,6 +1,7 @@
 """
     Klobuchar(α₀, α₁, α₁, α₃, β₀, β₁, β₂, β₃)
 
+
 Struct holding the ionospheric correction terms
 for the Klobuchar Ionospheric Model.
 """
@@ -20,6 +21,7 @@ end
     EphemerisEpoch(timestamp, year, month, day,
                    hour, minute, second)
 
+
 Struct for the epoch time of the ephemeris.
 """
 struct EphemerisEpoch
@@ -37,6 +39,7 @@ end
     BRDC(prn, iono_parms, epoch, Af₀, Af₁, Af₂, IODE,
          Crs, Crc, Cus, Cuc, Cis, Cic, ṅ, M₀, e, a,
          Toe, Toc, Ω, i, di, dα, ω, gps_week, health)
+
 
 Struct holding GPS Broadcast Ephemeris parameters and
 ionospheric correction terms.
@@ -74,8 +77,19 @@ end
 """
     replaceD(str)
 
+
 Replaces a `D` with an `E` from values in RINEX files
 so they can be parsed using `parse`.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function replaceD(str)
     str = replace(str, "D" => "E")
@@ -95,6 +109,16 @@ writen by Ben K. Bradley (2009-07-19).
 Returns dictionary epoch dictionaries containing `BRDC`
 structs for each PRN. The dictionary keys are the PRN
 values.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function loadrinex(file)
     f = open(file, "r")

@@ -1,6 +1,7 @@
 """
     FineAcquisitionResults
 
+
 A struct that stores the fine acquisition fine acquisition
 results for both the carrier and FFT based methods.
 """
@@ -26,9 +27,25 @@ end
                     t_length=replica.t_length, freq_lim=10000.,
                     σω=10., err_bin_num_ϕ=1, err_bin_num_f=2)
 
+
 Performs an FFT based fine acquisition on `data`. Note that `t_length` must
 equal `replica.t_length`. `data` can be either a `GNSSData` or `L5QSignal`
 struct, however, `data` and `replica` must be two seperate structs.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
@@ -135,10 +152,26 @@ end
                     t_length=replica.t_length, freq_lim=50000., M=10,
                     σω=1000.)
 
+
 Performs an carrier based fine acquisition on `data`.
 `replica` decides what signal type to use and the length of each `M` segment.
 
 `M` is the multiple of the length of replica to be used for fine acquisition.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
                          n₀_idx_course, type::Val{:carrier}; fd_rate=0.,

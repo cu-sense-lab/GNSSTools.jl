@@ -1,6 +1,7 @@
 """
     OrbitInfo
 
+
 Struct containing orbit, start time,
 and observer location info.
 """
@@ -20,8 +21,19 @@ end
     initorbitinfo(source_tle::String, target_tle::String, start_time,
                   site_loc_lla)
 
+
 Initialize the struct OrbitInfo for multiple satellites. Provide
 the file names of the individual TLE files.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function initorbitinfo(source_tle::String, target_tle::String, start_time,
                        site_loc_lla)
@@ -45,8 +57,19 @@ end
     initorbitinfo(source_tle::TLE, target_tle::TLE, start_time,
                   site_loc_lla)
 
+
 Initialize the struct OrbitInfo for multiple satellites. Provide
 the already loaded TLE files as `SatelliteToolbox` `TLE` structs.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function initorbitinfo(source_tle::TLE, target_tle::TLE, start_time,
                        site_loc_lla)
@@ -69,8 +92,19 @@ end
 """
     initorbitinfo(source_tle::String, start_time, site_loc_lla)
 
+
 Initialize the struct OrbitInfo for single satellite. Provide
 the file name of the individual TLE file.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function initorbitinfo(source_tle::String, start_time, site_loc_lla)
     start_time_julian_date = DatetoJD(start_time...)
@@ -90,8 +124,19 @@ end
 """
     initorbitinfo(source_tle::TLE, start_time, site_loc_lla)
 
+
 Initialize the struct OrbitInfo for single satellite. Provide
 the already loaded TLE file as a `SatelliteToolbox` `TLE` struct.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function initorbitinfo(source_tle::TLE, start_time, site_loc_lla)
     start_time_julian_date = DatetoJD(start_time...)
@@ -110,6 +155,7 @@ end
 
 """
     SatelliteRAE
+
 
 Holds information on a given satellite range,
 azimuth, and elevation from a observer position.
@@ -132,10 +178,21 @@ end
 """
     calcenumatrix(obs_lla)
 
+
 Calculate the ECEF to ENU transformation matrix
 using the observer's position in LLA.
 
 **NOTE:** Latitudes and longitudes are in radians.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function calcenumatrix(obs_lla)
     lat = obs_lla[1]  # rad
@@ -150,9 +207,25 @@ end
 """
     calcelevation(sat_tle::TLE, julian_date_range, eop, obs_ecef)
 
+
 Calculates the elevation of a given satellite relative to the
 observer for every second between the range specified in
 `julian_date_range`.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function calcelevation(sat_tle::TLE, julian_date_range, eop, obs_lla;
                        name="Satellite", Δt=1/60/60/24)
@@ -200,9 +273,25 @@ end
 """
     calcelevation(sat_tle, julian_date_range, eop, obs_ecef)
 
+
 Calculates the elevation of a given satellite relative to the
 observer for every second between the range specified in
 `julian_date_range`.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function calcelevation(satellite::Satellite, obs_lla; name="Satellite")
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
@@ -243,9 +332,20 @@ end
 """
     calcelevation(r::Vector{Float64}, obs_lla)
 
+
 Calculates the elevation of an object at a given ECEF coordinate specified
 by `sat_ecef`. Returns only `(sat_range, az, el)` instead of `SatelliteRAE`
 struct. Format is `(meters, deg, deg)`.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function calcelevation(sat_ecef, obs_lla)
     # Calculate ENU transformation matrix
@@ -272,8 +372,19 @@ end
 """
     getGPSSatnums(obs_time_JD, prns)
 
+
 Get the NORAD ID for each PRN for a given observationn time in Julian Days. Read
 from the `GPSData` dictionary. Returns dictionary with keys being the prns.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function getGPSSatnums(obs_time_JD, prns)
     gps_satnums = Dict{Int,Int}()
@@ -298,9 +409,25 @@ end
 """
     getTLEs(obs_time_JD, satnums)
 
+
 Query Space-Track.org for TLEs matching time and satnum
 criteria. Parse and determine TLEs for eac satnum that
 is closest but before the observation time.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function getTLEs(obs_time_JD, satnums; Δdays=5)
     obs_time_JD_begin = obs_time_JD - Δdays

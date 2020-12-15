@@ -8,6 +8,24 @@
                     σω=1000., fd_range=5000., RLM=10, replica_t_length=1e-3,
                     cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=2,
                     state_num=3, fine_acq_method=:fft, M=10, channel="both")
+
+
+#
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+- 
 """
 function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I",
                          signal_type=define_l1ca_code_type(t_length); bins=1000,

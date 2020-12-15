@@ -1,38 +1,79 @@
 """
     Satellite
+
+
+Struct to hold Satellite orbit parameters.
+
+
+Fields:
+
+- `id`:
+- `init_orbit`:
+- `t`:
+- `orbit`:
+- `r_ecef`:
+- `v_ecef`:
+- `a_ecef`:
 """
-struct Satellite
-    id
-    init_orbit
-    t
-    orbit
-    r_ecef
-    v_ecef
-    a_ecef
+struct Satellite{T1,T2,T3,T4,T5,T6,T7}
+    id::T1
+    init_orbit::T2
+    t::T3
+    orbit::T4
+    r_ecef::T5
+    v_ecef::T6
+    a_ecef::T7
 end
 
 
 """
     Constellation
+
+
+Struct for holding constellation parameters and individual satellite orbits.
+
+
+Fields:
+
+- `epoch`:
+- `plane_num`:
+- `satellite_per_plane`:
+- `Ω₀`:
+- `f₀`:
+- `ω`:
+- `e`:
+- `i`:
+- `t_range`:
+- `ΔΩ`:
+- `Δf`:
+- `satellites`:
 """
-struct Constellation
-    epoch
-    plane_num
-    satellite_per_plane
-    Ω₀
-    f₀
-    ω
-    e
-    i
-    t_range
-    ΔΩ
-    Δf
-    satellites
+struct Constellation{T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11,T12}
+    epoch::T1
+    plane_num::T2
+    satellite_per_plane::T3
+    Ω₀::T4
+    f₀::T5
+    ω::T6
+    e::T7
+    i::T8
+    t_range::T9
+    ΔΩ::T10
+    Δf::T11
+    satellites::T12
 end
 
 
 """
     get_eop()
+
+
+
+
+
+Returns:
+
+-
 """
 function get_eop()
     return get_iers_eop(:IAU1980)
@@ -42,8 +83,24 @@ end
 """
     define_constellation(plane_num, sat_per_plane, inclination)
 
+
 Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, otherwise,
 `ΔΩ` will default to `360/plane_num`.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_eop(), show_plot=true,
@@ -132,6 +189,24 @@ doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                      Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                      t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                      show_hist=true, bins=100)
+
+
+#
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_lla, sig_freq; eop=get_eop(),
@@ -221,6 +296,24 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
 
 """
     plot_satellite_orbit(satellite::Satellite; user_lla=missing)
+
+
+#
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function plot_satellite_orbit(satellite::Satellite; obs_lla=missing)
     figure()

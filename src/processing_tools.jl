@@ -4,6 +4,24 @@
             cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=2,
             state_num=3, fd_rate=0., figsize=missing, saveto=missing,
             show_plot=true)
+
+
+#
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+- 
 """
 function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000.,
                  fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,

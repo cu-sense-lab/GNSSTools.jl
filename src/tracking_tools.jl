@@ -1,6 +1,7 @@
 """
     PLLParms
 
+
 Struct for storing coefficients for the PLL filter.
 """
 struct PLLParms
@@ -21,6 +22,7 @@ end
 """
     DLLParms
 
+
 Struct for storing DLL parameters.
 """
 struct DLLParms
@@ -33,6 +35,7 @@ end
 
 """
     TrackResults
+
 
 A struct containing the parameters for tracking and its results
 """
@@ -86,7 +89,18 @@ end
 """
     definepll(T, B, damping)
 
+
 Define `PLLParms` struct.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function definepll(T, B, ξ)
     ωₙ = 4*B/(2*ξ + 1/(2*ξ))
@@ -104,7 +118,18 @@ end
 """
     definedll(T, B, d)
 
+
 Define `DLLParms` struct.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function definedll(T, B, d)
     descriminator = "Z4 = 1/d * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))"
@@ -115,7 +140,18 @@ end
 """
     measurephase(ZP)
 
+
 Calculate the raw phase measurement.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function measurephase(ZP)
     return atan((imag(ZP)/real(ZP)))
@@ -126,7 +162,18 @@ end
     filtercarrierphase(pll_parms::PLLParms, ϕ_meas, ϕ_meas_1,
                        ϕ_meas_2, ϕ_filt_1, ϕ_filt_2)
 
+
 Fiters the raw phase measurement using 2ⁿᵈ order PLL filter.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function filtercarrierphase(pll_parms::PLLParms, ϕ_meas, ϕ_meas_1,
                             ϕ_meas_2, ϕ_filt_1, ϕ_filt_2)
@@ -143,7 +190,18 @@ end
 """
     Z4(dll_parms::DLLParms, ZE, ZP, ZL)
 
+
 Calculates the code phase error.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function Z4(dll_parms::DLLParms, ZE, ZP, ZL)
     return 0.5 * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))
@@ -154,6 +212,16 @@ end
     filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_err)
 
 Returns the filtered code phase measusurement.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_err)
     return last_filt_code_err+4*dll_parms.T*dll_parms.B*(current_code_err-last_filt_code_err)
@@ -162,6 +230,19 @@ end
 
 """
 	shiftandcheck(i, offset, N)
+
+
+#
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function shiftandcheck(i, offset, N)
 	j = i + offset
@@ -179,10 +260,26 @@ end
 	getcorrelatoroutput!(ZP_array, data, replica, i, N, f_if, f_d,
 						 fd_rate, ϕ, d, bin_width=1)
 
+
 Calculate the early, prompt, and late correlator ouputs. Note that
 replica already containts the prompt correlator. Be sure to set
 the parameters to `replica` and run `generatesignal!(replica)` before
 calling this method.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function getcorrelatoroutput!(ZP_array, data, replica, i, N, f_if, f_d,
 	                          fd_rate, ϕ, d, bin_width=1)
@@ -248,8 +345,24 @@ end
 """
 	calcA(T, state_num=2)
 
+
 Calculate the state transition matrix, `A`, which is
 dependent on the integration time, `T`.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function calcA(T, state_num=2)
 	if state_num == 3
@@ -265,8 +378,24 @@ end
 """
 	calcC(T, state_num=2)
 
+
 Calculate the measurement matrix, `C`, using the integration
 time, `T`.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function calcC(T, state_num=2)
 	if state_num == 3
@@ -282,10 +411,26 @@ end
 """
 	calcQ(T, h₀, h₋₂, qₐ, f_L, state_num=2)
 
+
 Calculate the process noise covariance matrix, `Q`, which is
 dependent on the integration time, `T`, and receiver oscillator
 h-parameters, `h₀` and `h₋₂`. Can either specify `state_num`
 as 2 or 3. `f_L` is the carrier frequency.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function calcQ(T, h₀, h₋₂, qₐ, f_L, state_num=2)
 	qϕ = h₀/2  # oscillator phase PSD
@@ -308,10 +453,26 @@ end
                   h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10., state_num=2,
 				  dynamickf=false, covMult=1.)
 
+
 Perform code and phase tracking on data in `data`.
 
 `replica` decides the signal type. Can pass optional arguments
 that are minumum amount to track a given PRN.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function trackprn(data, replica::ReplicaSignals, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
                   DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,

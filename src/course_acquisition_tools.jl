@@ -24,8 +24,10 @@ Returns:
 """
 function gencorrresult(fd_range, Δfd, sample_num; iszeros=false)
     if iszeros
+        # Initialize with zeros
         return zeros(Float64, Int(2*fd_range/Δfd+1), sample_num)
     else
+        # Allocate space, but don't initialize elements to a value
        return Array{Float64}(undef, Int(2*fd_range/Δfd+1), sample_num)
     end
 end
@@ -45,18 +47,25 @@ Initializes `corr_result` array and runs `courseacquisition!` method. Returns
 
 Required Arguments:
 
-- `data::GNSSSignal`:
-- `replica::ReplicaSignals`:
-- `prn::Int`:
+- `data::GNSSSignal`: either a `GNSSData` or `ReplicaSignals`
+    * can be either simulated or real data
+- `replica::ReplicaSignals`: replica signal whose length determines the
+                             integration time used for course acquisition
+- `prn::Int`: PRN number refering to code to search for
 
 
 Optional Arguments:
 
-- `fd_center::Float64`:
-- `fd_range::Float64`:
-- `fd_rate::Float64`:
-- `Δfd::Float64`:
-- `start_idx::Int`:
+- `fd_center::Float64`: center Doppler frequency bin value in Hz `(default = 0Hz)`
+- `fd_range::Float64`: the range of Doppler frequencies in Hz to search plus and
+                       minus the center Doppler frequency bin `(default = 5000Hz)`
+- `fd_rate::Float64`: the Doppler frequency rate in Hz/s `(default = 0Hz)`
+- `Δfd::Float64`: the Doppler bin width in Hz `(default = 1/replica.t_length)`
+    * usually determined by the length of the integration time
+    * integration time is determined by the length of the replica
+      `replica.t_length`
+- `start_idx::Int`: starting sample in data plus `replica.sample_num` that is
+                    used for processing
 
 
 Returns:
@@ -107,19 +116,27 @@ Doppler bin.
 
 Required Arguments:
 
-- `corr_result::Array{Float64,2}`:
-- `data::Vector`:
-- `replica::ReplicaSignals`:
-- `prn::Int`:
+- `corr_result::Array{Float64,2}`: 2D array to store acquistion result
+- `data::GNSSSignal`: either a `GNSSData` or `ReplicaSignals`
+    * can be either simulated or real data
+- `replica::ReplicaSignals`: replica signal whose length determines the
+                             integration time used for course acquisition
+- `prn::Int`: PRN number refering to code to search for
 
 
 Optional Arguments:
 
-- `fd_center::Float64`:
-- `fd_range::Float64`:
-- `fd_rate::Float64`:
-- `Δfd::Float64`:
-- `start_idx::Int`:
+- `fd_center::Float64`: center Doppler frequency bin value in Hz `(default = 0Hz)`
+- `fd_range::Float64`: the range of Doppler frequencies in Hz to search plus and
+                       minus the center Doppler frequency bin `(default = 5000Hz)`
+- `fd_rate::Float64`: the Doppler frequency rate in Hz/s `(default = 0Hz)`
+- `Δfd::Float64`: the Doppler bin width in Hz `(default = 1/replica.t_length)`
+    * usually determined by the length of the integration time
+    * integration time is determined by the length of the replica
+      `replica.t_length`
+- `start_idx::Int`: starting sample in data plus `replica.sample_num` that is
+                    used for processing
+
 
 
 Modifies and Returns:
@@ -238,6 +255,7 @@ end
                       operation="replace", start_idx=1,
                       showprogressbar=true)
 
+
 Initializes `corr_result` array and runs `courseacquisition!` method.
 Returns `corr_result` and the course acquired code phase, Doppler
 frequency and SNR.
@@ -266,6 +284,7 @@ end
                        fd_rate=0., Δfd=1/data.t_length,
                        threads=8, message="Correlating...",
                        operation="replace", start_idx=1)
+
 
 Performs course acquisition on either `GNSSData` or `ReplicaSignal`
 type struct using defined `ReplicaSignal` type struct. No need
@@ -359,6 +378,7 @@ end
                             threads=nthreads(), message="Correlating...",
                             operation="add", start_idx=1,
                             showprogressbar=true)
+
 
 Performs non-coherent course acquisition on either `GNSSData` or
 `ReplicaSignal` type struct using defined `ReplicaSignal` type struct.

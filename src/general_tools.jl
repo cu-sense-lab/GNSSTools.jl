@@ -360,6 +360,21 @@ Find a number sequence in a file name. `digit_nums` can be a number or array.
 `separators` can also be either a number or array containing the characters such
 as `_` and `.` that may be between the numbers. Returns the string containing
 the sequence if found. Returns `missing` if not found.
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function find_sequence(file_name, digit_nums, separators=missing)
 	total_digits = sum(digit_nums)
@@ -414,6 +429,16 @@ end
 
 Find a sequency of 8 digits with `_` separating it from a sequence of 6 digits.
 Return the timestamp tuple.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function find_and_get_timestamp(file_name)
 	timestamp_string = find_sequence(file_name, [8, 6], "_")
@@ -436,9 +461,20 @@ end
 """
     get_signal_type(file_name)
 
+
 Find the signal type of the data based off its file name.
 Only checks if signal type is L1 or L5 signal. L2 is not
 supported.
+
+
+Required Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function get_signal_type(file_name)
     # Determine sampling and IF frequency and frequency center
@@ -482,6 +518,24 @@ end
 
 """
 	make_subplot(fig, row, col, i; projection3d=false, aspect="auto")
+
+
+#
+
+
+Required Arguments:
+
+-
+
+
+Optional Arguments:
+
+-
+
+
+Returns:
+
+-
 """
 function make_subplot(fig, row, col, i; projection3d=false, aspect="auto")
 	if projection3d
@@ -515,6 +569,8 @@ Optional Arguments:
                     where `freqs` is the array of frequencies spanning
 					`(0, f_s/2) Hz`
 
+
+Returns `nothing`
 
 Displays plot of frequencies against power of `fft(x)`
 """
