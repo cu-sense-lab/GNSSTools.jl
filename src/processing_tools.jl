@@ -53,7 +53,7 @@ function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000
     # is used for fine acquisition only. The signal must be at least
     # as long as `RLM*replica_t_length`
     f_s = signal.f_s
-    if typeof(signal_type) == SignalType
+    if isa(signal_type, SignalType)
         if channel == "both"
             # do nothing; keep as is
         elseif channel == "I"
