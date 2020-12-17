@@ -191,6 +191,7 @@ const gnsstypes = Dict(Val{:l5q}() => "l5q",
                        Val{:l1ca}() => "l1ca",
                        Val{:fft}() => "fft",
                        Val{:carrier}() => "carrier",
+					   Val{:sc16}() => "sc16",
                        Val{:sc8}() => "sc8",
                        Val{:sc4}() => "sc4")
 

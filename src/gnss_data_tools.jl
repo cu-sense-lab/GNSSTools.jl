@@ -3,7 +3,7 @@
              start_data_idx=1, site_lla=missing, data_start_time=missing)
 
 
-Loads data from `sc8` file and loads into `GNSSData` type struct.
+Loads data from `scN` file and loads into `GNSSData` type struct.
 
 `site_lla` is `[latitude, longitude, height]` in degrees and meters.
 
@@ -42,27 +42,31 @@ Returns:
 function loaddata(data_type, file_name, f_s, f_if, t_length;
                   start_data_idx=1, site_loc_lla=missing,
                   data_start_time=missing)
+	# Compute number of samples to extract
+	sample_num = Int(f_s * t_length)
 	# Determine nADC
 	if typeof(data_type) == Val{:sc8}
 		nADC = 8
+		data = Array{Complex{Int8}}(undef, sample_num)
 	elseif typeof(data_type) == Val{:sc4}
 		nADC = 4
+		data = Array{Complex{Int8}}(undef, sample_num)
+	elseif typeof(data_type) == Val{:sc16}
+		nADC = 16
+		data = Array{Complex{Int16}}(undef, sample_num)
 	else
 		error("Invalid data type: $(typeof(data_type))")
 	end
-	# Compute number of samples to extract
-	sample_num = Int(f_s * t_length)
 	# Read data
-	data = Array{Complex{Int8}}(undef, sample_num)
 	data, end_idx, dtype = readdatafile!(data, data_type, file_name,
-                                         sample_num, start_data_idx)
+	                                     sample_num, start_data_idx)
 	# Calculate total data length in seconds
 	total_data_length = (end_idx)/f_s
 	# Generate time vector
 	t = calctvector(sample_num, f_s)
 	return GNSSData(file_name, f_s, f_if, t_length, start_data_idx,
-                    t, float.(data), String(dtype), data_start_time,
-                    site_loc_lla, sample_num, total_data_length, nADC)
+	                t, float.(data), String(dtype), data_start_time,
+	                site_loc_lla, sample_num, total_data_length, nADC)
 end
 
 
@@ -107,17 +111,16 @@ end
 
 
 """
-	readdatafile!(data, data_type::Val{:sc8}, file_name, sample_num,
-				  start_idx=1)
+	readdatafile!(data, data_type, file_name, sample_num, start_idx=1)
 
 
-Loads `sc8` data files. First 8-bit number is real, second is imaginary.
+Loads `scN` data files. First N-bit number is real, second is imaginary.
 
 
 Required Arguments:
 
 - `data::Vector{Complex{Int}}`: the complex data vector to store the new data
-- `data_type::Val{:sc8}`: only accepts `Val(:sc8)` to indicate data is 8-bit
+- `data_type::Val{:scN}`: only accepts `Val(:scN)` to indicate data is N-bit
                           complex
 - `file_name::String`: data file name
 - `sample_num::Int`: `[NOT USED]` number of samples after `start_data_idx` to
@@ -127,15 +130,16 @@ Required Arguments:
 Optional Arguments:
 
 - `start_idx::Int`: where the first data sample will be loaded in the data
+	* `default = 1`
 
 
 Returns:
 
 - `data::Vector{Complex{Int}}`: elements are replaced with new data
 - `end_idx::Int`: the last sample index loaded plus one
-- `:sc8::Symbol`: symbol which describes the type of data
+- `:scN::Symbol`: symbol which describes the type of data
 """
-function readdatafile!(data, data_type::Val{:sc8}, file_name, sample_num,
+function readdatafile!(data, data_type, file_name, sample_num,
                        start_idx=1)
 	# Open file
 	f = open(file_name, "r")
@@ -146,7 +150,7 @@ function readdatafile!(data, data_type::Val{:sc8}, file_name, sample_num,
 	# Get the index value for the end of the file
 	end_idx = position(seekend(f)) + 1
     close(f)
-    return (data, end_idx, :sc8)
+    return (data, end_idx, gnsstypes[data_type])
 end
 
 
@@ -174,6 +178,7 @@ Required Arguments:
 Optional Arguments:
 
 - `start_idx::Int`: where the first data sample will be loaded in the data
+	* `default = 1`
 
 
 Returns:
