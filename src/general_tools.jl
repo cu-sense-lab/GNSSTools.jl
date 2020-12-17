@@ -364,18 +364,24 @@ the sequence if found. Returns `missing` if not found.
 
 Required Arguments:
 
-- `file_name`:
-- `digit_nums`:
+- `file_name`: name of file
+- `digit_nums`: can be an array or single number indicating number of digits in
+                `file_name` to find
+    * e.g. to find `1970-01-01`, user would pass `digit_nums` as `[4, 2, 2]`
 
 
 Optional Arguments:
 
-- `separators`:
+- `separators`: the characer used to separate the number sequence
+	* e.g. to find `1970-01-01`, user would pass `separators` as `"-"`
+	* `(default = missing)`
 
 
 Returns:
 
--
+- `String`: if sequence is found, a copy of the sequence in `file_name` is
+            returned
+    * returns `missing` if sequence is not found
 """
 function find_sequence(file_name, digit_nums, separators=missing)
 	total_digits = sum(digit_nums)
@@ -429,17 +435,19 @@ end
 
 
 Find a sequency of 8 digits with `_` separating it from a sequence of 6 digits.
-Return the timestamp tuple.
+Return the timestamp tuple. Expected sequence to find is `YYYYMMDD_HHMMSS`.
 
 
 Required Arguments:
 
-- `file_name`:
+- `file_name`: name of data file
 
 
 Returns:
 
--
+- `timestamp`: `Tuple` containing date and time
+	* format is `(year, month, day, hour, minute, second)`
+- `timestamp_JD`: Julian date of `timestamp`
 """
 function find_and_get_timestamp(file_name)
 	timestamp_string = find_sequence(file_name, [8, 6], "_")
@@ -463,19 +471,22 @@ end
     get_signal_type(file_name)
 
 
-Find the signal type of the data based off its file name.
-Only checks if signal type is L1 or L5 signal. L2 is not
-supported.
+Find the signal type of the data based off its file name. Only checks if signal
+type is L1 or L5 signal. L2 is not supported.
 
 
 Required Arguments:
 
-- `file_name`:
+- `file_name`: name of data file
 
 
 Returns:
 
--
+- `f_s`: sampling rate in Hz
+- `f_if`: IF frequency in Hz
+- `f_center`: receiver center frequency in Hz
+- `sig_freq`: signal carrier frequency in Hz
+- `sigtype`: either `Val(:l1ca)` or `Val(:l5q)`
 """
 function get_signal_type(file_name)
     # Determine sampling and IF frequency and frequency center
@@ -499,6 +510,9 @@ function get_signal_type(file_name)
 			data_freq_string = split(data_freq_string, "_")
 			f_center = parse(Float64, data_freq_string[1]) * 1e6  # Hz
 			f_s = parse(Float64, data_freq_string[2]) * 1e6  # Hz
+			# Determine the smallest difference between `f_center` and
+			# all GPS carrier frequencies. The closest difference determines
+			# what the signal type is.
 			Δf = abs.(f_center .- [L1_freq, L2_freq, L5_freq])
 			idx = argmin(Δf)
 			if idx == 1
@@ -521,31 +535,33 @@ end
 	make_subplot(fig, row, col, i; projection3d=false, aspect="auto")
 
 
-#
+Makes a subplot using the PyPlot module. Provides easier setup for 3D subplots.
 
 
 Required Arguments:
 
-- `fig`:
-- `row`:
-- `col`:
-- `i`:
+- `fig`: PyPlot figure object
+- `row`: `Int` that specifies the number of rows in the figure
+- `col`: `Int` that specifies the number of columns in the figure
+- `i`: `Int` specifying the subplot placement in the figure `(range = (1,row*col))`
 
 
 Optional Arguments:
 
-- `projection3d`:
-- `aspect`:
+- `projection3d`: set to `true` if generating a 3D plot `(default = `false`)`
+- `aspect`: subplot aspect ratio; refer to PyPlot `(default = "auto")`
+	* does not work if `projection3d` is set to `true`
 
 
 Returns:
 
--
+- `fig`: PyPlot figure object
+- `ax`: PyPlot subplot axis object
 """
 function make_subplot(fig, row, col, i; projection3d=false, aspect="auto")
 	if projection3d
-		mplot3d = PyPlot.PyObject(PyPlot.axes3D)  # must be called in local scope
-		                                          # in order to make 3D subplots
+		# Must be called in local scope in order to make 3D subplots
+		mplot3d = PyPlot.PyObject(PyPlot.axes3D)
 		ax = fig.add_subplot(row, col, i, projection="3d")
 	else
 		ax = fig.add_subplot(row, col, i, aspect=aspect)
