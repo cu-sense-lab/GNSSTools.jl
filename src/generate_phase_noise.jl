@@ -1,5 +1,5 @@
 """
-    voss(noise1, noise2, scale, N=length(noise1))
+    voss!(noise1::Vector, noise2::Vector, scale, N=length(noise1))
 
 
 #
@@ -7,8 +7,8 @@
 
 Required Arguments:
 
-- `noise1`:
-- `noise2`:
+- `noise1::Vector`:
+- `noise2::Vector`:
 - `scale`
 
 
@@ -21,7 +21,7 @@ Modifies and Returns:
 
 - `noise1`:
 """
-function voss!(noise1, noise2, scale, N=length(noise1))
+function voss!(noise1::Vector, noise2::Vector, scale, N=length(noise1))
     n = 2
     sampled_noise_T = Array{Int}(undef, 0)
     while n <= N
@@ -50,7 +50,7 @@ end
 
 
 """
-    generate_phase_noise(N; scale=1/10)
+    generate_phase_noise(N::Int; scale=1/10)
 
 
 #
@@ -58,7 +58,7 @@ end
 
 Required Arguments:
 
-- `N`:
+- `N::Int`:
 
 
 Optional Arguments:
@@ -70,7 +70,7 @@ Returns:
 
 -
 """
-function generate_phase_noise(N; scale=1/10)
+function generate_phase_noise(N::Int; scale=1/10)
     noise = randn(N)
     noise_temp = randn(N)
     return voss!(noise, noise_temp, scale, N)
@@ -78,7 +78,7 @@ end
 
 
 """
-    generate_phase_noise!(noise, N=length(noise); scale=1/10)
+    generate_phase_noise!(noise::Vector, N::Int=length(noise); scale=1/10)
 
 
 #
@@ -86,12 +86,12 @@ end
 
 Required Arguments:
 
-- `noise`:
+- `noise::Vector`:
 
 
 Optional Arguments:
 
-- `N`:
+- `N::Int`:
 - `scale`:
 
 
@@ -99,14 +99,14 @@ Returns:
 
 -
 """
-function generate_phase_noise!(noise, N=length(noise)::Int; scale=1/10)
+function generate_phase_noise!(noise::Vector, N::Int=length(noise); scale=1/10)
     noise_temp = randn(N)
     return voss!(noise, noise_temp, scale, N)
 end
 
 
 """
-    generate_phase_noise!(noise, temp_noise; scale=1/10)
+    generate_phase_noise!(noise::Vector, noise_temp::Vector; scale=1/10)
 
 
 #
@@ -114,8 +114,8 @@ end
 
 Required Arguments:
 
-- `noise`:
-- `noise_temp`:
+- `noise::Vector`:
+- `noise_temp::Vector`:
 
 
 Optional Arguments:
@@ -127,6 +127,6 @@ Returns:
 
 -
 """
-function generate_phase_noise!(noise, noise_temp::Vector; scale=1/10)
+function generate_phase_noise!(noise::Vector, noise_temp::Vector; scale=1/10)
     return voss!(noise, noise_temp, scale, length(noise))
 end
