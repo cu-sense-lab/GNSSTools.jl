@@ -3,6 +3,21 @@
 
 
 Struct for storing coefficients for the PLL filter.
+
+
+Fields:
+
+- `T::Float64`:
+- `damping::Float64`:
+- `B::Float64`:
+- `wn::Float64`:
+- `a0::Float64`:
+- `a1::Float64`:
+- `a2::Float64`:
+- `b0::Float64`:
+- `b1::Float64`:
+- `b2::Float64`:
+- `descriminator::String`:
 """
 struct PLLParms
     T::Float64
@@ -24,6 +39,14 @@ end
 
 
 Struct for storing DLL parameters.
+
+
+Fields:
+
+- `T::Float64`:
+- `B::Float64`:
+- `d::Int64`:
+- `descriminator::String`:
 """
 struct DLLParms
     T::Float64
@@ -38,6 +61,52 @@ end
 
 
 A struct containing the parameters for tracking and its results
+
+
+Fields:
+
+- `prn::Int64`:
+- `signaltype::String`:
+- `dll_parms::DLLParms`:
+- `pll_parms::PLLParms`:
+- `M::Int64`:
+- `T::Float64`:
+- `N::Int64`:
+- `data_file::String`:
+- `data_type::String`:
+- `data_nADC::Int64`:
+- `data_start_idx::Int64`:
+- `data_t_length::Float64`:
+- `data_total_t_length::Float64`:
+- `data_sample_num::Int64`:
+- `data_fs::Float64`:
+- `data_fif::Float64`:
+- `data_start_t::T1`:
+- `data_site_lla::T2`:
+- `data_init_n0::Float64`:
+- `data_init_code_chip::Float64`:
+- `data_init_phi::Float64`:
+- `data_init_fd::Float64`:
+- `t::Array{Float64,1}`:
+- `code_err_meas::Array{Float64,1}`:
+- `code_err_filt::Array{Float64,1}`:
+- `code_phase_meas::Array{Float64,1}`:
+- `code_phase_filt::Array{Float64,1}`:
+- `n0::Array{Float64,1}`:
+- `dphi_meas::Array{Float64,1}`:
+- `phi::Array{Float64,1}`:
+- `delta_fd::Array{Float64,1}`:
+- `fds::Array{Float64,1}`:
+- `ZP::Array{Complex{Float64},1}`:
+- `SNR::Array{Float64,1}`:
+- `data_bits::Array{Int64,1}`:
+- `code_length::Int64`:
+- `Q::Array{Float64,2}`:
+- `A::Array{Float64,2}`:
+- `C::Array{Float64,2}`:
+- `P::Array{Float64,2}`:
+- `x::Array{Float64,2}`:
+- `K::Array{Float64,2}`:
 """
 struct TrackResults{T1,T2}
     prn::Int64
@@ -95,12 +164,14 @@ Define `PLLParms` struct.
 
 Required Arguments:
 
--
+- `T`:
+- `B`:
+- `ξ`:
 
 
 Returns:
 
--
+- `PLLParms` struct
 """
 function definepll(T, B, ξ)
     ωₙ = 4*B/(2*ξ + 1/(2*ξ))
@@ -124,12 +195,14 @@ Define `DLLParms` struct.
 
 Required Arguments:
 
--
+- `T`:
+- `B`:
+- `d`:
 
 
 Returns:
 
--
+- `DLLParms` struct
 """
 function definedll(T, B, d)
     descriminator = "Z4 = 1/d * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))"
@@ -146,7 +219,7 @@ Calculate the raw phase measurement.
 
 Required Arguments:
 
--
+- `ZP`:
 
 
 Returns:
@@ -168,7 +241,12 @@ Fiters the raw phase measurement using 2ⁿᵈ order PLL filter.
 
 Required Arguments:
 
--
+- `pll_parms::PLLParms`:
+- `ϕ_meas`:
+- `ϕ_meas_1`:
+- `ϕ_meas_2`:
+- `ϕ_filt_1`:
+- `ϕ_filt_2`:
 
 
 Returns:
@@ -196,7 +274,10 @@ Calculates the code phase error.
 
 Required Arguments:
 
--
+- `dll_parms::DLLParms`:
+- `ZE`:
+- `ZP`:
+- `ZL`:
 
 
 Returns:
@@ -216,7 +297,9 @@ Returns the filtered code phase measusurement.
 
 Required Arguments:
 
--
+- `dll_parms::DLLParms`:
+- `current_code_err`:
+- `last_filt_code_err`:
 
 
 Returns:
@@ -237,7 +320,9 @@ end
 
 Required Arguments:
 
--
+- `i`:
+- `offset`:
+- `N`
 
 
 Returns:
@@ -269,12 +354,21 @@ calling this method.
 
 Required Arguments:
 
--
+- `ZP_array`:
+- `data`:
+- `replica`:
+- `i`:
+- `N`:
+- `f_id`:
+- `f_d`:
+- `fd_rate`:
+- `ϕ`:
+- `d`:
 
 
 Optional Arguments:
 
--
+- `bin_width`:
 
 
 Returns:
@@ -352,12 +446,12 @@ dependent on the integration time, `T`.
 
 Required Arguments:
 
--
+- `T`:
 
 
 Optional Arguments:
 
--
+- `state_num`:
 
 
 Returns:
@@ -385,12 +479,12 @@ time, `T`.
 
 Required Arguments:
 
--
+- `T`:
 
 
 Optional Arguments:
 
--
+- `state_num`:
 
 
 Returns:
@@ -420,12 +514,16 @@ as 2 or 3. `f_L` is the carrier frequency.
 
 Required Arguments:
 
--
+- `T`:
+- `h₀`:
+- `h₋₂`:
+- `qₐ`:
+- `f_L`:
 
 
 Optional Arguments:
 
--
+- `state_num`:
 
 
 Returns:
@@ -448,10 +546,11 @@ end
 
 
 """
-    trackprn(data, replica::ReplicaSignals, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
-                  DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
-                  h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10., state_num=2,
-				  dynamickf=false, covMult=1.)
+	trackprn(data::GNSSSignal, replica::ReplicaSignals, prn, ϕ_init,
+			 fd_init, n0_idx_init, P₀, R; DLL_B=5, PLL_B=15, damping=1.4,
+			 fd_rate=0., G=0.2, h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10.,
+			 state_num=2, dynamickf=false, cov_mult=1., q_mult=1.,
+			 channel="I")
 
 
 Perform code and phase tracking on data in `data`.
@@ -462,23 +561,43 @@ that are minumum amount to track a given PRN.
 
 Required Arguments:
 
--
+- `data::GNSSSignal`:
+- `replica::ReplicaSignals`:
+- `prn`:
+- `ϕ_init`:
+- `fd_init`:
+- `n0_idx_init`:
+- `P₀`:
+- `R`:
 
 
 Optional Arguments:
 
--
+- `DLL_B`:
+- `PLL_B`:
+- `damping`:
+- `fd_rate`:
+- `G`:
+- `h₀`:
+- `h₋₂`:
+- `σω`:
+- `qₐ`:
+- `state_num`:
+- `dynamickf`:
+- `cov_mult`:
+- `q_mult`:
+- `channel`:
 
 
 Returns:
 
--
+- `TrackResults` struct
 """
-function trackprn(data, replica::ReplicaSignals, prn, ϕ_init, fd_init, n0_idx_init, P₀, R;
-                  DLL_B=5, PLL_B=15, damping=1.4, fd_rate=0., G=0.2,
-                  h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10., state_num=2,
-				  dynamickf=false, cov_mult=1., q_mult=1., channel="I",
-                  message="Tracking PRN $(prn) with T=$(Int64(floor(replica.t_length*1000)))ms...")
+function trackprn(data::GNSSSignal, replica::ReplicaSignals, prn, ϕ_init,
+	              fd_init, n0_idx_init, P₀, R; DLL_B=5, PLL_B=15, damping=1.4,
+				  fd_rate=0., G=0.2, h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10.,
+				  state_num=2, dynamickf=false, cov_mult=1., q_mult=1.,
+				  channel="I")
     # Assign signal specific parameters
     sig_freq = replica.signal_type.sig_freq
 	if replica.signal_type.include_I
@@ -667,6 +786,98 @@ function trackprn(data, replica::ReplicaSignals, prn, ϕ_init, fd_init, n0_idx_i
                         delta_fd, fds, ZP, SNR, data_bits, code_length,
                         Q, A, C, P, x, K)
 end
+
+
+"""
+	plotresults(results::TrackResults; saveto=missing,
+				figsize=missing, doppler_curve=missing,
+				doppler_t=missing, CN0=missing)
+
+
+Plots the tracking results from the `trackprn` method.
+
+
+Required Arguments:
+
+- `results::TrackResults`:
+
+
+Optional Arguments:
+
+- `saveto`:
+- `figsize`:
+- `doppler_curve`:
+- `doppler_t`:
+- `CN0`:
+
+
+Plots tracking results figure.
+"""
+function plotresults(results::TrackResults; saveto=missing,
+	                 figsize=missing, doppler_curve=missing,
+					 doppler_t=missing, CN0=missing)
+	if ismissing(figsize)
+		figure()
+	else
+		figure(figsize=figsize)
+	end
+    matplotlib.gridspec.GridSpec(3,2)
+    # Plot code phase errors
+    subplot2grid((3,2), (0,0), colspan=1, rowspan=1)
+    plot(results.t, results.code_phase_meas.%results.code_length, "k.", label="Measured code phase")
+    plot(results.t, results.code_phase_filt.%results.code_length, "b-", label="Filtered code phase")
+    xlabel("Time (s)")
+    ylabel("Code Phase (chips)")
+    title("DLL Tracking")
+    legend()
+    # Plot filtered and measured phase errors
+    subplot2grid((3,2), (0,1), colspan=1, rowspan=1)
+    plot(results.t, results.dphi_meas.*180 ./π, "k.", label="Measured Δϕ")
+    xlabel("Time (s)")
+    ylabel("ϕ (degrees)")
+    title("PLL Tracking")
+    legend()
+	# Doppler frequency estimate
+    subplot2grid((3,2), (1,0), colspan=1, rowspan=1)
+	if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
+		plot(results.t, results.fds, "k.", label="Estimate")
+		plot(doppler_t, doppler_curve, "b-", label="Truth")
+		legend()
+	else
+    	plot(results.t, results.fds, "k.")
+	end
+    xlabel("Time (s)")
+    ylabel("Doppler (Hz)")
+    title("Doppler Frequency Estimate")
+	# SNR estimate
+	subplot2grid((3,2), (1,1), colspan=2, rowspan=1)
+	if ~ismissing(CN0)
+		plot(results.t, results.SNR, "k.", label="Estimate")
+		axhline(y=CN0+10*log10(results.T), color="b",
+		        label="Truth")
+		legend()
+	else
+    	plot(results.t, results.SNR, "k.")
+	end
+    xlabel("Time (s)")
+    ylabel("SNR (dB)")
+    title("SNR Estimate")
+    # Plot ZP real and imaginary parts
+    subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
+    plot(results.t, real(results.ZP), label="real(ZP)")
+    plot(results.t, imag(results.ZP), label="imag(ZP)")
+    xlabel("Time (s)")
+    ylabel("ZP")
+    title("Prompt Correlator Output")
+    legend()
+    suptitle("PRN $(results.prn)\nfd = $(Int(round(results.data_init_fd))) Hz\nn₀ = $(results.data_init_n0) samples")
+    # subplots_adjust(hspace=0.4, wspace=0.4)
+    subplots_adjust(hspace=0.4, wspace=0.2)
+    if ~ismissing(saveto)
+        savefig(saveto::String)
+    end
+end
+
 
 
 #------------------------------------------------------------------------------
@@ -869,75 +1080,4 @@ function trackprn(data, replica::ReplicaSignal, prn, ϕ_init, fd_init, n0_idx_in
                         code_phase_filt, n0s, dphi_measured, phi,
                         delta_fd, fds, ZP, SNR, data_bits, code_length,
                         Q, A, C, P, x, K)
-end
-
-
-"""
-    plot(results::TrackResults, saveto=missing)
-
-Plots the tracking results from the `trackprn` method.
-"""
-function plotresults(results::TrackResults; saveto=missing,
-	                 figsize=missing, doppler_curve=missing,
-					 doppler_t=missing, CN0=missing)
-	if ismissing(figsize)
-		figure()
-	else
-		figure(figsize=figsize)
-	end
-    matplotlib.gridspec.GridSpec(3,2)
-    # Plot code phase errors
-    subplot2grid((3,2), (0,0), colspan=1, rowspan=1)
-    plot(results.t, results.code_phase_meas.%results.code_length, "k.", label="Measured code phase")
-    plot(results.t, results.code_phase_filt.%results.code_length, "b-", label="Filtered code phase")
-    xlabel("Time (s)")
-    ylabel("Code Phase (chips)")
-    title("DLL Tracking")
-    legend()
-    # Plot filtered and measured phase errors
-    subplot2grid((3,2), (0,1), colspan=1, rowspan=1)
-    plot(results.t, results.dphi_meas.*180 ./π, "k.", label="Measured Δϕ")
-    xlabel("Time (s)")
-    ylabel("ϕ (degrees)")
-    title("PLL Tracking")
-    legend()
-	# Doppler frequency estimate
-    subplot2grid((3,2), (1,0), colspan=1, rowspan=1)
-	if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
-		plot(results.t, results.fds, "k.", label="Estimate")
-		plot(doppler_t, doppler_curve, "b-", label="Truth")
-		legend()
-	else
-    	plot(results.t, results.fds, "k.")
-	end
-    xlabel("Time (s)")
-    ylabel("Doppler (Hz)")
-    title("Doppler Frequency Estimate")
-	# SNR estimate
-	subplot2grid((3,2), (1,1), colspan=2, rowspan=1)
-	if ~ismissing(CN0)
-		plot(results.t, results.SNR, "k.", label="Estimate")
-		axhline(y=CN0+10*log10(results.T), color="b",
-		        label="Truth")
-		legend()
-	else
-    	plot(results.t, results.SNR, "k.")
-	end
-    xlabel("Time (s)")
-    ylabel("SNR (dB)")
-    title("SNR Estimate")
-    # Plot ZP real and imaginary parts
-    subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
-    plot(results.t, real(results.ZP), label="real(ZP)")
-    plot(results.t, imag(results.ZP), label="imag(ZP)")
-    xlabel("Time (s)")
-    ylabel("ZP")
-    title("Prompt Correlator Output")
-    legend()
-    suptitle("PRN $(results.prn)\nfd = $(Int(round(results.data_init_fd))) Hz\nn₀ = $(results.data_init_n0) samples")
-    # subplots_adjust(hspace=0.4, wspace=0.4)
-    subplots_adjust(hspace=0.4, wspace=0.2)
-    if ~ismissing(saveto)
-        savefig(saveto::String)
-    end
 end

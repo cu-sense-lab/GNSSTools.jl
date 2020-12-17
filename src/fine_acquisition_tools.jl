@@ -4,6 +4,22 @@
 
 A struct that stores the fine acquisition fine acquisition
 results for both the carrier and FFT based methods.
+
+
+Fields:
+
+- `prn::Int64`:
+- `type::String`:
+- `fd_course::Float64`:
+- `fd_rate::Float64`:
+- `n0_idx_course::Int64`:
+- `t_length::Float64`:
+- `fd_fine::Float64`:
+- `fd_est::Float64`:
+- `phi_init::Float64`:
+- `M::T1`:
+- `P::Array{Float64,2}`:
+- `R::Array{Float64,1}`:
 """
 struct FineAcquisitionResults{T1}
     prn::Int64
@@ -35,17 +51,27 @@ struct, however, `data` and `replica` must be two seperate structs.
 
 Required Arguments:
 
--
+- `data::GNSSSignal`:
+- `replica::ReplicaSignals`:
+- `prn::Int`:
+- `fd_course`:
+- `n₀_idx_course`:
+- `type::Val{:fft}`:
 
 
 Optional Arguments:
 
--
+- `fd_rate`:
+- `t_length`:
+- `freq_lim`:
+- `σω`:
+- `err_bin_num_ϕ`:
+- `err_bin_num_f`:
 
 
 Returns:
 
--
+- `FineAcquisitionResults` struct
 """
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
@@ -161,17 +187,26 @@ Performs an carrier based fine acquisition on `data`.
 
 Required Arguments:
 
--
+- `data::GNSSSignal`:
+- `replica::ReplicaSignals`:
+- `prn::Int`:
+- `fd_course`:
+- `n₀_idx_course`:
+- `type::Val{:carrier}`:
 
 
 Optional Arguments:
 
--
+- `fd_rate`:
+- `t_length`:
+- `freq_lim`:
+- `M`:
+- `σω`:
 
 
 Returns:
 
--
+- `FineAcquisitionResults` struct
 """
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
                          n₀_idx_course, type::Val{:carrier}; fd_rate=0.,

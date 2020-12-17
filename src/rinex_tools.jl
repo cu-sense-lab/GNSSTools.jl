@@ -1,9 +1,21 @@
 """
-    Klobuchar(α₀, α₁, α₁, α₃, β₀, β₁, β₂, β₃)
+    Klobuchar
 
 
 Struct holding the ionospheric correction terms
 for the Klobuchar Ionospheric Model.
+
+
+Fields:
+
+- `α₀`:
+- `α₁`:
+- `α₂`:
+- `α₃`:
+- `β₀`:
+- `β₁`:
+- `β₂`:
+- `β₃`:
 """
 struct Klobuchar
     α₀::Float64
@@ -18,11 +30,21 @@ end
 
 
 """
-    EphemerisEpoch(timestamp, year, month, day,
-                   hour, minute, second)
+    EphemerisEpoch
 
 
 Struct for the epoch time of the ephemeris.
+
+
+Fields:
+
+- `timestamp::String`:
+- `year::Float64`:
+- `month::Float64`:
+- `day::Float64`:
+- `hour::Float64`:
+- `minute::Float64`:
+- `second::Float64`:
 """
 struct EphemerisEpoch
     timestamp::String
@@ -36,13 +58,41 @@ end
 
 
 """
-    BRDC(prn, iono_parms, epoch, Af₀, Af₁, Af₂, IODE,
-         Crs, Crc, Cus, Cuc, Cis, Cic, ṅ, M₀, e, a,
-         Toe, Toc, Ω, i, di, dα, ω, gps_week, health)
+    BRDC
 
 
 Struct holding GPS Broadcast Ephemeris parameters and
 ionospheric correction terms.
+
+
+Fields:
+
+- `prn::Int64`:
+- `iono_parms::T`:
+- `epoch::EphemerisEpoch`
+- `Af₀::Float64`
+- `Af₁::Float64`
+- `Af₂::Float64`
+- `IODE::Float64`
+- `Crs::Float64`
+- `Crc::Float64`
+- `Cus::Float64`
+- `Cuc::Float64`
+- `Cis::Float64`
+- `Cic::Float64`
+- `ṅ::Float64`
+- `M₀::Float64`
+- `e::Float64`
+- `a::Float64`
+- `Toe::Float64`
+- `Toc::Float64`
+- `Ω::Float64`
+- `i::Float64`
+- `di::Float64`
+- `dα::Float64`
+- `ω::Float64`
+- `gps_week::Float64`
+- `health::Float64`
 """
 struct BRDC{T}
     prn::Int64
@@ -84,7 +134,7 @@ so they can be parsed using `parse`.
 
 Required Arguments:
 
--
+- `str`:
 
 
 Returns:
@@ -113,12 +163,12 @@ values.
 
 Required Arguments:
 
--
+- `file`:
 
 
 Returns:
 
--
+- `BRDCs::Dict`
 """
 function loadrinex(file)
     f = open(file, "r")

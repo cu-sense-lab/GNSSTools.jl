@@ -48,12 +48,15 @@ doppler2chips(signal::ReplicaSignals, doppler_curve,
 
 Required Arguments:
 
--
+- `signal::ReplicaSignals`:
+- `doppler_curve`:
+- `doppler_t`:
 
 
 Optional Arguments:
 
--
+- `Δt`:
+- `N`:
 
 
 Returns:
@@ -142,12 +145,9 @@ end
 
 Required Arguments:
 
--
-
-
-Optional Arguments:
-
--
+- `signal::ReplicaSignals`:
+- `doppler_curve`:
+- `doppler_t`:
 
 
 Returns:
@@ -168,10 +168,10 @@ end
 
 
 """
-doppler2chips(doppler_curve, chipping_rates, sig_freq, t;
-              Δt=t[2]-t[1], N=length(doppler_curve),
-              chip_init=zeros(length(chipping_rates)),
-              ϕ_init=0.)
+    doppler2chips(doppler_curve, chipping_rates, sig_freq, f_if, t;
+                  Δt=t[2]-t[1], N=length(doppler_curve),
+                  chip_init=zeros(length(chipping_rates)),
+                  ϕ_init=0.)
 
 `M` should be an integer multiple of `N`
 """

@@ -364,12 +364,13 @@ the sequence if found. Returns `missing` if not found.
 
 Required Arguments:
 
--
+- `file_name`:
+- `digit_nums`:
 
 
 Optional Arguments:
 
--
+- `separators`:
 
 
 Returns:
@@ -433,7 +434,7 @@ Return the timestamp tuple.
 
 Required Arguments:
 
--
+- `file_name`:
 
 
 Returns:
@@ -469,7 +470,7 @@ supported.
 
 Required Arguments:
 
--
+- `file_name`:
 
 
 Returns:
@@ -525,12 +526,16 @@ end
 
 Required Arguments:
 
--
+- `fig`:
+- `row`:
+- `col`:
+- `i`:
 
 
 Optional Arguments:
 
--
+- `projection3d`:
+- `aspect`:
 
 
 Returns:

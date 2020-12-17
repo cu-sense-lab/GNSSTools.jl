@@ -68,7 +68,7 @@ end
     get_eop()
 
 
-
+#
 
 
 Returns:
@@ -81,7 +81,11 @@ end
 
 
 """
-    define_constellation(plane_num, sat_per_plane, inclination)
+    define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
+                         eop=get_eop(), show_plot=true,
+                         Ω₀=0., f₀=0., ω=0., e=0., t_start=0., obs_lla=missing,
+                         ΔΩ=360/plane_num, a_lim=1, ax=missing, figsize=missing,
+                         print_steps=true)
 
 
 Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, otherwise,
@@ -90,12 +94,28 @@ Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, other
 
 Required Arguments:
 
--
+- `a`:
+- `plane_num`:
+- `satellite_per_plane`:
+- `incl`:
+- `t_range`:
 
 
 Optional Arguments:
 
--
+- `eop`:
+- `show_plot`:
+- `Ω₀`:
+- `f₀`:
+- `ω`:
+- `e`:
+- `t_start`:
+- `obs_lla`:
+- `ΔΩ`:
+- `a_lim`:
+- `ax`:
+- `figsize`:
+- `print_steps`:
 
 
 Returns:
@@ -184,11 +204,12 @@ end
 
 
 """
-doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
-                     obs_lla, sig_freq; eop=get_iers_eop(:IAU1980),
-                     Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
-                     t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
-                     show_hist=true, bins=100)
+    doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
+                         obs_lla, sig_freq; eop=get_eop(),
+                         Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
+                         t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
+                         bins=100, heatmap_bins=[bins, bins], a_lim=1.25,
+                         figsize=missing, print_steps=true)
 
 
 #
@@ -196,12 +217,31 @@ doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
 
 Required Arguments:
 
--
+- `a`:
+- `plane_num`:
+- `satellite_per_plane`:
+- `incl`:
+- `t_range`:
+- `obs_lla`:
+- `sig_freq`:
 
 
 Optional Arguments:
 
--
+- `eop`:
+- `Ω₀`:
+- `f₀`:
+- `show_plot`:
+- `ω`:
+- `e`:
+- `t_start`:
+- `ΔΩ`:
+- `min_elevation`:
+- `bins`:
+- `heatmap_bins`:
+- `a_lim`:
+- `figsize`:
+- `print_steps`:
 
 
 Returns:
@@ -295,7 +335,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
 
 
 """
-    plot_satellite_orbit(satellite::Satellite; user_lla=missing)
+    plot_satellite_orbit(satellite::Satellite; obs_lla=missing)
 
 
 #
@@ -303,12 +343,12 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
 
 Required Arguments:
 
--
+- `satellite::Satellite`:
 
 
 Optional Arguments:
 
--
+- `obs_lla`:
 
 
 Returns:

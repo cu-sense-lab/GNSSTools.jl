@@ -1,5 +1,5 @@
 """
-    CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s,
+    CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I",
                     signal_type=define_l1ca_code_type(t_length); bins=1000,
                     iterations=100, prn=1, nADC=4, phase_noise_scaler=1/10,
                     include_phase_noise=true, include_thermal_noise=true,
@@ -7,7 +7,7 @@
                     f_if=0., include_adc=true, Tsys=535., include_carrier=true,
                     σω=1000., fd_range=5000., RLM=10, replica_t_length=1e-3,
                     cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=2,
-                    state_num=3, fine_acq_method=:fft, M=10, channel="both")
+                    state_num=3, fine_acq_method=:fft, M=10)
 
 
 #
@@ -15,17 +15,47 @@
 
 Required Arguments:
 
--
+- `CN0`:
+- `dopplers`:
+- `doppler_rates`:
+- `t_length`:
+- `f_s`:
 
 
 Optional Arguments:
 
--
+- `channel`:
+- `signal_type`:
+- `bins`:
+- `iterations`:
+- `prn`:
+- `nADC`:
+- `phase_noise_scaler`:
+- `include_phase_noise`:
+- `include_thermal_noise`:
+- `include_databits_I`:
+- `include_databits_Q`:
+- `f_if`:
+- `include_adc`:
+- `Tsys`:
+- `include_carrier`:
+- `σω`:
+- `fd_range`:
+- `RLM`:
+- `replica_t_length`:
+- `cov_mult`:
+- `q_a`:
+- `q_mult`:
+- `dynamickf`:
+- `dll_b`:
+- `state_num`:
+- `fine_acq_method`:
+- `M`:
 
 
 Returns:
 
-- 
+-
 """
 function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I",
                          signal_type=define_l1ca_code_type(t_length); bins=1000,
