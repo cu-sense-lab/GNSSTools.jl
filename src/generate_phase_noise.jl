@@ -1,7 +1,27 @@
 """
     voss(noise1, noise2, scale, N=length(noise1))
+
+
+#
+
+
+Required Arguments:
+
+- `noise1`:
+- `noise2`:
+- `scale`
+
+
+Optional Arguments:
+
+- `N`:
+
+
+Modifies and Returns:
+
+- `noise1`:
 """
-function voss(noise1, noise2, scale, N=length(noise1))
+function voss!(noise1, noise2, scale, N=length(noise1))
     n = 2
     sampled_noise_T = Array{Int}(undef, 0)
     while n <= N
@@ -31,26 +51,82 @@ end
 
 """
     generate_phase_noise(N; scale=1/10)
+
+
+#
+
+
+Required Arguments:
+
+- `N`:
+
+
+Optional Arguments:
+
+- `scale`:
+
+
+Returns:
+
+-
 """
 function generate_phase_noise(N; scale=1/10)
     noise = randn(N)
     noise_temp = randn(N)
-    return voss(noise, noise_temp, scale, N)
+    return voss!(noise, noise_temp, scale, N)
 end
 
 
 """
     generate_phase_noise!(noise, N=length(noise); scale=1/10)
+
+
+#
+
+
+Required Arguments:
+
+- `noise`:
+
+
+Optional Arguments:
+
+- `N`:
+- `scale`:
+
+
+Returns:
+
+-
 """
 function generate_phase_noise!(noise, N=length(noise)::Int; scale=1/10)
     noise_temp = randn(N)
-    return voss(noise, noise_temp, scale, N)
+    return voss!(noise, noise_temp, scale, N)
 end
 
 
 """
     generate_phase_noise!(noise, temp_noise; scale=1/10)
+
+
+#
+
+
+Required Arguments:
+
+- `noise`:
+- `noise_temp`:
+
+
+Optional Arguments:
+
+- `scale`:
+
+
+Returns:
+
+-
 """
 function generate_phase_noise!(noise, noise_temp::Vector; scale=1/10)
-    return voss(noise, noise_temp, scale, length(noise))
+    return voss!(noise, noise_temp, scale, length(noise))
 end
