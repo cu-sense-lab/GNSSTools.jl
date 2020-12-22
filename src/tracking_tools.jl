@@ -7,9 +7,9 @@ Struct for storing coefficients for the PLL filter.
 
 Fields:
 
-- `T::Float64`:
-- `damping::Float64`:
-- `B::Float64`:
+- `T::Float64`: integration time in seconds
+- `damping::Float64`: PLL damping coefficient
+- `B::Float64`: Pll bandwidth in Hz
 - `wn::Float64`:
 - `a0::Float64`:
 - `a1::Float64`:
@@ -17,7 +17,7 @@ Fields:
 - `b0::Float64`:
 - `b1::Float64`:
 - `b2::Float64`:
-- `descriminator::String`:
+- `descriminator::String`: string containing descriminator equation expression
 """
 struct PLLParms
     T::Float64
@@ -43,10 +43,12 @@ Struct for storing DLL parameters.
 
 Fields:
 
-- `T::Float64`:
-- `B::Float64`:
-- `d::Int64`:
-- `descriminator::String`:
+- `T::Float64`: integration time in seconds
+- `B::Float64`: DLL bandwidth in Hz
+- `d::Int64`: correlator sample spacing
+	* this is the number of samples between descriminators
+	* `NOT` the number of chips
+- `descriminator::String`: string containing descriminator equation expression
 """
 struct DLLParms
     T::Float64
@@ -65,48 +67,68 @@ A struct containing the parameters for tracking and its results
 
 Fields:
 
-- `prn::Int64`:
-- `signaltype::String`:
-- `dll_parms::DLLParms`:
-- `pll_parms::PLLParms`:
-- `M::Int64`:
-- `T::Float64`:
-- `N::Int64`:
-- `data_file::String`:
-- `data_type::String`:
-- `data_nADC::Int64`:
-- `data_start_idx::Int64`:
-- `data_t_length::Float64`:
-- `data_total_t_length::Float64`:
-- `data_sample_num::Int64`:
-- `data_fs::Float64`:
-- `data_fif::Float64`:
-- `data_start_t::T1`:
-- `data_site_lla::T2`:
-- `data_init_n0::Float64`:
-- `data_init_code_chip::Float64`:
-- `data_init_phi::Float64`:
-- `data_init_fd::Float64`:
-- `t::Array{Float64,1}`:
-- `code_err_meas::Array{Float64,1}`:
-- `code_err_filt::Array{Float64,1}`:
-- `code_phase_meas::Array{Float64,1}`:
-- `code_phase_filt::Array{Float64,1}`:
-- `n0::Array{Float64,1}`:
-- `dphi_meas::Array{Float64,1}`:
-- `phi::Array{Float64,1}`:
-- `delta_fd::Array{Float64,1}`:
-- `fds::Array{Float64,1}`:
-- `ZP::Array{Complex{Float64},1}`:
-- `SNR::Array{Float64,1}`:
-- `data_bits::Array{Int64,1}`:
-- `code_length::Int64`:
-- `Q::Array{Float64,2}`:
-- `A::Array{Float64,2}`:
-- `C::Array{Float64,2}`:
-- `P::Array{Float64,2}`:
-- `x::Array{Float64,2}`:
-- `K::Array{Float64,2}`:
+- `prn::Int64`: PRN number to be tracked
+- `signaltype::String`: name of signal type
+- `dll_parms::DLLParms`: DLL parameters
+- `pll_parms::PLLParms`: PLL parameters
+- `M::Int64`: the length of the data over the integration time or the number of
+              tracking samples
+- `T::Float64`: the tracking integration time in seconds
+- `N::Int64`: the number of samples corresponding to a single integration time
+- `data_file::String`: name of data file processed
+- `data_type::String`: the data type (e.g. `sc4` or `sc8`)
+- `data_nADC::Int64`: bit depth of data
+- `data_start_idx::Int64`: starting index of data
+- `data_t_length::Float64`: length of data in seconds loaded into `GNSSData`
+                            struct
+- `data_total_t_length::Float64`: total length of data file in seconds
+- `data_sample_num::Int64`: number of data samples loaded into `GNSSData` struct
+- `data_fs::Float64`: data sampling rate in Hz
+- `data_fif::Float64`: data IF frequency in Hz
+- `data_start_t::T1`: data start UTC time
+- `data_site_lla::T2`: latitude, longitude, and height of receiver location,
+                       where data was collected
+- `data_init_n0::Float64`: index in data where code starts
+- `data_init_code_chip::Float64`: fractional chip number at `t=0s`
+- `data_init_phi::Float64`: initial phase in rads
+- `data_init_fd::Float64`: initial Doppler frequency in Hz
+- `t::Array{Float64,1}`: time vector in seconds with length `M`
+- `code_err_meas::Array{Float64,1}`: vector containing the meassured code phase
+                                     error
+- `code_err_filt::Array{Float64,1}`: vector containing filtered code phase error
+- `code_phase_meas::Array{Float64,1}`: vector containing the measured code phase
+                                       estimate
+- `code_phase_filt::Array{Float64,1}`: vector containing the filtered code phase
+                                       estimate
+- `n0::Array{Float64,1}`: vector containing the estimated chip per time
+- `dphi_meas::Array{Float64,1}`: vector containing the measured phase error
+                                 in rads
+- `phi::Array{Float64,1}`: vector containing the filtered phase estimate in rads
+- `delta_fd::Array{Float64,1}`: vector containing the Doppler frequency error in
+                                Hz
+- `fds::Array{Float64,1}`: vector containing the filtered Doppler frequency in
+                           Hz
+- `ZP::Array{Complex{Float64},1}`: vector containing the value of the prompt
+                                   correlator at each time step
+- `SNR::Array{Float64,1}`: vector containing the SNR of the correlation peak at
+                           each time step in dB
+- `data_bits::Array{Int64,1}`: extracted databits based off value of prompt
+                               correlator
+	* if `ZP[i] > 0`, `data_bits[i] = 1`
+	* if `ZP[i] < 0`, `data_bits[i] = 0`
+	* `NOTE:` there may be more samples corresponding to a single data bit
+	          depending on the integration time
+- `code_length::Int64`: the length of the primary code sequence
+
+
+Kalman Filter Parameters:
+
+- `Q::Array{Float64,2}`: process noise matrix `Q`
+- `A::Array{Float64,2}`: state transition matrix `A`
+- `C::Array{Float64,2}`: measurement matrix `C`
+- `P::Array{Float64,2}`: state uncertainties per time step
+- `x::Array{Float64,2}`: filted state estimates per time step
+- `K::Array{Float64,2}`: KF gain per time step
 """
 struct TrackResults{T1,T2}
     prn::Int64
@@ -164,9 +186,9 @@ Define `PLLParms` struct.
 
 Required Arguments:
 
-- `T`:
-- `B`:
-- `ξ`:
+- `T`: integration time in seconds
+- `B`: PLL bandwidth in Hz
+- `ξ`: damping coefficient
 
 
 Returns:
@@ -195,9 +217,9 @@ Define `DLLParms` struct.
 
 Required Arguments:
 
-- `T`:
-- `B`:
-- `d`:
+- `T`: integration time in seconds
+- `B`: PLL bandwidth in Hz
+- `d`: correlator spacing in number of samples
 
 
 Returns:
@@ -219,7 +241,7 @@ Calculate the raw phase measurement.
 
 Required Arguments:
 
-- `ZP`:
+- `ZP`: prompt correlator value
 
 
 Returns:
@@ -241,17 +263,17 @@ Fiters the raw phase measurement using 2ⁿᵈ order PLL filter.
 
 Required Arguments:
 
-- `pll_parms::PLLParms`:
-- `ϕ_meas`:
-- `ϕ_meas_1`:
-- `ϕ_meas_2`:
-- `ϕ_filt_1`:
-- `ϕ_filt_2`:
+- `pll_parms::PLLParms`: struct containing PLL filter parameters
+- `ϕ_meas`: phase measured at `t` step in rads
+- `ϕ_meas_1`: phase measured at `t-T` step in rads
+- `ϕ_meas_2`: phase measured at `t-2T` step in rads
+- `ϕ_filt_1`: filtered phase from `t-T` step in rads
+- `ϕ_filt_2`: filtered phase from `t-2T` step in rads
 
 
 Returns:
 
--
+- filtered phase from `t` step in rads
 """
 function filtercarrierphase(pll_parms::PLLParms, ϕ_meas, ϕ_meas_1,
                             ϕ_meas_2, ϕ_filt_1, ϕ_filt_2)
@@ -275,14 +297,14 @@ Calculates the code phase error.
 Required Arguments:
 
 - `dll_parms::DLLParms`:
-- `ZE`:
-- `ZP`:
-- `ZL`:
+- `ZE`: early correlator value
+- `ZP`: prompt correlator value
+- `ZL`: late correlator value
 
 
 Returns:
 
--
+- unfiltered code phase error
 """
 function Z4(dll_parms::DLLParms, ZE, ZP, ZL)
     return 0.5 * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))
@@ -297,14 +319,14 @@ Returns the filtered code phase measusurement.
 
 Required Arguments:
 
-- `dll_parms::DLLParms`:
-- `current_code_err`:
-- `last_filt_code_err`:
+- `dll_parms::DLLParms`: struct containing DLL filter parameters
+- `current_code_err`: current code phase error estimated from `Z4` descriminator
+- `last_filt_code_err`: filtered code phase error from last time step
 
 
 Returns:
 
--
+- filtered code phase error
 """
 function filtercodephase(dll_parms::DLLParms, current_code_err, last_filt_code_err)
     return last_filt_code_err+4*dll_parms.T*dll_parms.B*(current_code_err-last_filt_code_err)
@@ -315,19 +337,20 @@ end
 	shiftandcheck(i, offset, N)
 
 
-#
+Determines the sample location if shifting the current index `i` by some number,
+`offset` in a vector with length `N`. Assumes that the new index can wrap.
 
 
 Required Arguments:
 
-- `i`:
-- `offset`:
-- `N`
+- `i`: current index
+- `offset`: sample offset amount
+- `N`: size of vector
 
 
 Returns:
 
--
+- `j`: new index location
 """
 function shiftandcheck(i, offset, N)
 	j = i + offset
@@ -368,7 +391,8 @@ Required Arguments:
 
 Optional Arguments:
 
-- `bin_width`:
+- `bin_width`: half width of frequency range to sum when estimating the SNR
+               `(default = 1)`
 
 
 Returns:
@@ -440,23 +464,25 @@ end
 	calcA(T, state_num=2)
 
 
-Calculate the state transition matrix, `A`, which is
-dependent on the integration time, `T`.
+Calculate the state transition matrix, `A`, which is dependent on the
+integration time, `T`. Used in the carrier tracking loop. If `state_num` is set
+to `2`, then the KF will track the carrier phase and Doppler. If `state_num` is
+set to `3`, then the KF will track the carrier phase, Doppler, and Doppler rate.
 
 
 Required Arguments:
 
-- `T`:
+- `T`: integration time in seconds
 
 
 Optional Arguments:
 
-- `state_num`:
+- `state_num`: number of states to track `(default = 2)`
 
 
 Returns:
 
--
+- either `2x2` or `3x3` state transition matrix
 """
 function calcA(T, state_num=2)
 	if state_num == 3
@@ -473,23 +499,25 @@ end
 	calcC(T, state_num=2)
 
 
-Calculate the measurement matrix, `C`, using the integration
-time, `T`.
+Calculate the measurement matrix, `C`, using the integration time, `T`. Used in
+the carrier tracking loop. If `state_num` is set to `2`, then the KF will track
+the carrier phase and Doppler. If `state_num` is set to `3`, then the KF will
+track the carrier phase, Doppler, and Doppler rate.
 
 
 Required Arguments:
 
-- `T`:
+- `T`: integration time in seconds
 
 
 Optional Arguments:
 
-- `state_num`:
+- `state_num`: number of states to track `(default = 2)`
 
 
 Returns:
 
--
+- either `1x2` or `1x3` measurement matrix
 """
 function calcC(T, state_num=2)
 	if state_num == 3
@@ -506,29 +534,31 @@ end
 	calcQ(T, h₀, h₋₂, qₐ, f_L, state_num=2)
 
 
-Calculate the process noise covariance matrix, `Q`, which is
-dependent on the integration time, `T`, and receiver oscillator
-h-parameters, `h₀` and `h₋₂`. Can either specify `state_num`
-as 2 or 3. `f_L` is the carrier frequency.
+Calculate the process noise covariance matrix, `Q`, which is dependent on the
+integration time, `T`, and receiver oscillator h-parameters, `h₀` and `h₋₂`. Can
+either specify `state_num` as 2 or 3. `f_L` is the carrier frequency. if
+`state_num` is set to `3`, higher order effects from sources such as platform
+dynamics, decribed with qₐ, are included. If `state_num` is set to `2`, then
+they will not be included.
 
 
 Required Arguments:
 
-- `T`:
+- `T`: integration time in seconds
 - `h₀`:
 - `h₋₂`:
-- `qₐ`:
-- `f_L`:
+- `qₐ`: platform dynamics in m²/s⁶
+- `f_L`: carrier frequency in Hz
 
 
 Optional Arguments:
 
-- `state_num`:
+- `state_num`: number of states to track `(default = 2)`
 
 
 Returns:
 
--
+- either `2x2` or `3x3` process noise matric `Q`
 """
 function calcQ(T, h₀, h₋₂, qₐ, f_L, state_num=2)
 	qϕ = h₀/2  # oscillator phase PSD
@@ -555,38 +585,42 @@ end
 
 Perform code and phase tracking on data in `data`.
 
-`replica` decides the signal type. Can pass optional arguments
-that are minumum amount to track a given PRN.
+`replica` decides the signal type. Can pass optional arguments that are minumum
+amount to track a given PRN.
 
 
 Required Arguments:
 
-- `data::GNSSSignal`:
-- `replica::ReplicaSignals`:
-- `prn`:
-- `ϕ_init`:
-- `fd_init`:
-- `n0_idx_init`:
-- `P₀`:
-- `R`:
+- `data::GNSSSignal`: either `GNSSData` or `ReplicaSignals` struct
+- `replica::ReplicaSignals`: struct to use for replica signal generation
+	* `replica.t_length` determines the integration time, `T`, used in tracking
+- `prn`: PRN number to track
+- `ϕ_init`: initial phase estimate in rads
+- `fd_init`: initial Doppler frequency in Hz
+- `n0_idx_init`: initial code start index location
+- `P₀`: 3x3` diagonal matrix containing the initial uncertainties of the
+        carrier phase, Doppler, and Doppler rate
+- `R`: initial phase measurement uncertainty
 
 
 Optional Arguments:
 
-- `DLL_B`:
-- `PLL_B`:
-- `damping`:
-- `fd_rate`:
-- `G`:
+- `DLL_B`: bandwidth of the DLL filter in Hz
+- `PLL_B`: bandwidth of the PLL filter in Hz
+- `damping`: PLL filter damping coefficient
+- `fd_rate`: Doppler rate in Hz
+- `G`: `[DEPRICATED]` carrier phase filter gain
 - `h₀`:
 - `h₋₂`:
-- `σω`:
-- `qₐ`:
-- `state_num`:
-- `dynamickf`:
-- `cov_mult`:
-- `q_mult`:
-- `channel`:
+- `qₐ`: line of site platform dynamics in m²/s⁶
+- `state_num`: number of states to track
+	* if set to `3`, carrier phase, Doppler, and Doppler rate are tracked
+	* if set to `2`, only carrier phase and Doppler are tracked
+- `dynamickf`: flag to specify if steady state KF gain is used or if KF can
+               change from time step to time step
+- `cov_mult`: scalar to inflate the initial covariance matrix `P₀`
+- `q_mult`: scalar to inflate the process noise matrix `Q`
+- `channel`: `[NOT USED]`
 
 
 Returns:
@@ -595,7 +629,7 @@ Returns:
 """
 function trackprn(data::GNSSSignal, replica::ReplicaSignals, prn, ϕ_init,
 	              fd_init, n0_idx_init, P₀, R; DLL_B=5, PLL_B=15, damping=1.4,
-				  fd_rate=0., G=0.2, h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10.,
+				  fd_rate=0., G=0.2, h₀=1e-21, h₋₂=2e-20, qₐ=10.,
 				  state_num=2, dynamickf=false, cov_mult=1., q_mult=1.,
 				  channel="I")
     # Assign signal specific parameters
@@ -799,16 +833,20 @@ Plots the tracking results from the `trackprn` method.
 
 Required Arguments:
 
-- `results::TrackResults`:
+- `results::TrackResults`: struct containing results from signal tracking
 
 
 Optional Arguments:
 
-- `saveto`:
-- `figsize`:
-- `doppler_curve`:
-- `doppler_t`:
-- `CN0`:
+- `saveto`: `String` specifying file name to save figure to `(default = missing)`
+- `figsize`: `Tuple` of length 2 used to specify figure size in inches
+	* format is `(height, width)`
+	* `(default = missing)`
+- `doppler_curve`: truth Doppler curve that will be plotted against Doppler
+                   estimate `(default = missing)`
+- `doppler_t`: time vector that must be included with `doppler_curve`
+               `(default = missing)`
+- `CN0`: expected carrier-to-noise ratio `C/N₀` value
 
 
 Plots tracking results figure.
