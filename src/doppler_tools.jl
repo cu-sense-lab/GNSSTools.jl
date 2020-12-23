@@ -43,29 +43,41 @@ doppler2chips(signal::ReplicaSignals, doppler_curve,
               N=length(doppler_curve))
 
 
-`M` should be an integer multiple of `N`
+Use the Doppler curve to generate functions that calculate the code chip and
+carrier phase as a function of time.
+
+The Doppler curve is integrated over each `Δt` to deterimine the expected code
+phase for a given signal code layer. It is then interpolated and placed into a
+vector. There are two separate vectors with interpolated functions inside. One
+for the I channel and one for the Q channel. These functions are in the order
+they are stored in `signal.code_type.[I or Q]_codes`.
 
 
 Required Arguments:
 
-- `signal::ReplicaSignals`:
-- `doppler_curve`:
-- `doppler_t`:
+- `signal::ReplicaSignals`: replica signal struct
+- `doppler_curve`: Doppler frequency curve in Hz
+- `doppler_t`: time vector in seconds, corresponding to `doppler_curve`
 
 
 Optional Arguments:
 
-- `Δt`:
-- `N`:
+- `Δt`: time step size in seconds
+- `N`: number of samples in `doppler_curve`
 
 
 Returns:
 
--
+- `code_chip_I_sitp`: vector of interpolated functions that are functions of `t`
+                      for the I channel
+- `code_chip_Q_sitp`: vector of interpolated functions that are functions of `t`
+                      for the I channel
+- `ϕs_sitp`: interpolated function that takes `t` and returns the phase in rads
 """
 function doppler2chips(signal::ReplicaSignals, doppler_curve,
                        doppler_t; Δt=doppler_t[2]-doppler_t[1],
                        N=length(doppler_curve))
+      # Get parameters from `signal` struct
       ϕ_init = signal.phi
       f_if = signal.f_if
       sig_freq = signal.signal_type.signal_freq
@@ -75,6 +87,7 @@ function doppler2chips(signal::ReplicaSignals, doppler_curve,
       chipping_rates_Q = signal.signal_type.Q_codes.chipping_rates
       chip_init_I = signal.init_code_phases_I
       chip_init_Q = signal.init_code_phases_Q
+      # Generate range of time for use in interpolation
       t_range = range(doppler_t[1], doppler_t[end]; length=length(doppler_t))
       code_chips_I = zeros(N, length(signal.signal_type.I_codes.code_num))
       code_chips_Q = zeros(N, length(signal.signal_type.Q_codes.code_num))
@@ -140,19 +153,22 @@ end
     get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
 
 
-#
+Interpolate the Doppler frequency curve and return two functions that calculate
+the code and carrier phase, respectively, as a function of time.
 
 
 Required Arguments:
 
-- `signal::ReplicaSignals`:
-- `doppler_curve`:
-- `doppler_t`:
+- `signal::ReplicaSignals`: replica signal struct
+- `doppler_curve`: Doppler frequency curve in Hz
+- `doppler_t`: time vector in seconds, corresponding to `doppler_curve`
 
 
 Returns:
 
--
+- `get_code_val`: function of `t` that returns the current code value for both
+                  the I and Q channels
+- `get_ϕ`: interpolated function that takes `t` and returns the phase in rads
 """
 function get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
     code_chip_I, code_chip_Q, get_ϕs = doppler2chips(signal, doppler_curve,

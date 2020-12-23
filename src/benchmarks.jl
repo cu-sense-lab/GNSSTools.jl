@@ -6,51 +6,70 @@
                     include_databits_I=true, include_databits_Q=true,
                     f_if=0., include_adc=true, Tsys=535., include_carrier=true,
                     σω=1000., fd_range=5000., RLM=10, replica_t_length=1e-3,
-                    cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=2,
+                    cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
                     state_num=3, fine_acq_method=:fft, M=10)
 
 
-#
+Performs a benchmark test of signal simulation and processing by varying all
+parameters, except the carrier-to-noise ratio, C/N₀, which is set by the user.
 
 
 Required Arguments:
 
-- `CN0`:
-- `dopplers`:
-- `doppler_rates`:
-- `t_length`:
-- `f_s`:
+- `CN0`: carrier-to-noise ratio (C/N₀) of signal in dB
+- `dopplers`: vector of Dopplers where duplicates are allowed
+- `doppler_rates`: vector of Doppler rates where duplicates are allowed
+- `t_length`: length of the signal to simulate and process in seconds
+- `f_s`: sampling rate of signal in Hz
 
 
 Optional Arguments:
 
-- `channel`:
-- `signal_type`:
-- `bins`:
-- `iterations`:
-- `prn`:
-- `nADC`:
-- `phase_noise_scaler`:
-- `include_phase_noise`:
-- `include_thermal_noise`:
-- `include_databits_I`:
-- `include_databits_Q`:
-- `f_if`:
-- `include_adc`:
-- `Tsys`:
-- `include_carrier`:
-- `σω`:
-- `fd_range`:
-- `RLM`:
-- `replica_t_length`:
-- `cov_mult`:
-- `q_a`:
-- `q_mult`:
-- `dynamickf`:
-- `dll_b`:
-- `state_num`:
+- `channel`: channel to process signal on (must be either `"I"` or `"Q"`)
+             `(default = "I")`
+- `signal_type`: `SignalType` struct describing signal type
+                 `(default = define_l1ca_code_type(t_length))`
+- `bins`: number of bins that the Doppler vectors will be split into
+          `(default = 1000)`
+- `iterations`: number of times the simulation will be re-run and re-processed
+                `(default = 100)`
+- `prn`: PRN number to simulate `(default = 1)`
+- `nADC`: bit depth of signal
+- `phase_noise_scaler`: standard deviation of phase noise in rads
+                       `(default = 1/10)`
+- `include_phase_noise`: flag to include phase noise `(default = true)`
+    * will be regenerated on each iteration
+- `include_thermal_noise`: flag to include thermal noise `(default = true)`
+    * will be regenerated on each iteration
+- `include_databits_I`: flag to include databits on the I channel if they exist
+                        `(default = true)`
+- `include_databits_Q`: flag to include databits on the Q channel if they exist
+                        `(default = true)`
+- `f_if`: signal IF frequency in Hz `(default = 0Hz)`
+- `include_adc`: flag to quantize signal `(default = true)`
+- `Tsys`: system noise temperature in kelvin `(default = 535K)`
+- `include_carrier`: flag to include carrier in signal `(default = true)`
+- `σω`: initial uncertainty in Doppler rate `(default = 1000Hz/s)
+- `fd_range`: range of Doppler above and below Doppler search center frequency
+              in Hz `(default = 5000Hz)`
+- `RLM`: a multiple of the replica signal length and used for FFT based fine
+         acquisition `(default = 10)`
+- `replica_t_length`: length of the replica signal in seconds `(default = 1e-3s)`
+    * determines the length of the replica used in course acquisition and
+      tracking
+- `cov_mult`: scalar to inflate the initial covariance matrix `P₀`
+              `(default = 1)`
+- `q_a`: line of site platform dynamics in m²/s⁶ `(default = 1m²/s⁶)`
+- `q_mult`: scalar to inflate the process noise matrix `Q` `(default = 1)`
+- `dynamickf`: flag to specify if steady state KF gain is used or if KF can
+               change from time step to time step `(default = true)`
+- `dll_b`: bandwidth of the DLL filter in Hz `(default = 5Hz)`
+- `state_num`: number of states to track `(default = 3)`
+	* if set to `3`, carrier phase, Doppler, and Doppler rate are tracked
+	* if set to `2`, only carrier phase and Doppler are tracked
 - `fine_acq_method`:
-- `M`:
+- `M`: a multiple of the replica signal length and used for carrier based fine
+       acquisition `(default = 10)`
 
 
 Returns:
@@ -64,7 +83,7 @@ function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I
                          include_databits_I=true, include_databits_Q=true,
                          f_if=0., include_adc=true, Tsys=535., include_carrier=true,
                          σω=1000., fd_range=5000., RLM=10, replica_t_length=1e-3,
-                         cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=2,
+                         cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
                          state_num=3, fine_acq_method=:fft, M=10)
     if (channel != "I") && (channel != "Q")
         error("Invalid channel. Channel to be processed must be either I or Q.")
