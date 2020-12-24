@@ -8,18 +8,19 @@ results for both the carrier and FFT based methods.
 
 Fields:
 
-- `prn::Int64`:
-- `type::String`:
-- `fd_course::Float64`:
-- `fd_rate::Float64`:
-- `n0_idx_course::Int64`:
-- `t_length::Float64`:
-- `fd_fine::Float64`:
-- `fd_est::Float64`:
-- `phi_init::Float64`:
-- `M::T1`:
-- `P::Array{Float64,2}`:
-- `R::Array{Float64,1}`:
+- `prn::Int64`: PRN number processed
+- `type::String`: fine acquisition method used (either `"fft"` or `"carrier"`)
+- `fd_course::Float64`: course acquired Doppler frequency in Hz
+- `fd_rate::Float64`: signal Doppler rate in Hz/s
+- `n0_idx_course::Int64`: course acquired code start index
+- `t_length::Float64`: coherent integration time in seconds
+- `fd_fine::Float64`: fine Doppler frequency in Hz
+- `fd_est::Float64`: (fine + course) Doppler frequency in Hz
+- `phi_init::Float64`: initial phase estimate in rads
+- `M::T1`: number of integrations performed (carrier method only)
+- `P::Array{Float64,2}`: 3x3 diagonal matrix containin initial uncertainties
+                         of the phase, Doppler, and Doppler rate estimates
+- `R::Array{Float64,1}`: measurement uncertainty in rads
 """
 struct FineAcquisitionResults{T1}
     prn::Int64
