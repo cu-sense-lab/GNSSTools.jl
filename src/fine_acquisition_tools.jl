@@ -52,22 +52,27 @@ struct, however, `data` and `replica` must be two seperate structs.
 
 Required Arguments:
 
-- `data::GNSSSignal`:
-- `replica::ReplicaSignals`:
-- `prn::Int`:
-- `fd_course`:
-- `n₀_idx_course`:
-- `type::Val{:fft}`:
+- `data::GNSSSignal`: either `GNSSData` or `ReplicaSignals` struct
+- `replica::ReplicaSignals`: struct to use for replica signal generation
+    * `replica.t_length` determines the integration time, `T`, used in FFT fine
+      acquisition
+- `prn::Int`: PRN number to track
+- `fd_course`: course acquired Doppler frequency in Hz
+- `n₀_idx_course`: initial code start index location
+- `type::Val{:fft}`: `Val(:fft)` uses the FFT based fine acquisition method
 
 
 Optional Arguments:
 
-- `fd_rate`:
-- `t_length`:
-- `freq_lim`:
-- `σω`:
-- `err_bin_num_ϕ`:
-- `err_bin_num_f`:
+- `fd_rate`: the Doppler frequency rate in Hz/s `(default = 0Hz)`
+- `t_length`: `[NOT USED]` `(default = replica.t_length)`
+- `freq_lim`: frequency search range plus/minus OHz `(default = 10000Hz)`
+- `σω`: expected uncertainty of Doppler rate in Hz/s `(default = 1000Hz/s)`
+- `err_bin_num_ϕ`: number of bins to to look around peak to estimate the phase
+                   uncertainty `(default = 1)`
+- `err_bin_num_f`: number of frequency bins equal to the frequency uncertainty
+                   `(default = 2)`
+    * filter σ is equal to `err_bin_num_f×(1/t_length)`
 
 
 Returns:
@@ -188,21 +193,22 @@ Performs an carrier based fine acquisition on `data`.
 
 Required Arguments:
 
-- `data::GNSSSignal`:
-- `replica::ReplicaSignals`:
-- `prn::Int`:
-- `fd_course`:
-- `n₀_idx_course`:
-- `type::Val{:carrier}`:
+- `data::GNSSSignal`: either `GNSSData` or `ReplicaSignals` struct
+- `replica::ReplicaSignals`: struct to use for replica signal generation
+    * `replica.t_length` determines the integration time, `T`
+- `prn::Int`: PRN number to track
+- `fd_course`: course acquired Doppler frequency in Hz
+- `n₀_idx_course`: initial code start index location
+- `type::Val{:fft}`: `Val(:fft)` uses the FFT based fine acquisition method
 
 
 Optional Arguments:
 
-- `fd_rate`:
-- `t_length`:
-- `freq_lim`:
-- `M`:
-- `σω`:
+- `fd_rate`: the Doppler frequency rate in Hz/s `(default = 0Hz)`
+- `t_length`: `[NOT USED]` `(default = replica.t_length)`
+- `freq_lim`: frequency search range plus/minus OHz `(default = 10000Hz)`
+- `M`: Number of integrations to perform `(default = 10)`
+- `σω`: expected uncertainty of Doppler rate in Hz/s `(default = 1000Hz/s)`
 
 
 Returns:

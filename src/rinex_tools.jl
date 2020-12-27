@@ -2,8 +2,8 @@
     Klobuchar
 
 
-Struct holding the ionospheric correction terms
-for the Klobuchar Ionospheric Model.
+Struct holding the ionospheric correction terms for the Klobuchar Ionospheric
+Model.
 
 
 Fields:
@@ -38,7 +38,7 @@ Struct for the epoch time of the ephemeris.
 
 Fields:
 
-- `timestamp::String`:
+- `timestamp::String`: 
 - `year::Float64`:
 - `month::Float64`:
 - `day::Float64`:
@@ -61,8 +61,8 @@ end
     BRDC
 
 
-Struct holding GPS Broadcast Ephemeris parameters and
-ionospheric correction terms.
+Struct holding GPS Broadcast Ephemeris parameters and ionospheric correction
+terms.
 
 
 Fields:
@@ -128,18 +128,19 @@ end
     replaceD(str)
 
 
-Replaces a `D` with an `E` from values in RINEX files
-so they can be parsed using `parse`.
+Replaces a `D` with an `E` from values in RINEX files so they can be parsed
+using `parse`.
 
 
 Required Arguments:
 
-- `str`:
+- `str`: string from RINEX file that contains `D` in place of the `E`
 
 
 Returns:
 
--
+- `str`: string with all `D` characters converted to `E` which can be parsed
+         into `Float64`
 """
 function replaceD(str)
     str = replace(str, "D" => "E")
@@ -148,30 +149,29 @@ end
 
 
 """
-    loadrinex(file)
+    loadrinex(file_name)
 
-Loads a RINEX broadcast ephemeris file and stores into
-dictionary where the keys are the PRN numbers.
+Loads a RINEX broadcast ephemeris file and stores into dictionary where the keys
+are the PRN numbers.
 
-Julia implementation based off the MATLAB implementation,
-writen by Ben K. Bradley (2009-07-19).
+Julia implementation based off the MATLAB implementation, writen by Ben K.
+Bradley (2009-07-19).
 
-Returns dictionary epoch dictionaries containing `BRDC`
-structs for each PRN. The dictionary keys are the PRN
-values.
+Returns dictionary epoch dictionaries containing `BRDC` structs for each PRN.
+The dictionary keys are the PRN values.
 
 
 Required Arguments:
 
-- `file`:
+- `file_name`: name of file
 
 
 Returns:
 
 - `BRDCs::Dict`
 """
-function loadrinex(file)
-    f = open(file, "r")
+function loadrinex(file_name)
+    f = open(file_name, "r")
     # Read header
     endofheader = false
     alphas = missing
