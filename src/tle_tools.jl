@@ -215,8 +215,8 @@ end
     calcenumatrix(obs_lla)
 
 
-Calculate the ECEF to ENU transformation matrix
-using the observer's position in LLA.
+Calculate the ECEF to ENU transformation matrix using the observer's position in
+LLA.
 
 **NOTE:** Latitudes and longitudes are in radians.
 
@@ -454,9 +454,8 @@ end
     getTLEs(obs_time_JD, satnums; Δdays=5)
 
 
-Query Space-Track.org for TLEs matching time and satnum
-criteria. Parse and determine TLEs for eac satnum that
-is closest but before the observation time.
+Query Space-Track.org for TLEs matching time and satnum criteria. Parse and
+determine TLEs for eac satnum that is closest but before the observation time.
 
 
 Required Arguments:

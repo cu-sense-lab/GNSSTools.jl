@@ -42,7 +42,7 @@ Fields:
 - `Ω₀`: initial Longitude of Ascending Node in rads
 - `f₀`: initial true anomaly in rads
 - `ω`: Argument of perigee in rads
-- `e`: orbit eccentricity in rads
+- `e`: orbit eccentricity
 - `i`: orbit inclination in rads
 - `t_range`: vector of time in Julian days
 - `ΔΩ`: offset in longitude of ascending mode for each plane in rads
@@ -114,7 +114,7 @@ Optional Arguments:
 - `Ω₀`: initial Longitude of Ascending Node in rads `(default = 0)`
 - `f₀`: initial true anomaly in rads `(default = 0)`
 - `ω`: Argument of perigee in rads `(default = 0)`
-- `e`: orbit eccentricity in rads `(default = 0)`
+- `e`: orbit eccentricity `(default = 0)`
 - `t_start`: the time in Julian Days at the beginning of the simulation
              `(default = 0)`
 - `obs_lla`: if this exists, the receiver location is shown on the plot
@@ -250,7 +250,7 @@ Optional Arguments:
 - `f₀`: initial true anomaly in rads `(default = 0)`
 - `show_plot`: flag to show plot when finished `(default = true)`
 - `ω`: Argument of perigee in rads `(default = 0)`
-- `e`: orbit eccentricity in rads `(default = 0)`
+- `e`: orbit eccentricity `(default = 0)`
 - `t_start`: the time in Julian Days at the beginning of the simulation
              `(default = 0)`
 - `ΔΩ`: offset in longitude of ascending mode for each plane in degrees
