@@ -38,7 +38,7 @@ Struct for the epoch time of the ephemeris.
 
 Fields:
 
-- `timestamp::String`: 
+- `timestamp::String`:
 - `year::Float64`:
 - `month::Float64`:
 - `day::Float64`:

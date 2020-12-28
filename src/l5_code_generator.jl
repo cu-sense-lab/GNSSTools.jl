@@ -220,8 +220,10 @@ with initial conditions defined by `intial_conditions[prn]`.
 
 Required Arguments:
 
-- `prn::Int`:
-- `initial_conditions::Dict`:
+- `prn::Int`: the pseudorandom noise (PRN) number, which is also related to the
+              satellite vehicle
+- `initial_conditions::Dict`: dictionary containing the initial states of the
+                              register for each PRN
 
 
 Returns:
