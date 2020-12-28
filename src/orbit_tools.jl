@@ -74,7 +74,7 @@ end
 
 
 Obtains Earth Orientation Parameters through `SatelliteToolbox` function
-`get_iers_eop`.
+`get_iers_eop`. This object is required to convert to ECEF frame.
 
 
 Returns:

@@ -38,13 +38,13 @@ Struct for the epoch time of the ephemeris.
 
 Fields:
 
-- `timestamp::String`:
-- `year::Float64`:
-- `month::Float64`:
-- `day::Float64`:
-- `hour::Float64`:
-- `minute::Float64`:
-- `second::Float64`:
+- `timestamp::String`: UTC timestamp string
+- `year::Float64`: year
+- `month::Float64`: month
+- `day::Float64`: day
+- `hour::Float64`: hour
+- `minute::Float64`: minute
+- `second::Float64`: fractional second
 """
 struct EphemerisEpoch
     timestamp::String
@@ -67,32 +67,38 @@ terms.
 
 Fields:
 
-- `prn::Int64`:
-- `iono_parms::T`:
-- `epoch::EphemerisEpoch`
-- `Af₀::Float64`
-- `Af₁::Float64`
-- `Af₂::Float64`
-- `IODE::Float64`
-- `Crs::Float64`
-- `Crc::Float64`
-- `Cus::Float64`
-- `Cuc::Float64`
-- `Cis::Float64`
-- `Cic::Float64`
-- `ṅ::Float64`
-- `M₀::Float64`
-- `e::Float64`
-- `a::Float64`
-- `Toe::Float64`
-- `Toc::Float64`
-- `Ω::Float64`
-- `i::Float64`
-- `di::Float64`
-- `dα::Float64`
-- `ω::Float64`
-- `gps_week::Float64`
-- `health::Float64`
+- `prn::Int64`: satellite assigned PRN
+- `iono_parms::T`: struct containing ionospheric correction terms
+- `epoch::EphemerisEpoch`: ephemeris epoch time structure
+- `Af₀::Float64`: clock bias in seconds
+- `Af₁::Float64`: clock drift in seconds/second
+- `Af₂::Float64`: clock drift rate in seconds/second²
+- `IODE::Float64`: issue of data
+- `Crs::Float64`:  amplitude of the sine harmonic correction
+    * apply to orbital radius
+- `Crc::Float64`: amplitude of the Cosine Harmonic Correction
+    * use with orbt radius
+- `Cus::Float64`: amplitude of the Sine Harmonic Correction
+    * apply to Argument of Latitude
+- `Cuc::Float64`: amplitude of the Cosine Harmonic
+    * apply to Argument of Latitude
+- `Cis::Float64`: amplitude of Sine Harmonic Correction
+    * apply to th Angle of Inclination (i)
+- `Cic::Float64`:  amplitude of Cosine Harmonic Correction
+    * apply to th Angle of Inclination (i)
+- `ṅ::Float64`: mean motion difference from computed value in rad/s
+- `M₀::Float64`: mean anomaly at reference time in rad
+- `e::Float64`: eccentricity
+- `a::Float64`: semi-major axis in meters
+- `Toe::Float64`: referemce time of ephemeris (seconds into GPS week)
+- `Toc::Float64`: time of clock
+- `Ω::Float64`: Longitude of Ascending Node of orbit plane
+- `i::Float64`: inclination angle at reference time in rad
+- `di::Float64`: rate of change inclination angle in rad/s
+- `dα::Float64`: rate of change of Right Ascension in rad/s
+- `ω::Float64`: argument of perigee in rad
+- `gps_week::Float64`: GPS week number (use with Toe)
+- `health::Float64`: satellite health (0.00 = usable)
 """
 struct BRDC{T}
     prn::Int64
