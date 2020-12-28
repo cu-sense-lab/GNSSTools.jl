@@ -7,13 +7,14 @@ Struct to hold Satellite orbit parameters.
 
 Fields:
 
-- `id`:
-- `init_orbit`:
-- `t`:
-- `orbit`:
-- `r_ecef`:
-- `v_ecef`:
-- `a_ecef`:
+- `id`: satellite SV number in custom constellation
+- `init_orbit`: `SatellitToolbox ``OrbitPropagator` struct for use in
+                propagating the satellite orbit to a given `t`
+- `t`: vector of Julian Date times in day number
+- `orbit`: propagated orbit struct to times in the `t` vector
+- `r_ecef`: ECEF position in meters for all times in the `t` vector
+- `v_ecef`: ECEF velocities in meters for all times in the `t` vector
+- `a_ecef`: ECEF accelerations in meters for all times in the `t` vector
 """
 struct Satellite{T1,T2,T3,T4,T5,T6,T7}
     id::T1
@@ -35,20 +36,23 @@ Struct for holding constellation parameters and individual satellite orbits.
 
 Fields:
 
-- `epoch`:
-- `plane_num`:
-- `satellite_per_plane`:
-- `Ω₀`:
-- `f₀`:
-- `ω`:
-- `e`:
-- `i`:
-- `t_range`:
-- `ΔΩ`:
-- `Δf`:
-- `satellites`:
+- `epoch`: the time in Julian Days at the beginning of the simulation
+- `plane_num`: number of planes in the constellation
+- `satellite_per_plane`: number of satellites per plane
+- `Ω₀`: initial Longitude of Ascending Node in rads
+- `f₀`: initial true anomaly in rads
+- `ω`: Argument of perigee in rads
+- `e`: orbit eccentricity in rads
+- `i`: orbit inclination in rads
+- `t_range`: vector of time in Julian days
+- `ΔΩ`: offset in longitude of ascending mode for each plane in rads
+    * each plane is offset by a multiple of `ΔΩ`
+- `Δf`: true anomaly spacing between satellites in a given plane in rads
+- `a`: semi-major axis of all orbits in meters
+- `satellites`: array of `Satellite` structs where the index is equal to the
+                satellite ID number, located in `satellites[i].id`
 """
-struct Constellation{T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11,T12}
+struct Constellation{T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11,T12,T13}
     epoch::T1
     plane_num::T2
     satellite_per_plane::T3
@@ -60,7 +64,8 @@ struct Constellation{T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11,T12}
     t_range::T9
     ΔΩ::T10
     Δf::T11
-    satellites::T12
+    a::T12
+    satellites::T13
 end
 
 
@@ -68,12 +73,13 @@ end
     get_eop()
 
 
-#
+Obtains Earth Orientation Parameters through `SatelliteToolbox` function
+`get_iers_eop`.
 
 
 Returns:
 
--
+- EOP object
 """
 function get_eop()
     return get_iers_eop(:IAU1980)
@@ -82,10 +88,10 @@ end
 
 """
     define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
-                         eop=get_eop(), show_plot=true,
-                         Ω₀=0., f₀=0., ω=0., e=0., t_start=0., obs_lla=missing,
-                         ΔΩ=360/plane_num, a_lim=1, ax=missing, figsize=missing,
-                         print_steps=true)
+                         eop=get_eop(), show_plot=true, Ω₀=0., f₀=0.,
+                         ω=0., e=0., t_start=0., obs_lla=missing,
+                         ΔΩ=360/plane_num, a_lim=1, ax=missing,
+                         figsize=missing, print_steps=true)
 
 
 Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, otherwise,
@@ -94,39 +100,47 @@ Set `ΔΩ` to 30ᵒ if simulating sun-sync constellation, such as Iridium, other
 
 Required Arguments:
 
-- `a`:
-- `plane_num`:
-- `satellite_per_plane`:
-- `incl`:
-- `t_range`:
+- `a`: semi-major axis of all orbits in meters
+- `plane_num`: number of planes in the constellation
+- `satellite_per_plane`: number of satellites per plane
+- `incl`: orbit inclination in rads
+- `t_range`: vector of time in seconds
 
 
 Optional Arguments:
 
-- `eop`:
-- `show_plot`:
-- `Ω₀`:
-- `f₀`:
-- `ω`:
-- `e`:
-- `t_start`:
-- `obs_lla`:
-- `ΔΩ`:
-- `a_lim`:
-- `ax`:
-- `figsize`:
-- `print_steps`:
+- `eop`: Earth Orientation Parameters `(default = get_eop())`
+- `show_plot`: flag to show plot when finished `(default = true)`
+- `Ω₀`: initial Longitude of Ascending Node in rads `(default = 0)`
+- `f₀`: initial true anomaly in rads `(default = 0)`
+- `ω`: Argument of perigee in rads `(default = 0)`
+- `e`: orbit eccentricity in rads `(default = 0)`
+- `t_start`: the time in Julian Days at the beginning of the simulation
+             `(default = 0)`
+- `obs_lla`: if this exists, the receiver location is shown on the plot
+             `(default = missing)`
+- `ΔΩ`: offset in longitude of ascending mode for each plane in degrees
+        `(default = 360/place_num)`
+    * each plane is offset by a multiple of `ΔΩ`
+- `a_lim`: sets the limit in x, y, and z axis for plot `(default = 1)`
+- `ax`: `PyPlot` axis object for plotting inside single figure
+        `(default = missing)`
+- `figsize`: `Tuple` of length 2 used to specify figure size in inches
+             `(default = missing)`
+	* format is `(height, width)`
+- `print_steps`: flag to show `ProgressMeter` while generating constellation
+                 `(default = true)`
 
 
 Returns:
 
--
+- `Constellation` struct
 """
 function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
-                              eop=get_eop(), show_plot=true,
-                              Ω₀=0., f₀=0., ω=0., e=0., t_start=0., obs_lla=missing,
-                              ΔΩ=360/plane_num, a_lim=1, ax=missing, figsize=missing,
-                              print_steps=true)
+                              eop=get_eop(), show_plot=true, Ω₀=0., f₀=0.,
+                              ω=0., e=0., t_start=0., obs_lla=missing,
+                              ΔΩ=360/plane_num, a_lim=1, ax=missing,
+                              figsize=missing, print_steps=true)
     a = float(a)
     incl = incl*π/180
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
@@ -199,7 +213,7 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
         ax.axes.set_zlim3d(bottom=-a*a_lim/2, top=a*a_lim/2)
     end
     return Constellation(t_start, plane_num, satellite_per_plane, Ω₀, f₀, ω, e, incl,
-                         t_range, ΔΩ, Δf, satellites)
+                         t_range, ΔΩ, Δf, a, satellites)
 end
 
 
@@ -217,36 +231,60 @@ end
 
 Required Arguments:
 
-- `a`:
-- `plane_num`:
-- `satellite_per_plane`:
-- `incl`:
-- `t_range`:
-- `obs_lla`:
-- `sig_freq`:
+- `a`: semi-major axis of all orbits in meters
+- `plane_num`: number of planes in the constellation
+- `satellite_per_plane`: number of satellites per plane
+- `incl`: orbit inclination in rads
+- `t_range`: vector of time in seconds
+- `obs_lla`: the receiver location in lat, long, height `(default = missing)`
+    * format `(latitude, longitude, height)` in (rad, rad, meters)
+- `sig_freq`: carrier frequency in Hz
 
 
 Optional Arguments:
 
-- `eop`:
-- `Ω₀`:
-- `f₀`:
-- `show_plot`:
-- `ω`:
-- `e`:
-- `t_start`:
-- `ΔΩ`:
-- `min_elevation`:
-- `bins`:
-- `heatmap_bins`:
-- `a_lim`:
-- `figsize`:
-- `print_steps`:
+
+- `eop`: Earth Orientation Parameters `(default = get_eop())`
+- `Ω₀`: initial Longitude of Ascending Node in rads `(default = 0)`
+- `f₀`: initial true anomaly in rads `(default = 0)`
+- `show_plot`: flag to show plot when finished `(default = true)`
+- `ω`: Argument of perigee in rads `(default = 0)`
+- `e`: orbit eccentricity in rads `(default = 0)`
+- `t_start`: the time in Julian Days at the beginning of the simulation
+             `(default = 0)`
+- `ΔΩ`: offset in longitude of ascending mode for each plane in degrees
+        `(default = 360/plane_num)`
+    * each plane is offset by a multiple of `ΔΩ`
+- `min_elevation`: minimum elevation in degrees to include in statistics
+                   `(default = 5)`
+- `bins`: number of bins in Doppler and Doppler rate histograms
+           `(default = 100)`
+- `heatmap_bins`: two element vector specifying number of bins in the heatmap
+                  `(default = [bins, bins])`
+- `a_lim`: sets the limit in x, y, and z axis for plot `(default = 1.25)`
+- `figsize`: `Tuple` of length 2 used to specify figure size in inches
+             `(default = missing)`
+	* format is `(height, width)`
+- `print_steps`: flag to show `ProgressMeter` while generating constellation
+                 `(default = true)`
+
+
+Required Arguments:
+
+- `a`: semi-major axis of all orbits in meters
+- `plane_num`: number of planes in the constellation
+- `satellite_per_plane`: number of satellites per plane
+- `incl`: orbit inclination in rads
+- `t_range`: vector of time in seconds
 
 
 Returns:
 
--
+- `doppler_means`: 
+- `doppler_rates`:
+- `doppler_rate_ts`:
+- `ids`:
+- `elevations`:
 """
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_lla, sig_freq; eop=get_eop(),
@@ -338,22 +376,18 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
     plot_satellite_orbit(satellite::Satellite; obs_lla=missing)
 
 
-#
+Plots satellite orbit.
 
 
 Required Arguments:
 
-- `satellite::Satellite`:
+- `satellite::Satellite`: struct containing satellite orbit info
 
 
 Optional Arguments:
 
-- `obs_lla`:
-
-
-Returns:
-
--
+- `obs_lla`: if this exists, the receiver location is shown on the plot
+             `(default = missing)`
 """
 function plot_satellite_orbit(satellite::Satellite; obs_lla=missing)
     figure()
