@@ -226,7 +226,8 @@ end
                          figsize=missing, print_steps=true)
 
 
-#
+Produces all instances of Dopplers and Doppler rates by propagating the
+constellation using user specified parameters.
 
 
 Required Arguments:
@@ -280,11 +281,13 @@ Required Arguments:
 
 Returns:
 
-- `doppler_means`: 
-- `doppler_rates`:
-- `doppler_rate_ts`:
-- `ids`:
-- `elevations`:
+- `doppler_means`: vector of Doppler frequencies observed in Hz
+- `doppler_rates`: vector of Doppler rates observed in Hz/s
+- `doppler_rate_ts`: vector time in Julian days corresponding to the Doppler
+                     rates observed
+- `ids`: satellite IDs corresponding observed Doppler freqency
+- `elevations`: elevations corresponding to observed Doppler frequencies in
+                degrees
 """
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_lla, sig_freq; eop=get_eop(),
