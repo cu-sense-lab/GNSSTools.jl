@@ -39,10 +39,12 @@ of the individual TLE files.
 
 Required Arguments:
 
-- `source_tle::String`:
-- `target_tle::String`:
-- `start_time`:
-- `site_loc_lla`:
+- `source_tle::String`: TLE string for satellite that is trasmitting signal
+- `target_tle::String`: TLE string for satellite that reflectes transmitted
+                        signal from source satellite
+- `start_time`: start time in UTC in the format
+                (year, month, day, hour, minute, second)
+- `site_loc_lla`: site latitude, longitude, and height in (deg, deg, meters)
 
 
 Returns:
@@ -78,10 +80,12 @@ loaded TLE files as `SatelliteToolbox` `TLE` structs.
 
 Required Arguments:
 
-- `source_tle::TLE`:
-- `target_tle::TLE`:
-- `start_time`:
-- `site_loc_lla`:
+- `source_tle::TLE`: TLE struct for satellite that is trasmitting signal
+- `target_tle::TLE`: TLE struct for satellite that reflectes transmitted
+                        signal from source satellite
+- `start_time`: start time in UTC in the format
+                (year, month, day, hour, minute, second)
+- `site_loc_lla`: site latitude, longitude, and height in (deg, deg, meters)
 
 
 Returns:
@@ -116,9 +120,10 @@ the individual TLE file.
 
 Required Arguments:
 
-- `source_tle::String`:
-- `start_time`:
-- `site_loc_lla`:
+- `source_tle::String`: TLE string for satellite that is trasmitting signal
+- `start_time`: start time in UTC in the format
+                (year, month, day, hour, minute, second)
+- `site_loc_lla`: site latitude, longitude, and height in (deg, deg, meters)
 
 
 Returns:
@@ -150,9 +155,10 @@ TLE file as a `SatelliteToolbox` `TLE` struct.
 
 Required Arguments:
 
-- `source_tle::TLE`:
-- `start_time`:
-- `site_loc_lla`:
+- `source_tle::TLE`: TLE struct for satellite that is trasmitting signal
+- `start_time`: start time in UTC in the format
+                (year, month, day, hour, minute, second)
+- `site_loc_lla`: site latitude, longitude, and height in (deg, deg, meters)
 
 
 Returns:
@@ -223,12 +229,12 @@ LLA.
 
 Required Arguments:
 
-- `obs_lla`:
+- `obs_lla`: observer latitude, longitude, and height in (rad, rad, meters)
 
 
 Returns:
 
--
+- ECEF to ENU transformation matrix
 """
 function calcenumatrix(obs_lla)
     lat = obs_lla[1]  # rad
@@ -386,9 +392,9 @@ Required Arguments:
 
 Returns:
 
-- sat_range
-- az
-- el
+- `sat_range`:
+- `az`:
+- `el`:
 """
 function calcelevation(sat_ecef, obs_lla)
     # Calculate ENU transformation matrix
@@ -422,13 +428,14 @@ from the `GPSData` dictionary. Returns dictionary with keys being the prns.
 
 Required Arguments:
 
-- `obs_time_JD`:
-- `prns`:
+- `obs_time_JD`: observation time in Julian Days
+- `prns`: PRNs to get NORAD ID for
 
 
 Returns:
 
-- `gps_satnums::Dict`
+- `gps_satnums::Dict`: dictionary containing NORAD IDs for each PRN
+    * dictionary keys are the PRN numbers
 """
 function getGPSSatnums(obs_time_JD, prns)
     gps_satnums = Dict{Int,Int}()
@@ -460,18 +467,20 @@ determine TLEs for eac satnum that is closest but before the observation time.
 
 Required Arguments:
 
-- `obs_time_JD`:
-- `satnums`:
+- `obs_time_JD`: observation time in Julian Days
+- `satnums`: vector of satelleite NORAD IDs
 
 
 Optional Arguments:
 
-- `Δdays`:
+- `Δdays`: Number of days to look before and up to `obs_time_JD`
 
 
 Returns:
 
-- `filtered_tles::Dict{Int,TLE}`:
+- `filtered_tles::Dict{Int,TLE}`: dictionary containing the TLEs for each
+                                  satellite NORAD ID
+    * dictionary keys are the NORAD IDs
 """
 function getTLEs(obs_time_JD, satnums; Δdays=5)
     obs_time_JD_begin = obs_time_JD - Δdays
