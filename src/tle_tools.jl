@@ -7,14 +7,15 @@ Struct containing orbit, start time, and observer location info.
 
 Fields:
 
-- `start_time`:
-- `start_time_julian_date`:
-- `site_loc_lla`:
-- `site_loc_ecef`:
-- `tle_file_name`:
-- `tle`:
-- `orb`:
-- `eop`:
+- `start_time`: start time in UTC in the format
+                (year, month, day, hour, minute, second)
+- `start_time_julian_date`: start time in Julian days
+- `site_loc_lla`: site latitude, longitude, and height in (deg, deg, meters)
+- `site_loc_ecef`: site ECEF position in (meters, meters, meters)
+- `tle_file_name`: file name of satellite TLE file
+- `tle`: `TLE` struct (data loaded from TLE file)
+- `orb`: single or vector of `OrbitPropagator` structs
+- `eop`: Earth Orientation Parameters object
 """
 mutable struct OrbitInfo{T1,T2,T3,T4,T5,T6,T7,T8}
     start_time::T1
@@ -190,17 +191,18 @@ observer position.
 
 Fields:
 
-- `name`:
-- `sat_tle`:
-- `julian_date_range`:
-- `obs_lla`:
-- `obs_ecef`:
-- `Δt`:
-- `ts`:
-- `sat_range`:
-- `sat_azimuth`:
-- `sat_elevation`:
-- `sat_ecef`:
+- `name`: name of satellite
+- `sat_tle`: `Satellite` or `TLE` struct
+- `julian_date_range`: two element vector containing start and end times
+                       in Julian days
+- `obs_lla`: observer latitude, longitude, and height
+- `obs_ecef`: observer ECEF coordinates
+- `Δt`: step size of data
+- `ts`: vector of time corresponding to data
+- `sat_range`: distance between satellite and observer
+- `sat_azimuth`: vector of satellite azimuths
+- `sat_elevation`: vector of satellite elevations
+- `sat_ecef`: vector of satellite ECEF coordinates
 """
 struct SatelliteRAE{A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11}
     name::A1
@@ -257,16 +259,17 @@ second between the range specified in `julian_date_range`.
 
 Required Arguments:
 
-- `sat_tle::TLE`:
-- `julian_date_range`:
-- `eop`:
-- `obs_lla`:
+- `sat_tle::TLE`: satellite TLE struct
+- `julian_date_range`: two element vector containing start and end times
+                       in Julian days
+- `eop`: Earth Orientation Parameters object
+- `obs_lla`: observer latitude, longitude, and height in (rad, rad, meters)
 
 
 Optional Arguments:
 
-- `name`:
-- `Δt`:
+- `name`: name of satellite `(default = "Satellite"`
+- `Δt`: step size in seconds `(default = 1/60/60/24)`
 
 
 Returns:
@@ -317,29 +320,29 @@ end
 
 
 """
-    calcelevation(satellite::Satellite, obs_lla; name="Satellite")
+    calcelevation(satellite::Satellite, obs_lla; name=string(satellite.id))
 
 
-Calculates the elevation of a given satellite relative to the observer for every
-second between the range specified in `julian_date_range`.
+Calculates the elevation of a given satellite relative to the observer for all
+time specified in `satellite.t`.
 
 
 Required Arguments:
 
-- `satellite::Satellite`:
-- `obs_lla`:
+- `satellite::Satellite`: struct containing satellite orbit information
+- `obs_lla`: observer latitude, longitude, and height in (rad, rad, meters)
 
 
 Optional Arguments:
 
-- `name`:
+- `name`: name of satellite `(default = string(satellite.id))`
 
 
 Returns:
 
 - `SatelliteRAE` struct
 """
-function calcelevation(satellite::Satellite, obs_lla; name="Satellite")
+function calcelevation(satellite::Satellite, obs_lla; name=string(satellite.id))
     obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
     ts = satellite.t
     Δt = ts[2] - ts[1]
@@ -386,15 +389,15 @@ Format is `(meters, deg, deg)`.
 
 Required Arguments:
 
-- `sat_ecef`:
-- `obs_lla`:
+- `sat_ecef`: satellite ECEF coordinates with all components in meters
+- `obs_lla`: observer latitude, longitude, and height in (rad, rad, meters)
 
 
 Returns:
 
-- `sat_range`:
-- `az`:
-- `el`:
+- `sat_range`: range between satellite and observer in meters
+- `az`: satellite azimuth in degrees
+- `el`: satellite elevation in degrees
 """
 function calcelevation(sat_ecef, obs_lla)
     # Calculate ENU transformation matrix
