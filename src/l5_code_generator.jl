@@ -368,14 +368,15 @@ Returns:
                              a signal, which can be used with `generatesignal!`
                              to generate the signal
 """
-function define_l5_code_type(channel="both"; t_length=missing, databits=true)
+function define_l5_code_type(channel="both"; t_length=missing, databits=false)
 	if (channel == "I") || (channel == "both")
 	    if databits
 	        if ~ismissing(t_length)
 	            # Generate random databits
 	            databits = rand(0:1, ceil(Int, L5_db_chipping_rate*t_length))
 	            # Include databits in I channel codes
-	            I_codes = definecodetype(l5_codes, L5_chipping_rate;
+	            I_codes = definecodetype([l5i_codes, nh10],
+				                         [L5_chipping_rate, nh_chipping_rate];
 	                                     databits=[databits, L5_db_chipping_rate])
 	         else
 	             error("Must define `t_length` in seconds.")
@@ -387,11 +388,13 @@ function define_l5_code_type(channel="both"; t_length=missing, databits=true)
 		if channel == "I"
 			signal_type = definesignaltype(I_codes, L5_freq, "I"; name="L5")
 		else
-			Q_codes = definecodetype(l5q_codes, L5_chipping_rate)
+			Q_codes = definecodetype([l5q_codes, nh20],
+									 [L5_chipping_rate, nh_chipping_rate])
 			signal_type = definesignaltype(I_codes, Q_codes, L5_freq; name="L5")
 		end
 	elseif channel =="Q"
-		Q_codes = definecodetype(l5q_codes, L5_chipping_rate)
+		Q_codes = definecodetype([l5q_codes, nh20],
+								 [L5_chipping_rate, nh_chipping_rate])
 		signal_type = definesignaltype(Q_codes, L5_freq, "Q"; name="L5")
 	end
     return signal_type
