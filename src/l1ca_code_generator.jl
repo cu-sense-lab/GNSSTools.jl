@@ -175,7 +175,7 @@ Returns:
                              a signal, which can be used with `generatesignal!`
                              to generate the signal
 """
-function define_l1ca_code_type(; t_length=missing, databits=true)
+function define_l1ca_code_type(; t_length=missing, databits=false)
     if databits
         if ~ismissing(t_length)
             # Generate random databits

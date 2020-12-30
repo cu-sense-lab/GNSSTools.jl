@@ -469,6 +469,11 @@ end
 
 
 """
+	random_databits(chipping_rate, t_length; )
+"""
+
+
+"""
     get_signal_type(file_name)
 
 
