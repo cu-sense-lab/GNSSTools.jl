@@ -469,8 +469,39 @@ end
 
 
 """
-	random_databits(chipping_rate, t_length; )
+	random_databits(chipping_rate, t_length; prns=missing)
+
+
+Generates single or multiple random bit streams. Multiple bit streams are stored
+in a dictionary wit the keys being the contents of `prns`.
+
+
+Required Arguments:
+
+- `chipping_rate`: databit chipping rate in Hz
+- `t_length`: length of databit sequence in seconds
+
+
+Optioonal Arguments:
+
+- `prns`: vector containing PRN numbers
+
+
+Returns:
+
+- Vector of databits or dictionary of `length(prns)` databit sequences
 """
+function random_databits(chipping_rate, t_length; prns=missing)
+	if ismissing(prns)
+		return rand(0:1, ceil(Int, chipping_rate*t_length))
+	else
+		databits = Dict{eltype(prns),Vector{Int}}()
+		for prn in prns
+			databits[prn] = rand(0:1, ceil(Int, chipping_rate*t_length))
+		end
+		return databits
+	end
+end
 
 
 """
