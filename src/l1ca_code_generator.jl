@@ -151,22 +151,19 @@ const l1ca_codes = gen_l1ca_codes()
 
 
 """
-    define_l1ca_code_type(t_length; databits=true)
+    define_l1ca_code_type(; t_length=missing, databits=true)
 
 
 Generates a `SignalType` struct which defines the L1 C/A code that can be used
 to define and generate L1 C/A signals. The databits generated are random.
 
 
-Required Arguments:
+Optional Arguments:
 
 - `t_length:Float64`: the length of the planned signal in seconds
     * this argument is used only to generate a `Vector` of databits so they do
       not repeat throughout the duration of the signal, once it is generated
-
-
-Optional Arguments:
-
+    * `(default = missing)`
 - `databits::Bool`: if `true`, a databit array is generated with a length in
                     seconds defined by `t_length` and is inserted into the I
                     channel of the signal type
@@ -178,17 +175,21 @@ Returns:
                              a signal, which can be used with `generatesignal!`
                              to generate the signal
 """
-function define_l1ca_code_type(t_length; databits=true)
+function define_l1ca_code_type(; t_length=missing, databits=true)
     if databits
-        # Generate random databits
-        databits = rand(0:1, ceil(Int, l1ca_db_chipping_rate*t_length))
-        # Include databits in I channel codes
-        I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate;
-                                 databits=[databits, l1ca_db_chipping_rate])
+        if ~ismissing(t_length)
+            # Generate random databits
+            databits = rand(0:1, ceil(Int, l1ca_db_chipping_rate*t_length))
+            # Include databits in I channel codes
+            I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate;
+                                     databits=[databits, l1ca_db_chipping_rate])
+         else
+             error("Must define `t_length` in seconds.")
+         end
     else
         # Define I channel codes without databits
         I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate)
     end
-    signal_type = definesignaltype(I_codes, L1_freq, "I")
+    signal_type = definesignaltype(I_codes, L1_freq, "I"; name="L1 C/A")
     return signal_type
 end
