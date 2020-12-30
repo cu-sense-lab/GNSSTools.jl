@@ -342,7 +342,7 @@ const l5i_codes = gen_l5i_codes()
 
 
 """
-    define_l5_code_type(channel; t_length=missing, databits=true)
+    define_l5_code_type(channel="both"; t_length=missing, databits=false)
 
 
 Generates a `SignalType` struct which defines the L5 codes that can be used

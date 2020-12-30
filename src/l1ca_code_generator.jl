@@ -151,7 +151,7 @@ const l1ca_codes = gen_l1ca_codes()
 
 
 """
-    define_l1ca_code_type(; t_length=missing, databits=true)
+    define_l1ca_code_type(; t_length=missing, databits=false)
 
 
 Generates a `SignalType` struct which defines the L1 C/A code that can be used
