@@ -13,7 +13,7 @@ Since this is a private repo, the installation instructions are different than f
 ```bash
 # Startup ssh-agent and add RSA key for Julia's Package Manager
 eval `ssh-agent -s`
-ssh-add ~/.ssh/id_rsa  # This could also be the path to your RSA key if named differently
+ssh-add ~/.ssh/id_rsa  # This could also be the path to your RSA key if it is named differently
 ```
 
 The above ensures that Julia's package manager can access SeNSe's internal GitLab using the same ssh key you use to make commits. Once you've done this, restart your terminal session by logging out and back in. You will now be able to install internal packages directly through Julia's package manager.
