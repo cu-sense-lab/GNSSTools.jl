@@ -151,8 +151,7 @@ const l1ca_codes = gen_l1ca_codes()
 
 
 """
-    define_l1ca_code_type(;t_length=missing, databits=false,
-                          prns=keys(l1ca_codes))
+    define_l1ca_code_type(t_length=missing; prns=keys(l1ca_codes))
 
 
 Generates a `SignalType` struct which defines the L1 C/A code that can be used
@@ -165,10 +164,8 @@ Optional Arguments:
     * this argument is used only to generate a `Vector` of databits so they do
       not repeat throughout the duration of the signal, once it is generated
     * `(default = missing)`
-- `databits::Bool`: if `true`, a databit array is generated with a length in
-                    seconds defined by `t_length` and is inserted into the I
-                    channel of the signal type `(default = false)`
-- `prns`: codes to define for signal type `(default = keys(l5i_codes))`
+    * if given, databits are included in signal type
+- `prns`: codes to define for signal type `(default = keys(l1ca_codes))`
 	* default is to define all PRN codes and assume that databits for each
 	  are different
 
@@ -179,18 +176,13 @@ Returns:
                              a signal, which can be used with `generatesignal!`
                              to generate the signal
 """
-function define_l1ca_code_type(;t_length=missing, databits=false,
-                               prns=keys(l1ca_codes))
-    if databits
-        if ~ismissing(t_length)
-            # Generate random databits
-            databits = rand(0:1, ceil(Int, l1ca_db_chipping_rate*t_length))
-            # Include databits in I channel codes
-            I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate;
-                                     databits=[databits, l1ca_db_chipping_rate])
-         else
-             error("Must define `t_length` in seconds.")
-         end
+function define_l1ca_code_type(t_length=missing; prns=keys(l1ca_codes))
+    if ~ismissing(t_length)
+        # Generate random databits
+        databits = rand(0:1, ceil(Int, l1ca_db_chipping_rate*t_length))
+        # Include databits in I channel codes
+        I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate;
+                                 databits=[databits, l1ca_db_chipping_rate])
     else
         # Define I channel codes without databits
         I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate)
