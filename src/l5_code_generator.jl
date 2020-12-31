@@ -342,7 +342,8 @@ const l5i_codes = gen_l5i_codes()
 
 
 """
-    define_l5_code_type(channel="both"; t_length=missing, databits=false)
+    define_l5_code_type(channel="both"; t_length=missing, databits=false,
+	                    prns=missing)
 
 
 Generates a `SignalType` struct which defines the L5 codes that can be used
@@ -359,7 +360,10 @@ Optional Arguments:
     * `(default = missing)`
 - `databits::Bool`: if `true`, a databit array is generated with a length in
                     seconds defined by `t_length` and is inserted into the I
-                    channel of the signal type
+                    channel of the signal type `(default = false)`
+- `prns`: codes to define for signal type `(default = keys(l5i_codes))`
+	* default is to define all PRN codes and assume that databits for each
+	  are different
 
 
 Returns:
@@ -368,7 +372,8 @@ Returns:
                              a signal, which can be used with `generatesignal!`
                              to generate the signal
 """
-function define_l5_code_type(channel="both"; t_length=missing, databits=false)
+function define_l5_code_type(channel="both"; t_length=missing, databits=false,
+	                         prns=keys(l5i_codes))
 	if (channel == "I") || (channel == "both")
 	    if databits
 	        if ~ismissing(t_length)

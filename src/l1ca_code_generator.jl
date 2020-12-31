@@ -151,7 +151,8 @@ const l1ca_codes = gen_l1ca_codes()
 
 
 """
-    define_l1ca_code_type(; t_length=missing, databits=false)
+    define_l1ca_code_type(;t_length=missing, databits=false,
+                          prns=keys(l1ca_codes))
 
 
 Generates a `SignalType` struct which defines the L1 C/A code that can be used
@@ -166,7 +167,10 @@ Optional Arguments:
     * `(default = missing)`
 - `databits::Bool`: if `true`, a databit array is generated with a length in
                     seconds defined by `t_length` and is inserted into the I
-                    channel of the signal type
+                    channel of the signal type `(default = false)`
+- `prns`: codes to define for signal type `(default = keys(l5i_codes))`
+	* default is to define all PRN codes and assume that databits for each
+	  are different
 
 
 Returns:
@@ -175,7 +179,8 @@ Returns:
                              a signal, which can be used with `generatesignal!`
                              to generate the signal
 """
-function define_l1ca_code_type(; t_length=missing, databits=false)
+function define_l1ca_code_type(;t_length=missing, databits=false,
+                               prns=keys(l1ca_codes))
     if databits
         if ~ismissing(t_length)
             # Generate random databits
