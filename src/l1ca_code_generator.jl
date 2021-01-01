@@ -151,7 +151,7 @@ const l1ca_codes = gen_l1ca_codes()
 
 
 """
-    define_l1ca_code_type(t_length=missing; prns=keys(l1ca_codes))
+    define_l1ca_code_type(t_length=missing; prns=collect(keys(l1ca_codes)))
 
 
 Generates a `SignalType` struct which defines the L1 C/A code that can be used
@@ -176,16 +176,18 @@ Returns:
                              a signal, which can be used with `generatesignal!`
                              to generate the signal
 """
-function define_l1ca_code_type(t_length=missing; prns=keys(l1ca_codes))
+function define_l1ca_code_type(t_length=missing; prns=collect(keys(l1ca_codes)))
     if ~ismissing(t_length)
         # Generate random databits
-        databits = rand(0:1, ceil(Int, l1ca_db_chipping_rate*t_length))
+        databits = random_databits(l1ca_db_chipping_rate, t_length; prns=prns)
         # Include databits in I channel codes
-        I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate;
+        I_codes = definecodetype(copy_dictionary(l1ca_codes, prns),
+                                 l1ca_chipping_rate;
                                  databits=[databits, l1ca_db_chipping_rate])
     else
         # Define I channel codes without databits
-        I_codes = definecodetype(l1ca_codes, l1ca_chipping_rate)
+        I_codes = definecodetype(copy_dictionary(l1ca_codes, prns),
+                                 l1ca_chipping_rate)
     end
     signal_type = definesignaltype(I_codes, L1_freq, "I"; name="L1 C/A")
     return signal_type

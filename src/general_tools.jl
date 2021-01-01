@@ -505,6 +505,33 @@ end
 
 
 """
+	copy_dictionary(dict, key_list)
+
+
+Copies a dictionary keys and values with keys defined as `b`.
+
+
+Required Arguments:
+
+- `dict`: dictionary to copy
+- `key_list`: list of keys to copy
+
+
+Return:
+
+- dictionary containing partial to full copy of key_list
+"""
+function copy_dictionary(dict, key_list)
+	dict_copy = Dict{eltype(keys(dict)),Vector{eltype(dict[key_list[1]])}}()
+	for key in key_list
+		dict_copy[key] = dict[key]
+	end
+	return dict_copy
+end
+
+
+
+"""
     get_signal_type(file_name)
 
 
