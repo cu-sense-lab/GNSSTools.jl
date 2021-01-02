@@ -46,6 +46,8 @@ Returns:
 - `trackresults`:
 - `corr_result`: `[OPTIONAL]` course correlation result returned if
                  `return_corrresult` is set to `true`
+- `SNR_est`: `[OPTIONAL]` course correlation peak SNR returned if
+             `return_corrresult` is set to `true`
 """
 function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000.,
                  fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
@@ -122,5 +124,9 @@ function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000
     if show_plot
         plotresults(trackresults; saveto=saveto, figsize=figsize)
     end
-    return (results, trackresults)
+    if return_corrresult
+        return (results, trackresults, corr_result, SNR_est)
+    else
+        return (results, trackresults)
+    end
 end
