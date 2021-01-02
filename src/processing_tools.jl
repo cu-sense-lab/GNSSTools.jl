@@ -36,18 +36,23 @@ Optional Arguments:
 - `show_plot`:
 - `fine_acq_method`:
 - `M`:
+- `return_corrresult`: flag, if set to true, will return the course correlation
+                       result
 
 
 Returns:
 
-- results
-- trackresults
+- `results`:
+- `trackresults`:
+- `corr_result`: `[OPTIONAL]` course correlation result returned if
+                 `return_corrresult` is set to `true`
 """
 function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000.,
                  fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
                  cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
                  state_num=3, fd_rate=0., figsize=missing, saveto=missing,
-                 show_plot=true, fine_acq_method=:fft, M=10)
+                 show_plot=true, fine_acq_method=:fft, M=10,
+                 return_corrresult=false)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
