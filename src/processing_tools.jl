@@ -103,7 +103,7 @@ function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000
     elseif fine_acq_method == :carrier
         results = fineacquisition(signal, replica, prn, fd_est,
                                   n0_est, Val(fine_acq_method); σω=σω,
-                                  fd_rate=fd_rate, M=M)
+                                  fd_rate=fd_rate, M=RLM)
     else
         error("Invalid value for argument `fine_acq_method`.")
     end
