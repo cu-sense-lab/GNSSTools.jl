@@ -377,16 +377,16 @@ calling this method.
 
 Required Arguments:
 
-- `ZP_array`:
-- `data`:
-- `replica`:
-- `i`:
-- `N`:
-- `f_id`:
-- `f_d`:
-- `fd_rate`:
-- `ϕ`:
-- `d`:
+- `ZP_array`: allocated memory for ZP values to use to get SNR of peak
+- `data`: vector containin I/Q samples to process
+- `replica`: replica generated signal
+- `i`: current `iᵗʰ` integration time `T`
+- `N`: number of samples in `data` and `replica`
+- `f_if`: intermediate frequency (IF) of `data` in Hz
+- `f_d`: current Doppler frequency estimate in Hz
+- `fd_rate`: current Doppler frequency rate estimate in Hz/s
+- `ϕ`: current phase estimate in rads
+- `d`: current correlator spacing in sample space
 
 
 Optional Arguments:
@@ -397,7 +397,10 @@ Optional Arguments:
 
 Returns:
 
--
+- `ze`: early correlator value
+- `zp`: prompt correlator value
+- `zl`: late correlator value
+- `SNR`: signal-to-noise ratio of frequency domain correlation peak in dB
 """
 function getcorrelatoroutput!(ZP_array, data, replica, i, N, f_if, f_d,
 	                          fd_rate, ϕ, d, bin_width=1)
