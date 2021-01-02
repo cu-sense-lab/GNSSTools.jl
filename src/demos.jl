@@ -17,6 +17,204 @@ and code/carrier phase and Doppler frequency tracking on simulated and real
 data.
 """
 function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
+               include_databits=true, simulatedata=true,
+               saveto=missing, T="short", showplot=true, f_d=800.,
+               fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
+               fd_range=5000., dll_b=5, state_num=3, dynamickf=true,
+               cov_mult=1., q_a=1, figsize=missing, CN0=45., plot3d=true,
+               show_acq_plot=false, doppler_curve=missing, doppler_t=missing,
+               fd_center=0., sig_freq=missing, signal=missing, q_mult=1,
+               print_steps=true, σω=1000, channel="I", file_name=missing,
+               include_thermal_noise=true, include_phase_noise=true,
+               fine_acq_method=:fft)
+    if print_steps
+        println("Running GNSSTools Signal Simulation and Data Processing Demo")
+    end
+
+    # L5Q parameters
+    if sigtype == "l5"
+        f_s = 25e6  # Hz
+        f_if = 0.  # Hz
+        Tsys = 535.  # K
+        phi = π/4  # rad
+        nADC = 4  # bits
+        B = 2.046e7  # Hz
+        if channel == "I"
+            RLM = 10
+        elseif channel == "Q"
+            RLM = 20
+        else
+            error("Invalid channel specified")
+        end
+        if ismissing(file_name)
+            file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
+        end
+        if include_databits
+            signal_type = define_l5_code_type(M*t_length; prns=prn)
+        else
+            signal_type = define_l5_code_type(;prns=prn)
+        end
+    elseif sigtype == "l1ca"
+        f_s = 5e6  # Hz
+        # f_if = 1.25e6  # Hz
+        f_if = 0.  # Hz
+        Tsys = 535.  # K
+        phi = π/4  # rad
+        nADC = 4  # bits
+        B = 2.046e6  # Hz
+        RLM = 10
+        if ismissing(file_name)
+            file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
+        end
+        if include_databits
+            signal_type = define_l1ca_code_type(M*t_length; prns=prn)
+        else
+            signal_type = define_l1ca_code_type(;prns=prn)
+        end
+    else
+        error("Invalid signal type specified.")
+    end
+
+    if simulatedata
+        # Simulate data
+        if print_steps
+            print("Generating PRN $(prn) $(sigtype) signal...")
+        end
+        if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
+            zero_idx = findfirst(t -> t == 0, doppler_t)
+            f_d = doppler_curve[zero_idx]
+            fd_rate = (doppler_curve[zero_idx+1]-doppler_curve[zero_idx]) /
+                      (doppler_t[zero_idx+1]-doppler_t[zero_idx])
+        end
+        if ismissing(signal)
+            data = definesignal(signal_type, f_s, M*t_length; prn=prn,
+                                f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+                                CN0=CN0, phi=phi, nADC=nADC,
+                                include_carrier=include_carrier,
+                                include_adc=include_adc,
+                                include_thermal_noise=include_thermal_noise,
+                                include_phase_noise=include_phase_noise,
+                                code_start_idx=n0)
+            generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
+        else
+            data = signal
+        end
+        if print_steps
+            println("Done")
+        end
+    else
+        # Load data
+        if print_steps
+            print("Loading $(sigtype) data...")
+        end
+        file_dir = "/media/Srv3Pool2/by-location/hi/"
+        file_path = string(file_dir, file_name)
+        data_type = Val(:sc4)
+        start_t = 1e-3
+        data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
+                        start_data_idx=Int(f_s * start_t)+1)
+        if print_steps
+            println("Done")
+        end
+    end
+    if T == "long"
+        # Use 20ms coherent integration for L5Q signal and 10ms
+        # coherent integration for L5I signal
+        if sigtype == "l5"
+            if channel == "I"
+                replica_t_length = 10e-3
+            elseif channel == "Q"
+                replica_t_length = 20e-3
+            else
+                error("Invalid signal type specified.")
+            end
+        else
+            replica_t_length = 1e-3
+        end
+    else
+        replica_t_length = 1e-3
+    end
+    # Process signal
+    if print_steps
+        print("Processing signal...")
+    end
+    results = process(data, signal_type, prn, channel;
+                      σω=σω, fd_center=fd_center, fd_range=fd_range, RLM=RLM,
+                      replica_t_length=replica_t_length, cov_mult=cov_mult,
+                      q_a=q_a, q_mult=q_mult, dynamickf=dynamickf, dll_b=dll_b,
+                      state_num=state_num, fd_rate=fd_rate, show_plot=false,
+                      fine_acq_method=fine_acq_method, return_corrresult=true,
+                      M=M)
+    acqresults, trackresults, corr_result, SNR_est = results
+    # Plot results and save if `saveto` is a string
+    n0_est = acqresults.n0_idx_course
+    fd_est = acqresults.fd_course
+    println("Done")
+    if showplot
+        if print_steps
+            print("Generating figures...")
+        end
+        # Course Acquisition Results
+        if (sigtype == "l1ca") && show_acq_plot
+            if ~plot3d
+                fig, ax = subplots(1, 1)
+                img = ax.imshow(corr_result, interpolation="none", aspect="auto",
+                                extent=[0, size(corr_result)[2], fd_range, -fd_range],
+                                vmin=minimum(corr_result), vmax=maximum(corr_result)/4)
+                scatter(n0_est, fd_est, color="r", s=400, marker="o",
+                        facecolor="none")
+            else
+                fig = figure()
+                ax = Axes3D(fig)
+                fd_bins = Array(-fd_range+fd_center:1/replica.t_length:fd_range+fd_center)
+                x, y = meshgrid(Array(1:replica.sample_num), fd_bins./1000.)
+                surf(x, y, corr_result)
+                max_val_idx = argmax(collect(Iterators.flatten(corr_result)))
+                scatter3D(collect(Iterators.flatten(x))[max_val_idx],
+                          collect(Iterators.flatten(y))[max_val_idx],
+                          collect(Iterators.flatten(corr_result))[max_val_idx],
+                          c="r")
+            end
+            xlabel("Samples")
+            ylabel("Doppler (Hz)")
+            suptitle("PRN $(prn)\nfd course: $(fd_est)Hz; n₀ course: $(n0_est)")
+        end
+        # Tracking results
+        plotresults(trackresults; saveto=saveto, figsize=figsize)
+        if print_steps
+            println("Done")
+        end
+    end
+    return (trackresults, data)
+end
+
+
+#------------------------------------------------------------------------------
+#                             OLD IMPLEMENTATON
+#------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------
+#             GNSSTools.jl Signal Simulation and Data Processing Demo
+#-------------------------------------------------------------------------------
+"""
+    demo(old_flag; sigtype="l1ca", include_carrier=true, include_adc=true,
+          include_noise=true, include_databits=true, simulatedata=true,
+          saveto=missing, T="short", showplot=true, f_d=800.,
+          fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
+          fd_range=5000., dll_b=2, state_num=3, dynamickf=true,
+          cov_mult=1., q_a=1, figsize=missing, CN0=45., plot3d=true,
+          show_acq_plot=true, doppler_curve=missing, doppler_t=missing,
+          fd_center=missing, sig_freq=missing, signal=missing, q_mult=1,
+          print_steps=true, σω=1000)
+
+Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquisition
+and code/carrier phase and Doppler frequency tracking on simulated and real
+data.
+
+**NOTE: THIS IS AN OLDER VERSION. `old_flag` CAN BE ANYTHING.**
+"""
+function demo(old_flag; sigtype="l1ca", include_carrier=true, include_adc=true,
                include_noise=true, include_databits=true, simulatedata=true,
                saveto=missing, T="short", showplot=true, f_d=800.,
                fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
@@ -25,6 +223,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                show_acq_plot=false, doppler_curve=missing, doppler_t=missing,
                fd_center=missing, sig_freq=missing, signal=missing, q_mult=1,
                print_steps=true, σω=1000)
+    @warn "THIS METHOD IS DEPRICATED."
     if print_steps
         println("Running GNSSTools Signal Simulation and Data Processing Demo")
     end
@@ -224,7 +423,7 @@ end
 #                         GNSSTools.jl Constellation Demo
 #-------------------------------------------------------------------------------
 """
-    demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 1655);
+    demo(old_flag, a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 1655);
          sigtype="l1ca", include_carrier=true, include_adc=true, include_noise=true,
          include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
          t_length=1e-3, M=4000, fd_range=5000., dll_b=1., state_num=3,
@@ -237,13 +436,15 @@ Runs a demo of `GNSSTools` showing major capabilities such as course/fine acquis
 and code/carrier phase and Doppler frequency tracking on simulated data based
 off a user defined constellation.
 
+**NOTE: THIS IS AN OLDER VERSION. `old_flag` CAN BE ANYTHING.**
+
     - `a`: semi-major axis in meters
     - `plane_num`: number of orbital planes in constellation
     - `satellite_per_plane`: number of satellites in each orbital plane
     - `user_lla`: user [latitude, longitude, altitude] in [deg, deg, meters]
                   defaults to (40.01, -105.2437, 1655), or Boulder, CO, USA
 """
-function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 1655);
+function demo(old_flag, a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 1655);
               sigtype="l1ca", include_carrier=true, include_adc=true, include_noise=true,
               include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
               t_length=1e-3, M=4000, fd_range=5000., dll_b=5., state_num=3,
@@ -251,6 +452,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
               sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
               print_steps=true, eop=get_eop(), σω=1000.)
+    @warn "THIS METHOD IS DEPRICATED."
     if print_steps
         println("Running GNSSTools Constellation Demo")
     end
