@@ -52,8 +52,7 @@ function generatesignal!(signal::ReplicaSignals, t_length=signal.t_length;
         get_ϕ(t) = 2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ_init
         get_code_val(t) = calc_code_val(signal, t)
     else
-        get_code_val, get_ϕ = get_chips_and_ϕ(signal, doppler_curve;
-                                              doppler_t=doppler_t)
+        get_code_val, get_ϕ = get_chips_and_ϕ(signal, doppler_curve, doppler_t)
     end
     generatesignal!(signal, t_length, get_code_val, get_ϕ)
 end
