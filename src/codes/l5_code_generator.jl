@@ -343,7 +343,7 @@ const l5i_codes = gen_l5i_codes()
 
 """
 	define_l5_code_type(t_length=missing; channel="both",
-						prns=collect(keys(l5i_codes)))
+						prns=collect(keys(l5i_codes)), sig_freq=L5_freq)
 
 
 Generates a `SignalType` struct which defines the L5 codes that can be used
@@ -362,6 +362,7 @@ Optional Arguments:
 - `prns`: codes to define for signal type `(default = keys(l5i_codes))`
 	* default is to define all PRN codes and assume that databits for each
 	  are different
+- `sig_freq`: carrier frequency in Hz `(default = L5_freq)`
 
 
 Returns:
@@ -371,7 +372,7 @@ Returns:
                              to generate the signal
 """
 function define_l5_code_type(t_length=missing; channel="both",
-	                         prns=collect(keys(l5i_codes)))
+	                         prns=collect(keys(l5i_codes)), sig_freq=L5_freq)
 	if (channel == "I") || (channel == "both")
         if ~ismissing(t_length)
             # Generate random databits
@@ -387,16 +388,16 @@ function define_l5_code_type(t_length=missing; channel="both",
 			                         [L5_chipping_rate, nh_chipping_rate])
 	    end
 		if channel == "I"
-			signal_type = definesignaltype(I_codes, L5_freq, "I"; name="L5")
+			signal_type = definesignaltype(I_codes, sig_freq, "I"; name="L5")
 		else
 			Q_codes = definecodetype([copy_dictionary(l5q_codes, prns), nh20],
 									 [L5_chipping_rate, nh_chipping_rate])
-			signal_type = definesignaltype(I_codes, Q_codes, L5_freq; name="L5")
+			signal_type = definesignaltype(I_codes, Q_codes, sig_freq; name="L5")
 		end
 	elseif channel == "Q"
 		Q_codes = definecodetype([copy_dictionary(l5q_codes, prns), nh20],
 								 [L5_chipping_rate, nh_chipping_rate])
-		signal_type = definesignaltype(Q_codes, L5_freq, "Q"; name="L5")
+		signal_type = definesignaltype(Q_codes, sig_freq, "Q"; name="L5")
 	else
 		error("Invalid channel specifed.")
 	end
