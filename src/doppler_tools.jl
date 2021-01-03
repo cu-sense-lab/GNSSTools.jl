@@ -80,7 +80,7 @@ function doppler2chips(signal::ReplicaSignals, doppler_curve,
       # Get parameters from `signal` struct
       ϕ_init = signal.phi
       f_if = signal.f_if
-      sig_freq = signal.signal_type.signal_freq
+      sig_freq = signal.signal_type.sig_freq
       include_I = signal.signal_type.include_I
       include_Q = signal.signal_type.include_Q
       chipping_rates_I = signal.signal_type.I_codes.chipping_rates
