@@ -119,6 +119,7 @@ Optional Arguments:
              `(default = 0)`
 - `obs_lla`: if this exists, the receiver location is shown on the plot
              `(default = missing)`
+    * format `(latitude, longitude, height)` in (deg, deg, meters)
 - `ΔΩ`: offset in longitude of ascending mode for each plane in degrees
         `(default = 360/place_num)`
     * each plane is offset by a multiple of `ΔΩ`
@@ -197,7 +198,8 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
     if show_plot
         axis("off")
         if ~ismissing(obs_lla)
-            obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+            obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
+                                      obs_lla[3])
             scatter3D(obs_ecef[1], obs_ecef[2], obs_ecef[3], s=300, c="r",
                       marker="*", facecolor="white")
         end
@@ -207,6 +209,7 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
         x = Rₑ.*cos.(u).*sin.(v)
         y = Rₑ.*sin.(u).*sin.(v)
         z = Rₑ.*cos.(v)
+        println("Working")
         plot_wireframe(x, y, z, color="grey", linestyle=":", rcount=20, ccount=30)
         ax.axes.set_xlim3d(left=-a*a_lim/2, right=a*a_lim/2)
         ax.axes.set_ylim3d(bottom=-a*a_lim/2, top=a*a_lim/2)
@@ -238,7 +241,7 @@ Required Arguments:
 - `incl`: orbit inclination in rads
 - `t_range`: vector of time in seconds
 - `obs_lla`: the receiver location in lat, long, height `(default = missing)`
-    * format `(latitude, longitude, height)` in (rad, rad, meters)
+    * format `(latitude, longitude, height)` in (deg, deg, meters)
 - `sig_freq`: carrier frequency in Hz
 
 
@@ -310,7 +313,8 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
                                          obs_lla=obs_lla, ΔΩ=ΔΩ, ax=ax1, a_lim=a_lim,
                                          print_steps=print_steps)
-    obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+    obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
+                              obs_lla[3])
     N = length(t_range)*plane_num*satellite_per_plane
     ts = Array{Float64}(undef, N)
     ids = Array{Int}(undef, N)
