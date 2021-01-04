@@ -216,13 +216,18 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               dynamickf=true, cov_mult=1., q_a=1., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
               sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
-              print_steps=true, eop=get_eop(), σω=1000.)
+              print_steps=true, eop=get_eop(), σω=1000., channel="I",
+              include_thermal_noise=true, include_phase_noise=true,
+              fine_acq_method=:fft)
     if print_steps
         println("Running GNSSTools Constellation Demo")
     end
 
     # L5Q parameters
     if sigtype == "l5"
+        if ismissing(sig_freq)
+            sig_freq = L5_freq
+        end
         f_s = 25e6  # Hz
         f_if = 0.  # Hz
         Tsys = 535.  # K
@@ -236,15 +241,17 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         else
             error("Invalid channel specified")
         end
-        if ismissing(file_name)
-            file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
-        end
         if include_databits
-            signal_type = define_l5_code_type(M*t_length; prns=prn)
+            signal_type = define_l5_code_type(M*t_length; prns=prn,
+                                              sig_freq=sig_freq)
         else
-            signal_type = define_l5_code_type(;prns=prn)
+            signal_type = define_l5_code_type(;prns=prn, sig_freq=sig_freq)
         end
     elseif sigtype == "l1ca"
+        if ismissing(sig_freq)
+            sig_freq = L1_freq
+        end
+        f_s = 25e6  #
         f_s = 5e6  # Hz
         # f_if = 1.25e6  # Hz
         f_if = 0.  # Hz
@@ -253,13 +260,11 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         nADC = 4  # bits
         B = 2.046e6  # Hz
         RLM = 10
-        if ismissing(file_name)
-            file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
-        end
         if include_databits
-            signal_type = define_l1ca_code_type(M*t_length; prns=prn)
+            signal_type = define_l1ca_code_type(M*t_length; prns=prn,
+                                                sig_freq=sig_freq)
         else
-            signal_type = define_l1ca_code_type(;prns=prn)
+            signal_type = define_l1ca_code_type(;prns=prn, sig_freq=sig_freq)
         end
     else
         error("Invalid signal type specified.")
@@ -270,7 +275,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         print("Setting signal parameters and generating constellation...")
     end
     data = definesignal(signal_type, f_s, M*t_length; prn=prn,
-                        f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
+                        f_if=f_if, f_d=0., fd_rate=0., Tsys=Tsys,
                         CN0=CN0, phi=phi, nADC=nADC,
                         include_carrier=include_carrier,
                         include_adc=include_adc,
@@ -292,7 +297,8 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         push!(elevations, elevation)
     end
     max_idx = argmax(max_elevations)
-    user_ecef = GeodetictoECEF(user_lla[1], user_lla[2], user_lla[3])
+    user_ecef = GeodetictoECEF(deg2rad(user_lla[1]), deg2rad(user_lla[2]),
+                               user_lla[3])
     doppler_curve = zeros(length(doppler_t))
     for i in 1:length(doppler_curve)
         julian_date = doppler_t[i]/60/60/24 .+ t_start
@@ -310,62 +316,83 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
     if print_steps
         println("Done")
-        print("Performing course acquisition...")
     end
     if T == "long"
         # Use 20ms coherent integration for L5Q signal and 10ms
         # coherent integration for L5I signal
-        if sigtype == "l5i"
-            replica_t_length = 10e-3
-        elseif sigtype == "l5q"
-            replica_t_length = 20e-3
+        if sigtype == "l5"
+            if channel == "I"
+                replica_t_length = 10e-3
+            elseif channel == "Q"
+                replica_t_length = 20e-3
+            else
+                error("Invalid signal type specified.")
+            end
         else
             replica_t_length = 1e-3
         end
     else
         replica_t_length = 1e-3
     end
-    # Define 1ms and RLM*1ms signals
-    replica = definesignal(type, f_s, replica_t_length; sig_freq=sig_freq)
-    replicalong = definesignal(type, f_s, RLM*t_length; sig_freq=sig_freq)
-    # Calculate Doppler bin spacing for course acquisition
-    Δfd = 1/replica.t_length  # Hz
+    # Process signal
+    if print_steps
+        print("Processing signal...")
+    end
+    Δfd = 1/replica_t_length  # Hz
     fd_center = round(doppler_curve[1]/Δfd)*Δfd  # Hz
-    # fd_center = 0.  # Hz
-    # Allocate space for correlation result
-    corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
-    # Perform course acquisition
-    courseacquisition!(corr_result, data, replica, prn;
-                       fd_center=fd_center, fd_range=fd_range,
-                       fd_rate=fd_rate, Δfd=Δfd)
-    n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range, Δfd)
-    if print_steps
-        println("Done ($(SNR_est)dB)")
-    end
-    # Perform FFT based fine acquisition
-    # Returns structure containing the fine, course,
-    # and estimated Doppler frequency
-    if print_steps
-        print("Performing FFT based fine acquisition...")
-    end
-    results = fineacquisition(data, replicalong, prn, fd_est,
-                              n0_est, Val(:fft); σω=σω)
-    if print_steps
-        println("Done")
-    end
-    # Perform code/carrier phase, and Doppler frequency tracking on signal
-    # using results from fine acquisition as the intial conditions
-    if print_steps
-        print("Performing signal tracking...")
-    end
-    trackresults = trackprn(data, replica, prn, results.phi_init,
-                            results.fd_est, results.n0_idx_course,
-                            results.P, results.R; DLL_B=dll_b,
-                            state_num=state_num, dynamickf=dynamickf,
-                            cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
-    if print_steps
-        println("Done")
-    end
+    results = process(data, signal_type, prn, channel;
+                      σω=σω, fd_center=fd_center, fd_range=fd_range, RLM=RLM,
+                      replica_t_length=replica_t_length, cov_mult=cov_mult,
+                      q_a=q_a, q_mult=q_mult, dynamickf=dynamickf, dll_b=dll_b,
+                      state_num=state_num, fd_rate=fd_rate, show_plot=false,
+                      fine_acq_method=fine_acq_method, return_corrresult=true,
+                      M=M)
+    acqresults, trackresults, corr_result, SNR_est = results
+    # Plot results and save if `saveto` is a string
+    n0_est = acqresults.n0_idx_course
+    fd_est = acqresults.fd_course
+    println("Done")
+    # # Define 1ms and RLM*1ms signals
+    # replica = definesignal(type, f_s, replica_t_length; sig_freq=sig_freq)
+    # replicalong = definesignal(type, f_s, RLM*t_length; sig_freq=sig_freq)
+    # # Calculate Doppler bin spacing for course acquisition
+    # Δfd = 1/replica.t_length  # Hz
+    # fd_center = round(doppler_curve[1]/Δfd)*Δfd  # Hz
+    # # fd_center = 0.  # Hz
+    # # Allocate space for correlation result
+    # corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
+    # # Perform course acquisition
+    # courseacquisition!(corr_result, data, replica, prn;
+    #                    fd_center=fd_center, fd_range=fd_range,
+    #                    fd_rate=fd_rate, Δfd=Δfd)
+    # n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range, Δfd)
+    # if print_steps
+    #     println("Done ($(SNR_est)dB)")
+    # end
+    # # Perform FFT based fine acquisition
+    # # Returns structure containing the fine, course,
+    # # and estimated Doppler frequency
+    # if print_steps
+    #     print("Performing FFT based fine acquisition...")
+    # end
+    # results = fineacquisition(data, replicalong, prn, fd_est,
+    #                           n0_est, Val(:fft); σω=σω)
+    # if print_steps
+    #     println("Done")
+    # end
+    # # Perform code/carrier phase, and Doppler frequency tracking on signal
+    # # using results from fine acquisition as the intial conditions
+    # if print_steps
+    #     print("Performing signal tracking...")
+    # end
+    # trackresults = trackprn(data, replica, prn, results.phi_init,
+    #                         results.fd_est, results.n0_idx_course,
+    #                         results.P, results.R; DLL_B=dll_b,
+    #                         state_num=state_num, dynamickf=dynamickf,
+    #                         cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
+    # if print_steps
+    #     println("Done")
+    # end
     # Plot results and save if `saveto` is a string
     if showplot
         if print_steps
