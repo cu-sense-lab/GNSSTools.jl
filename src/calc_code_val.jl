@@ -133,8 +133,7 @@ end
 
 
 """
-    calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
-                  code_chips_Q::Vector{T}) where T
+    calc_code_val(signal::ReplicaSignals, t, code_chips_I, code_chips_Q)
 
 
 Calculates the value of the generic code with parameters defined by `signal` at
@@ -153,12 +152,12 @@ Required Arguments:
 
 - `signal::ReplicaSignals`: struct containing signal data and parameters
 - `t::Float64`: current time in seconds
-- `code_chips_I::Vector{T}`: N element array containing interpolated functions
-                             that compute the current code chip for a given `t`
-                             for each code on the I channel
-- `code_chips_Q::Vector{T}`: M element array containing interpolated functions
-                             that compute the current code chip for a given `t`
-                             for each code on the Q channel
+- `code_chips_I`: N element array containing interpolated functions
+                  that compute the current code chip for a given `t`
+                  for each code on the I channel
+- `code_chips_Q`: M element array containing interpolated functions
+                  that compute the current code chip for a given `t`
+                  for each code on the Q channel
 
 
 Returns:
@@ -201,8 +200,7 @@ and for codes on **only** the Q channel:
 | 0             | 1             | 90              |
 | 0             | -1            | 270             |
 """
-function calc_code_val(signal::ReplicaSignals, t, code_chips_I::Vector{T},
-                       code_chips_Q::Vector{T}) where T
+function calc_code_val(signal::ReplicaSignals, t, code_chips_I, code_chips_Q)
     prn = signal.prn
     # I channel
     I_val = 0
