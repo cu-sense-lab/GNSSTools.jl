@@ -83,30 +83,36 @@ function doppler2chips(signal::ReplicaSignals, doppler_curve,
       sig_freq = signal.signal_type.sig_freq
       include_I = signal.signal_type.include_I
       include_Q = signal.signal_type.include_Q
-      chipping_rates_I = signal.signal_type.I_codes.chipping_rates
-      chipping_rates_Q = signal.signal_type.Q_codes.chipping_rates
-      chip_init_I = signal.init_code_phases_I
-      chip_init_Q = signal.init_code_phases_Q
+      # chipping_rates_I = signal.signal_type.I_codes.chipping_rates
+      # chipping_rates_Q = signal.signal_type.Q_codes.chipping_rates
+      # chip_init_I = signal.init_code_phases_I
+      # chip_init_Q = signal.init_code_phases_Q
       # Generate range of time for use in interpolation
       t_range = range(doppler_t[1], doppler_t[end]; length=length(doppler_t))
-      code_chips_I = zeros(N, length(signal.signal_type.I_codes.code_num))
-      code_chips_Q = zeros(N, length(signal.signal_type.Q_codes.code_num))
+      # code_chips_I = zeros(N, length(signal.signal_type.I_codes.code_num))
+      # code_chips_Q = zeros(N, length(signal.signal_type.Q_codes.code_num))
       f_code_d_I_sitps = []
       f_code_d_Q_sitps = []
       # I channel
       if include_I
+          chipping_rates_I = signal.signal_type.I_codes.chipping_rates
+          chip_init_I = signal.init_code_phases_I
+          code_chips_I = zeros(N, signal.signal_type.I_codes.code_num)
           for i in 1:signal.signal_type.I_codes.code_num
               chipping_rate = chipping_rates_I[i]
-              code_chips[1,i] = chip_init_I[i]
+              code_chips_I[1,i] = chip_init_I[i]
               f_code_d = chipping_rate .* (1 .+ doppler_curve./sig_freq)
               push!(f_code_d_I_sitps, CubicSplineInterpolation(t_range, f_code_d))
           end
       end
       # Q channel
       if include_Q
+          chipping_rates_Q = signal.signal_type.Q_codes.chipping_rates
+          chip_init_Q = signal.init_code_phases_Q
+          code_chips_Q = zeros(N, signal.signal_type.Q_codes.code_num)
           for i in 1:signal.signal_type.Q_codes.code_num
               chipping_rate = chipping_rates_Q[i]
-              code_chips[1,i] = chip_init_Q[i]
+              code_chips_Q[1,i] = chip_init_Q[i]
               f_code_d = chipping_rate .* (1 .+ doppler_curve./sig_freq)
               push!(f_code_d_Q_sitps, CubicSplineInterpolation(t_range, f_code_d))
           end
@@ -132,18 +138,28 @@ function doppler2chips(signal::ReplicaSignals, doppler_curve,
                                                                    (i-1)*Δt+doppler_t[1])[1]
               end
           end
+          # Carrier phase
           ϕs[i] = ϕs[i-1] + quadgk(doppler_sitp, (i-2)*Δt+doppler_t[1], (i-1)*Δt+doppler_t[1])[1]
       end
-      code_chip_I_sitp = Array{typeof(doppler_sitp)}(undef, length(signal.signal_type.I_codes.code_num))
-      code_chip_Q_sitp = Array{typeof(doppler_sitp)}(undef, length(signal.signal_type.Q_codes.code_num))
-      # I channel
-      for i in 1:signal.signal_type.I_codes.code_num
-          code_chip_I_sitp[i] = CubicSplineInterpolation(t_range, view(code_chips_I, :, i))
+      # Interpolate I channel codes
+      if include_I
+          code_chip_I_sitp = Array{typeof(doppler_sitp)}(undef, signal.signal_type.I_codes.code_num)
+          for i in 1:signal.signal_type.I_codes.code_num
+              code_chip_I_sitp[i] = CubicSplineInterpolation(t_range, view(code_chips_I, :, i))
+          end
+      else
+          code_chip_I_sitp = missing
       end
-      # Q channel
-      for i in 1:signal.signal_type.Q_codes.code_num
-          code_chip_Q_sitp[i] = CubicSplineInterpolation(t_range, view(code_chips_Q, :, i))
+      # Interpolate Q channel codes
+      if include_Q
+          code_chip_Q_sitp = Array{typeof(doppler_sitp)}(undef, signal.signal_type.Q_codes.code_num)
+          for i in 1:signal.signal_type.Q_codes.code_num
+              code_chip_Q_sitp[i] = CubicSplineInterpolation(t_range, view(code_chips_Q, :, i))
+          end
+      else
+          code_chip_Q_sitp = missing
       end
+      # Interpolate carrier phase
       ϕs_sitp = CubicSplineInterpolation(t_range, ϕs)
       return (code_chip_I_sitp, code_chip_Q_sitp, ϕs_sitp)
 end
@@ -171,9 +187,9 @@ Returns:
 - `get_ϕ`: interpolated function that takes `t` and returns the phase in rads
 """
 function get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
-    code_chip_I, code_chip_Q, get_ϕs = doppler2chips(signal, doppler_curve,
-                                                     doppler_t)
-    get_code_val(t) = calc_code_val(signal, t, code_chips_I, code_chip_Q)
+    code_chips_I, code_chips_Q, get_ϕ = doppler2chips(signal, doppler_curve,
+                                                      doppler_t)
+    get_code_val(t) = calc_code_val(signal, t, code_chips_I, code_chips_Q)
     return (get_code_val, get_ϕ)
 end
 
