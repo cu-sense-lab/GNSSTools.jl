@@ -141,7 +141,7 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_eop(), show_plot=true, Ω₀=0., f₀=0.,
                               ω=0., e=0., t_start=0., obs_lla=missing,
                               ΔΩ=360/plane_num, a_lim=1, ax=missing,
-                              figsize=missing, print_steps=true)
+                              figsize=missing, print_steps=false)
     a = float(a)
     incl = incl*π/180
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
@@ -209,7 +209,6 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
         x = Rₑ.*cos.(u).*sin.(v)
         y = Rₑ.*sin.(u).*sin.(v)
         z = Rₑ.*cos.(v)
-        println("Working")
         plot_wireframe(x, y, z, color="grey", linestyle=":", rcount=20, ccount=30)
         ax.axes.set_xlim3d(left=-a*a_lim/2, right=a*a_lim/2)
         ax.axes.set_ylim3d(bottom=-a*a_lim/2, top=a*a_lim/2)
