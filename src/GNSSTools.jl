@@ -112,5 +112,6 @@ module GNSSTools
     export process
     export CN0_monte_carlo
     export define_l5_code_type, define_l1ca_code_type
+    export get_distribution_bounds
 
 end # module
