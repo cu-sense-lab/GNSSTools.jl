@@ -377,14 +377,14 @@ Fields:
     * `sc4` is 4 bit
     * `sc8` is 8 bit
 """
-struct GNSSData{T1,T2} <: GNSSSignal
+struct GNSSData{T1,T2,T3} <: GNSSSignal
     file_name::String
     f_s::Float64
     f_if::Float64
     t_length::Float64
     start_data_idx::Int
     t::Array{Float64,1}
-    data::Array{Complex{Float64},1}
+    data::Array{T3,1}
     data_type::String
     data_start_time::T1
     site_loc_lla::T2
