@@ -671,3 +671,49 @@ function plot_spectrum(x::Vector, f_s::Number, log_freq::Bool=false)
     end
     plot(freqs, X)
 end
+
+
+"""
+	get_distribution_bound(distribution, p, tail=:center)
+
+
+Gets the bounds of a normalized distribution where the sum is equal to `p`.
+"""
+function get_distribution_bounds(distribution, p, tail=:center)
+	if tail == :center
+		center_idx = ceil(Int, length(distribution.edges[1])/2)
+		center_idx = findall(x->x==0., distribution.edges[1])[1]
+		side_limits = ceil(Int, length(distribution.edges[1])/2)
+		distrbution_sum = distribution.weights[center_idx]
+		bounds = 0
+		for i in 1:side_limits
+			if distrbution_sum < p
+				distrbution_sum += distribution.weights[center_idx-i]
+				distrbution_sum += distribution.weights[center_idx+i]
+				bounds += 1
+			end
+		end
+		bounds = [center_idx-bounds, center_idx+bounds]
+	elseif tail == :left
+		distrbution_sum = 0.
+		bounds = [1, 1]
+		for i in 1:length(distribution.weights)
+			if distrbution_sum < p
+				distrbution_sum += distribution.weights[i]
+				bounds[2] = i
+			end
+		end
+	elseif tail == :right
+		distrbution_sum = 0.
+		bounds = [1, 1] .* length(distribution.weights)
+		for i in length(distribution.weights):-1:1
+			if distrbution_sum < p
+				distrbution_sum += distribution.weights[i]
+				bounds[1] = i
+			end
+		end
+	else
+		error("$(tail) invalid. Must be either `:center`, `:left`, or `:right`.")
+	end
+	return bounds
+end
