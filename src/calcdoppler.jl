@@ -145,18 +145,17 @@ Calculates the Doppler frequency for the direct signal case.
 
 Required Arguments:
 
-- `r::Vector`: object ECEF position vector in meters with format `(x, y, z)`
-- `v::Vector`: object ECEF velocity vector in meters with format `(v_x, v_y, v_z)`
-- `julian_date::Float64`: Julian date
-- `obs_ecef::Vector`: receiver ECEF position in meters with format `(x, y, z)`
-- `sig_freq::Float64`: signal carrier frequency in Hz
+- `r`: object ECEF position vector in meters with format `(x, y, z)`
+- `v`: object ECEF velocity vector in meters with format `(v_x, v_y, v_z)`
+- `obs_ecef`: receiver ECEF position in meters with format `(x, y, z)`
+- `sig_freq`: signal carrier frequency in Hz
 
 
 Returns:
 
 - `fd_obs::Float64`: receiver observed Doppler frequency in Hz
 """
-function calcdoppler(r::Vector, v::Vector, obs_ecef, sig_freq)
+function calcdoppler(r, v, obs_ecef, sig_freq)
     # Direct signal case
     v_obs = transpose((r-obs_ecef)/norm(r-obs_ecef))*v
     # Calculate observed Doppler frequency by observer
