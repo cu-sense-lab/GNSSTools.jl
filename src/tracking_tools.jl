@@ -647,7 +647,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignals, prn, ϕ_init,
 		error("Cannot track since there are no codes defined in signal type.")
 	end
     # Compute the spacing between the ZE, ZP, and ZL correlators
-    d = Int64(floor(data.f_s/chipping_rate/2))
+	# d = floor(Int, (data.f_s/chipping_rate - 1)/2)
+	d = floor(Int, data.f_s/chipping_rate/2)
     # Initialize common variables and initial conditions
     T = replica.t_length
     t_length = data.t_length
