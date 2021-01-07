@@ -291,12 +291,15 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_cour
     dϕavg /= (M-2)
     # Calculate the fine Doppler frequency
     f_s = replica.f_s
-    fd_fine = dϕavg/(2π*N/f_s)
+    # fd_fine = dϕavg/(2π*N/f_s)
+    fd_fine = dϕavg/(2π*replica.t_length)
     fd_est = fd_course + fd_fine
-    dϕ_init_err = std([dϕ[1:maxvaridx-1]; dϕ[maxvaridx+1:end]])
-    fd_err = dϕ_init_err/(2π*N/f_s)
+    dϕ_init_err = std(([dϕ[1:maxvaridx-1]; dϕ[maxvaridx+1:end]] .- dϕavg))
+    fd_err = dϕ_init_err/(2π*replica.t_length)
     definesignal!(replica; isreplica=false)
-    P = diagm([dϕ_init_err^2, fd_err^2, σω^2])
+    # P = diagm([dϕ_init_err^2, 74.7*fd_err^2, σω^2])
+    # P = diagm([dϕ_init_err^2, fd_err^2, σω^2])
+    P = diagm([dϕ_init_err^2, (1/replica.t_length)^2, σω^2])
     R = [dϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:carrier), fd_course, fd_rate, n₀_idx_course,
