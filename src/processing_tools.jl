@@ -4,7 +4,7 @@
             cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
             state_num=3, fd_rate=0., figsize=missing, saveto=missing,
             show_plot=true, fine_acq_method=:carrier, M=10,
-            return_corrresult=false)
+            return_corrresult=false,  fine_acq=true, σ_phi=π/2)
 
 
 #
