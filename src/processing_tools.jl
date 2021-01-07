@@ -1,9 +1,10 @@
 """
     process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000.,
             fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
-            cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=2,
+            cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
             state_num=3, fd_rate=0., figsize=missing, saveto=missing,
-            show_plot=true, fine_acq_method=:fft, M=10, return_corrresult=false)
+            show_plot=true, fine_acq_method=:carrier, M=10,
+            return_corrresult=false)
 
 
 #
@@ -53,8 +54,8 @@ function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000
                  fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
                  cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
                  state_num=3, fd_rate=0., figsize=missing, saveto=missing,
-                 show_plot=true, fine_acq_method=:fft, M=10,
-                 return_corrresult=false)
+                 show_plot=true, fine_acq_method=:carrier, M=10,
+                 return_corrresult=false, fine_acq=true, σ_phi=π/2)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
@@ -94,8 +95,8 @@ function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000
                        fd_rate=fd_rate, Δfd=Δfd)
     # Calculate the code start index (`n0_est`), Doppler estimate (`fd_est`),
     # anc the SNR estimate (`SNR_est`)
-    n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
-                                             Δfd)
+    n0_est, fd_course, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
+                                                Δfd)
     # Perform fine acquisition using FFT based method
     # Returns structure containing the fine acquisition results,
     # fine Doppler (`fd_est`) and inital phase estimate (`phi_est`).
@@ -103,22 +104,35 @@ function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000
     # for the states and measurements (`P` and `R`, respectively).
     # `σω` is the uncertainty of the Doppler rate. It is set to 1000Hz/s
     # by default.
-    if fine_acq_method == :fft
-        results = fineacquisition(signal, replicalong, prn, fd_est,
-                                  n0_est, Val(fine_acq_method); σω=σω,
-                                  fd_rate=fd_rate)
-    elseif fine_acq_method == :carrier
-        results = fineacquisition(signal, replica, prn, fd_est,
-                                  n0_est, Val(fine_acq_method); σω=σω,
-                                  fd_rate=fd_rate, M=RLM)
+    if fine_acq
+        if fine_acq_method == :fft
+            results = fineacquisition(signal, replicalong, prn, fd_course,
+                                      n0_est, Val(fine_acq_method); σω=σω,
+                                      fd_rate=fd_rate)
+        elseif fine_acq_method == :carrier
+            results = fineacquisition(signal, replica, prn, fd_course,
+                                      n0_est, Val(fine_acq_method); σω=σω,
+                                      fd_rate=fd_rate, M=RLM)
+        else
+            error("Invalid value for argument `fine_acq_method`.")
+        end
+        P = results.P
+        R = results.R
+        phi_init = results.phi_init
+        fd_est = results.fd_est
     else
-        error("Invalid value for argument `fine_acq_method`.")
+        P = diagm([σ_phi, 1/replica_t_length, σω]).^2
+        R = [σ_phi].^2
+        phi_init = 0.
+        fd_est = fd_course
+        results = FineAcquisitionResults(prn, "N/A", fd_course, fd_rate, n0_est,
+                                         replica_t_length, 0., fd_est, phi_init,
+                                         "N/A", P, R)
     end
     # Peform tracking on signal using the initial estimates and
     # uncertainties calculated above.
     trackresults = trackprn(signal, replica, prn, results.phi_init,
-                            results.fd_est, results.n0_idx_course,
-                            results.P, results.R; DLL_B=dll_b,
+                            fd_est, n0_est, P, R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
                             cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
     if show_plot
