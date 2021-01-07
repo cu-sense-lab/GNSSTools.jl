@@ -5,7 +5,7 @@
 
 Loads data from `scN` file and loads into `GNSSData` type struct.
 
-`site_lla` is `[latitude, longitude, height]` in degrees and meters.
+`site_lla` is `[latitude, longitude, height]` in (degrees, degrees, meters).
 
 `data_start_time` is `[year, month, day, hour, minute, seconds]`, where "ss" is
 decimal seconds.
@@ -67,6 +67,9 @@ function loaddata(data_type, file_name, f_s, f_if, t_length;
 	return GNSSData(file_name, f_s, f_if, t_length, start_data_idx,
 	                t, float.(data), String(dtype), data_start_time,
 	                site_loc_lla, sample_num, total_data_length, nADC)
+	# return GNSSData(file_name, f_s, f_if, t_length, start_data_idx,
+	#                 t, data, String(dtype), data_start_time,
+	#                 site_loc_lla, sample_num, total_data_length, nADC)
 end
 
 
@@ -119,7 +122,7 @@ Loads `scN` data files. First N-bit number is real, second is imaginary.
 
 Required Arguments:
 
-- `data::Vector{Complex{Int}}`: the complex data vector to store the new data
+- `data::Vector{Complex{IntN}}`: the complex data vector to store the new data
 - `data_type::Val{:scN}`: only accepts `Val(:scN)` to indicate data is N-bit
                           complex
 - `file_name::String`: data file name
@@ -130,12 +133,12 @@ Required Arguments:
 Optional Arguments:
 
 - `start_idx::Int`: where the first data sample will be loaded in the data
-	* `default = 1`
+	* `default = 1`5
 
 
 Returns:
 
-- `data::Vector{Complex{Int}}`: elements are replaced with new data
+- `data::Vector{Complex{IntN}}`: elements are replaced with new data
 - `end_idx::Int`: the last sample index loaded plus one
 - `:scN::Symbol`: symbol which describes the type of data
 """
@@ -145,7 +148,7 @@ function readdatafile!(data, data_type, file_name, sample_num,
 	f = open(file_name, "r")
 	# Go to start location
 	seek(f, 2*(start_idx-1))
-	# Load Complex{Int8} values directly from file
+	# Load Complex{IntN} values directly from file
 	read!(f, data)
 	# Get the index value for the end of the file
 	end_idx = position(seekend(f)) + 1
