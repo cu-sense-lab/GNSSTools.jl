@@ -231,7 +231,7 @@ LLA.
 
 Required Arguments:
 
-- `obs_lla`: observer latitude, longitude, and height in (rad, rad, meters)
+- `obs_lla`: observer latitude, longitude, and height in (deg, deg, meters)
 
 
 Returns:
@@ -239,8 +239,8 @@ Returns:
 - ECEF to ENU transformation matrix
 """
 function calcenumatrix(obs_lla)
-    lat = obs_lla[1]  # rad
-    lon = obs_lla[2]  # rad
+    lat = deg2rad(obs_lla[1])  # rad
+    lon = deg2rad(obs_lla[2])  # rad
     h = obs_lla[3]  # meters
     return [         -sin(lon)           cos(lon)        0;
             -sin(lat)*cos(lon) -sin(lat)*sin(lon) cos(lat);
@@ -263,7 +263,7 @@ Required Arguments:
 - `julian_date_range`: two element vector containing start and end times
                        in Julian days
 - `eop`: Earth Orientation Parameters object
-- `obs_lla`: observer latitude, longitude, and height in (rad, rad, meters)
+- `obs_lla`: observer latitude, longitude, and height in (deg, deg, meters)
 
 
 Optional Arguments:
@@ -278,7 +278,8 @@ Returns:
 """
 function calcelevation(sat_tle::TLE, julian_date_range, eop, obs_lla;
                        name="Satellite", Δt=1/60/60/24)
-    obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+    obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
+                              obs_lla[3])
     sat_orb = init_orbit_propagator(Val{:sgp4}, sat_tle)
     ts = Array(julian_date_range[1]:Δt:julian_date_range[2])
     # Propagate orbit to ts
@@ -330,7 +331,7 @@ time specified in `satellite.t`.
 Required Arguments:
 
 - `satellite::Satellite`: struct containing satellite orbit information
-- `obs_lla`: observer latitude, longitude, and height in (rad, rad, meters)
+- `obs_lla`: observer latitude, longitude, and height in (deg, deg, meters)
 
 
 Optional Arguments:
@@ -343,7 +344,8 @@ Returns:
 - `SatelliteRAE` struct
 """
 function calcelevation(satellite::Satellite, obs_lla; name=string(satellite.id))
-    obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+    obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
+                              obs_lla[3])
     ts = satellite.t
     Δt = ts[2] - ts[1]
     julian_date_range = (ts[1], ts[end])
@@ -390,7 +392,7 @@ Format is `(meters, deg, deg)`.
 Required Arguments:
 
 - `sat_ecef`: satellite ECEF coordinates with all components in meters
-- `obs_lla`: observer latitude, longitude, and height in (rad, rad, meters)
+- `obs_lla`: observer latitude, longitude, and height in (deg, deg, meters)
 
 
 Returns:
@@ -402,7 +404,8 @@ Returns:
 function calcelevation(sat_ecef, obs_lla)
     # Calculate ENU transformation matrix
     R_ENU = calcenumatrix(obs_lla)
-    obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+    obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
+                              obs_lla[3])
     # Calculate user-to-sat vector
     user_to_sat = sat_ecef - obs_ecef
     # Caluclate satellite range
