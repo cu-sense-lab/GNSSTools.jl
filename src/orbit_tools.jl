@@ -90,7 +90,7 @@ end
     define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                          eop=get_eop(), show_plot=true, Ω₀=0., f₀=0.,
                          ω=0., e=0., t_start=0., obs_lla=missing,
-                         ΔΩ=360/plane_num, a_lim=1, ax=missing,
+                         ΔΩ=360/plane_num, a_lim=1.5, ax=missing,
                          figsize=missing, print_steps=true)
 
 
@@ -103,7 +103,7 @@ Required Arguments:
 - `a`: semi-major axis of all orbits in meters
 - `plane_num`: number of planes in the constellation
 - `satellite_per_plane`: number of satellites per plane
-- `incl`: orbit inclination in rads
+- `incl`: orbit inclination in degrees
 - `t_range`: vector of time in seconds
 
 
@@ -140,10 +140,10 @@ Returns:
 function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_eop(), show_plot=true, Ω₀=0., f₀=0.,
                               ω=0., e=0., t_start=0., obs_lla=missing,
-                              ΔΩ=360/plane_num, a_lim=1, ax=missing,
+                              ΔΩ=360/plane_num, a_lim=1.5, ax=missing,
                               figsize=missing, print_steps=false)
     a = float(a)
-    incl = incl*π/180
+    incl = deg2rad(incl)
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
     ΔΩ = ΔΩ*π/180
     Δf = 2π/satellite_per_plane
@@ -225,7 +225,7 @@ end
                          Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                          t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                          bins=100, heatmap_bins=[bins, bins], a_lim=1.25,
-                         figsize=missing, print_steps=true)
+                         figsize=missing, print_steps=true, p=0.7)
 
 
 Produces all instances of Dopplers and Doppler rates by propagating the
@@ -237,7 +237,7 @@ Required Arguments:
 - `a`: semi-major axis of all orbits in meters
 - `plane_num`: number of planes in the constellation
 - `satellite_per_plane`: number of satellites per plane
-- `incl`: orbit inclination in rads
+- `incl`: orbit inclination in degrees
 - `t_range`: vector of time in seconds
 - `obs_lla`: the receiver location in lat, long, height `(default = missing)`
     * format `(latitude, longitude, height)` in (deg, deg, meters)
@@ -261,7 +261,7 @@ Optional Arguments:
 - `min_elevation`: minimum elevation in degrees to include in statistics
                    `(default = 5)`
 - `bins`: number of bins in Doppler and Doppler rate histograms
-           `(default = 100)`
+           `(default = 150)`
 - `heatmap_bins`: two element vector specifying number of bins in the heatmap
                   `(default = [bins, bins])`
 - `a_lim`: sets the limit in x, y, and z axis for plot `(default = 1.25)`
@@ -270,15 +270,8 @@ Optional Arguments:
 	* format is `(height, width)`
 - `print_steps`: flag to show `ProgressMeter` while generating constellation
                  `(default = true)`
-
-
-Required Arguments:
-
-- `a`: semi-major axis of all orbits in meters
-- `plane_num`: number of planes in the constellation
-- `satellite_per_plane`: number of satellites per plane
-- `incl`: orbit inclination in rads
-- `t_range`: vector of time in seconds
+- `p`: `(default = 0.7)`
+- `plot_with_bounds`: `(default = true)`
 
 
 Returns:
@@ -295,8 +288,9 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_lla, sig_freq; eop=get_eop(),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
-                              bins=100, heatmap_bins=[bins, bins], a_lim=1.25,
-                              figsize=missing, print_steps=true)
+                              bins=150, heatmap_bins=[bins, bins], a_lim=1.25,
+                              figsize=missing, print_steps=true, p=0.5,
+                              plot_with_bounds=true)
     if show_plot
         if ismissing(figsize)
             fig = figure()
@@ -307,6 +301,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
     else
         ax1 = missing
     end
+    # incl = deg2rad(incl)
     constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
                                          t_range; eop=eop, show_plot=show_plot,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
@@ -357,6 +352,15 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
     doppler_means = doppler_means[1:k-1]
     doppler_rates = doppler_rates[1:k-1]
     doppler_rate_ts = doppler_rate_ts[1:k-1]
+    # Get histograms
+    doppler_hist = normalize(fit(Histogram, dopplers, nbins=bins),
+                             mode=:probability)
+    # doppler_hist = fit(Histogram, dopplers, nbins=bins)
+    doppler_rate_hist = normalize(fit(Histogram, doppler_rates, nbins=bins),
+                                  mode=:probability)
+    # doppler_rate_hist = fit(Histogram, doppler_rates, nbins=bins)
+    doppler_bounds = get_distribution_bounds(doppler_hist, p, :center)
+    doppler_rate_bounds = get_distribution_bounds(doppler_rate_hist, p, :right)
     if show_plot
         fig, ax2 = make_subplot(fig, 2, 2, 2; aspect="auto")
         hist2D(doppler_means./1000, doppler_rates, bins=heatmap_bins)
@@ -364,16 +368,38 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         ylabel("Doppler Rate (Hz/s)")
         colorbar()
         fig, ax3 = make_subplot(fig, 2, 2, 3; aspect="auto")
-        hist(doppler_means./1000, bins=bins, density=true)
+        # hist(doppler_means./1000, bins=bins, density=true)
+        hist(Array(doppler_hist.edges[1])[2:end]./1000,
+             Array(doppler_hist.edges[1])./1000,
+             weights=doppler_hist.weights);
+        # Plot with bounds
+        if plot_with_bounds
+            hist(Array(doppler_hist.edges[1])[doppler_bounds[1]+1:doppler_bounds[2]+1]./1000,
+                 Array(doppler_hist.edges[1])[doppler_bounds[1]+1:doppler_bounds[2]+2]./1000,
+                 weights=doppler_hist.weights[doppler_bounds[1]:doppler_bounds[2]],
+                 color="r", label="p=$(round(p, digits=2))");
+            legend()
+        end
         xlabel("Doppler (kHz)")
         ylabel("Prob")
         fig, ax4 = make_subplot(fig, 2, 2, 4; aspect="auto")
-        hist(doppler_rates, bins=bins, density=true)
+        # hist(doppler_rates, bins=bins, density=true)
+        hist(Array(doppler_rate_hist.edges[1])[2:end],
+             Array(doppler_rate_hist.edges[1]),
+             weights=doppler_rate_hist.weights);
+        # Plot with bounds
+        if plot_with_bounds
+            hist(Array(doppler_rate_hist.edges[1])[doppler_rate_bounds[1]+1:end],
+                 Array(doppler_rate_hist.edges[1])[doppler_rate_bounds[1]:end],
+                 weights=doppler_rate_hist.weights[doppler_rate_bounds[1]:end],
+                 color="r", label="p=$(round(p, digits=2))");
+            legend()
+        end
         xlabel("Doppler (Hz/sec)")
         ylabel("Prob")
         suptitle("Incination: $(round(incl, digits=0))ᵒ; a: $(Int(round(a/1000, digits=0)))km; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)\nUser loc: ($(round(obs_lla[1], digits=3))ᵒ, $(round(obs_lla[2], digits=3))ᵒ, $(round(obs_lla[3], digits=3))m)\nSignal Freq: $(sig_freq)Hz")
     end
-    return (doppler_means, doppler_rates, doppler_rate_ts, ids, elevations)
+    return (doppler_hist, doppler_rate_hist, doppler_bounds, doppler_rate_bounds)
  end
 
 
@@ -394,6 +420,7 @@ Optional Arguments:
 
 - `obs_lla`: if this exists, the receiver location is shown on the plot
              `(default = missing)`
+    * format is (degrees, degrees, meters)
 """
 function plot_satellite_orbit(satellite::Satellite; obs_lla=missing)
     figure()
@@ -408,7 +435,8 @@ function plot_satellite_orbit(satellite::Satellite; obs_lla=missing)
     plot_wireframe(x, y, z, color="grey", linestyle=":", rcount=20, ccount=30)
     # Plot user location
     if ~ismissing(obs_lla)
-        obs_ecef = GeodetictoECEF(obs_lla[1], obs_lla[2], obs_lla[3])
+        obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
+                                  obs_lla[3])
         scatter3D(obs_ecef[1], obs_ecef[2], obs_ecef[3], s=300, c="r",
                   marker="*", facecolor="white")
     end
