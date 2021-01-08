@@ -78,15 +78,21 @@ Returns:
 function courseacquisition(data::GNSSSignal, replica::ReplicaSignals,
                            prn; fd_center=0., fd_range=5000.,
                            fd_rate=0., Δfd=1/replica.t_length,
-                           start_idx=1)
+                           start_idx=1, return_corrresult=false)
     # Allocate space for correlation result
     corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
     # Perform course acquisition
     courseacquisition!(corr_result, data, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,
                        fd_rate=fd_rate, Δfd=Δfd, start_idx=start_idx)
-    n0_est, fd_est, SNR_est = course_acq_est(corr_result)
-    return (corr_result, fd_est, n0_est, SNR_est)
+    # n0_est, fd_est, SNR_est = course_acq_est(corr_result)
+    n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
+                                             Δfd)
+    if return_corrresult
+        return (fd_est, n0_est, SNR_est, corr_result)
+    else
+        return (fd_est, n0_est, SNR_est)
+    end
 end
 
 
@@ -156,7 +162,6 @@ function courseacquisition!(corr_result::Array{Float64,2},
     # Carrier wipe data signal, make copy, and take FFT
     datafft = fft(data.data[start_idx:start_idx+dsize-1] .*
                   exp.(-2π.*data.f_if.*data.t[1:dsize].*1im))
-    # datafft = fft(data.data)
     # Number of bits representing `data`
     nADC = data.nADC
     # Number of Doppler bins
