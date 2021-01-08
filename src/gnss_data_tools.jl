@@ -23,8 +23,9 @@ Required Arguments:
 
 Optional Arguments:
 
-- `start_data_idx::Int`: where the first data sample will be loaded in the data
-                         `(default = 1)`
+- `skip_to::Float64`: where the first data sample will be loaded in the data
+                      `(default = 0.1sec)`
+	* units are in seconds
 - `site_lla`: receiver LLA location in the format `(lat, lon, height)`
 	* `lat`, latitude, is in degrees
 	* `lon`, longitude, is in degrees
@@ -40,26 +41,33 @@ Returns:
 - `GNSSData` struct
 """
 function loaddata(data_type, file_name, f_s, f_if, t_length;
-                  start_data_idx=1, site_loc_lla=missing,
+                  skip_to=0.1, site_loc_lla=missing,
                   data_start_time=missing)
 	# Compute number of samples to extract
 	sample_num = Int(f_s * t_length)
 	# Determine nADC
-	if typeof(data_type) == Val{:sc8}
-		nADC = 8
-		data = Array{Complex{Int8}}(undef, sample_num)
-	elseif typeof(data_type) == Val{:sc4}
+	if typeof(data_type) == Val{:sc4}
 		nADC = 4
+		data = Array{Complex{Int8}}(undef, sample_num)
+	elseif typeof(data_type) == Val{:sc8}
+		nADC = 8
 		data = Array{Complex{Int8}}(undef, sample_num)
 	elseif typeof(data_type) == Val{:sc16}
 		nADC = 16
 		data = Array{Complex{Int16}}(undef, sample_num)
+	elseif typeof(data_type) == Val{:sc32}
+		nADC = 32
+		data = Array{Complex{Int32}}(undef, sample_num)
+	elseif typeof(data_type) == Val{:sc64}
+		nADC = 64
+		data = Array{Complex{Int64}}(undef, sample_num)
 	else
 		error("Invalid data type: $(typeof(data_type))")
 	end
 	# Read data
+	start_data_idx = floor(Int, f_s*skip_to)
 	data, end_idx, dtype = readdatafile!(data, data_type, file_name,
-	                                     sample_num, start_data_idx)
+	                                     sample_num, nADC, start_data_idx)
 	# Calculate total data length in seconds
 	total_data_length = (end_idx)/f_s
 	# Generate time vector
@@ -94,7 +102,7 @@ Modifies in Place and Returns:
 - `gnss_data::GNSSData`
 """
 function reloaddata!(gnss_data::GNSSData, start_data_idx,
-	                 sample_num=gnss_data.sample_num)
+	                 nADC, sample_num=gnss_data.sample_num)
 	file_name = gnss_data.file_name
 	data_type = gnss_data.data_type
 	data = gnss_data.data
@@ -103,7 +111,8 @@ function reloaddata!(gnss_data::GNSSData, start_data_idx,
 		                                     file_name, sample_num,
 											 start_data_idx)
         f = open(file_name, "r")
-		seek(f, 2*(start_data_idx-1))
+		bit_num = 2*Int(nADC/8)
+		seek(f, bit_num*start_data_idx)
 		read!(f, data)
 		close(f)
 	else
@@ -143,15 +152,16 @@ Returns:
 - `:scN::Symbol`: symbol which describes the type of data
 """
 function readdatafile!(data, data_type, file_name, sample_num,
-                       start_idx=1)
+                       nADC, start_idx=0)
 	# Open file
 	f = open(file_name, "r")
 	# Go to start location
-	seek(f, 2*(start_idx-1))
+	bit_num = 2*Int(nADC/8)
+	seek(f, bit_num*start_idx)
 	# Load Complex{IntN} values directly from file
 	read!(f, data)
 	# Get the index value for the end of the file
-	end_idx = position(seekend(f)) + 1
+	end_idx = Int(position(seekend(f))/bit_num)
     close(f)
     return (data, end_idx, gnsstypes[data_type])
 end
@@ -191,15 +201,15 @@ Returns:
 - `:sc4::Symbol`: symbol which describes the type of data
 """
 function readdatafile!(data, data_type::Val{:sc4}, file_name, sample_num,
-                       start_idx=1)
+                       nADC, start_idx=0)
 	# Open file
 	f = open(file_name, "r")
 	# Go to start location
-	seek(f, start_idx-1)
+	seek(f, start_idx)
 	# Load UInt8 values and convert to Complex{Int8}
 	data[:] = bytetocomplex.(read(f, sample_num))
 	# Get the index value for the end of the file
-	end_idx = position(seekend(f)) + 1
+	end_idx = position(seekend(f))
     close(f)
     return (data, end_idx, :sc4)
 end
