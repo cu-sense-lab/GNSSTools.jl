@@ -167,7 +167,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
         thermal_noise = Array{Complex{Float64}}(undef, 0)
         phase_noise = Array{Float64}(undef, 0)
         include_thermal_noise = false
-        include_phase_noise = true
+        include_phase_noise = false
     end
     return ReplicaSignals(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
                           CN0, phi, nADC, code_start_idx, init_code_phases_I,
