@@ -77,7 +77,7 @@ module GNSSTools
     export GNSSData
     export loaddata
     export gencorrresult
-    export courseacquisition!
+    export courseacquisition, courseacquisition!
     export fineacquisition
     export gnsstypes
     export calcinitcodephase
