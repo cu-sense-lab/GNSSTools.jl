@@ -26,7 +26,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                fd_center=0., sig_freq=missing, signal=missing, q_mult=1,
                print_steps=true, σω=1000, channel="I", file_name=missing,
                include_thermal_noise=true, include_phase_noise=true,
-               fine_acq_method=:fft)
+               fine_acq_method=:fft, skip_to=0.1)
     if print_steps
         println("Running GNSSTools Signal Simulation and Data Processing Demo")
     end
@@ -112,7 +112,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         data_type = Val(:sc4)
         start_t = 1e-3
         data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
-                        start_data_idx=Int(f_s * start_t)+1)
+                        skip_to=skip_to)
         if print_steps
             println("Done")
         end
