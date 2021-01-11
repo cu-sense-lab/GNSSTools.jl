@@ -29,3 +29,31 @@ add git@192.168.3.66:bilardis/GNSSTools.jl.git
 ```
 
 Julia will automatically install the neccessary dependencies and GNSSTools. Once complete, you can return the Julia REPL by hitting the `backspace` key. To update GNSSTools if newer versions are released, enter the package manager again by typing `]` and use `update GNSSTools`.
+
+
+## TODOS
+
+- [ ] Monte Carlo simulation for processing method evaluation
+  * static C/N₀ and constellation
+  * all other parameters are variable
+    + thermal and phase noise are generated for each simulation run
+    + initial code phase and carrier phase are picked from a uniform distribution at each iteration
+- [ ] multi-PRN simulation
+  * each signal from a given PRN is a modulated carrier of specific C/N₀
+  * add multiple carriers together into a single raw IQ vector
+- [ ] partial sample code offset (two possible methods)
+  1. everything is a function of time and is integrated over each sample period
+  2. up-sample signal by N times
+    * for each sample, N sub-samples are calculated and summed together
+    * will not store N sub-samples; will instead calculate them in place and store only the sum of them
+- [ ] generate L1C codes
+- [ ] User dynamics due to user motion
+  * allow user to provide a vector of user positions along with accompanying time vector
+  * this vector will be used along with satellite information to calculate Doppler frequency curve
+  * Doppler curve will be used for non-linear Doppler simulation
+- [ ] FFT based phase noise generation
+  * allow user to specify phase noise in frequency domain
+  * frequency domain phase noise is converted to time domain using inverse FFT
+- [ ] allow seed input for thermal and phase noise sources
+- [ ] effects due to ionosphere
+  * not needed for X-band frequency, since ionospheric effects are negligible at that frequency
