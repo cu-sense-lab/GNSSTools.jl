@@ -10,10 +10,10 @@ coherent integration `T` with length of data to be processed being defined
 by `t_length`.
 """
 function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
-                     output_dir=missing, prns=:all, data_start_t=5e-3,
+                     output_dir=missing, prns=:all, skip_to=0.1,
                      fd_range=5000., fd_center=0., Δdays=5, showplot=true,
                      site_lla=(40.01, -105.2437, 1655), figsize=missing,
-                     use_gps_orbit_only=false)
+                     use_gps_orbit_only=false, skip_to=100e-3)
     # Load data & infer f_s, f_if, and data type from file name
     file_info = data_info_from_name(data_file)
     println("-----------------------------------------------------")
@@ -29,7 +29,7 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
     start_data_idx = Int(file_info.f_s * data_start_t)+1
     data = loaddata(file_info.data_type, data_file, file_info.f_s,
                     file_info.f_if, T;
-                    start_data_idx=start_data_idx)
+                    skip_to=skip_to)
     # Initialize replica struct
     replica = definesignal(file_info.sigtype, file_info.f_s, T)
     # Calculate Doppler bin spacing for course acquisition
@@ -142,7 +142,7 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
         # reloaddata!(data, start_data_idx+n*N+1)
         data = loaddata(file_info.data_type, data_file, file_info.f_s,
                         file_info.f_if, T;
-                        start_data_idx=start_data_idx+n*N+1)
+                        skip_to=skip_to+n*T)
     end
     # Save results to HDF5 file
     if ~ismissing(output_dir)
