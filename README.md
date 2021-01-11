@@ -44,8 +44,8 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
 - [ ] partial sample code offset (two possible methods)
   1. everything is a function of time and is integrated over each sample period
   2. up-sample signal by N times
-    * for each sample, N sub-samples are calculated and summed together
-    * will not store N sub-samples; will instead calculate them in place and store only the sum of them
+    - for each sample, N sub-samples are calculated and summed together
+    - will not store N sub-samples; will instead calculate them in place and store only the sum of them
 - [ ] generate L1C codes
 - [ ] User dynamics due to user motion
   * allow user to provide a vector of user positions along with accompanying time vector
