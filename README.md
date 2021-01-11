@@ -60,3 +60,8 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
 - [ ] specify power ratio between I and Q channels
   * usually split 50% on I and Q
   * depending on code and band, it may be 75% on I and 25% on Q
+- [ ] track both I and Q channels simultaneously
+  * may be able to do this by generating a replica with both I and Q codes
+  * during tracking, track each channel separately
+  * assign separate early, prompt, and late correlators for each channel
+    * will get two outputs from this step
