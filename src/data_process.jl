@@ -13,7 +13,7 @@ function dataprocess(data_file; target_satnum=missing, T=1e-3, t_length=4.,
                      output_dir=missing, prns=:all, skip_to=0.1,
                      fd_range=5000., fd_center=0., Δdays=5, showplot=true,
                      site_lla=(40.01, -105.2437, 1655), figsize=missing,
-                     use_gps_orbit_only=false, skip_to=100e-3)
+                     use_gps_orbit_only=false)
     # Load data & infer f_s, f_if, and data type from file name
     file_info = data_info_from_name(data_file)
     println("-----------------------------------------------------")
