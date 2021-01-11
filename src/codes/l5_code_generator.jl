@@ -372,12 +372,15 @@ Returns:
                              to generate the signal
 """
 function define_l5_code_type(t_length=missing; channel="both",
-	                         prns=collect(keys(l5i_codes)), sig_freq=L5_freq)
+	                         prns=collect(keys(l5i_codes)), sig_freq=L5_freq,
+							 databits=missing)
 	if (channel == "I") || (channel == "both")
         if ~ismissing(t_length)
             # Generate random databits
-            databits = random_databits(L5_db_chipping_rate, t_length;
-			                           prns=prns)
+			if ismissing(databits)
+				databits = random_databits(L5_db_chipping_rate, t_length;
+				                           prns=prns)
+	        end
             # Include databits in I channel codes
             I_codes = definecodetype([copy_dictionary(l5i_codes, prns), nh10],
 			                         [L5_chipping_rate, nh_chipping_rate];

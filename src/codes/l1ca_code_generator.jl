@@ -179,10 +179,12 @@ Returns:
                              to generate the signal
 """
 function define_l1ca_code_type(t_length=missing; prns=collect(keys(l1ca_codes)),
-                               sig_freq=L1_freq)
+                               sig_freq=L1_freq, databits=missing)
     if ~ismissing(t_length)
         # Generate random databits
-        databits = random_databits(l1ca_db_chipping_rate, t_length; prns=prns)
+        if ismissing(databits)
+            databits = random_databits(l1ca_db_chipping_rate, t_length; prns=prns)
+        end
         # Include databits in I channel codes
         I_codes = definecodetype(copy_dictionary(l1ca_codes, prns),
                                  l1ca_chipping_rate;
