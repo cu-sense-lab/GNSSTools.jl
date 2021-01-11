@@ -57,3 +57,6 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
 - [ ] allow seed input for thermal and phase noise sources
 - [ ] effects due to ionosphere
   * not needed for X-band frequency, since ionospheric effects are negligible at that frequency
+- [ ] specify power ratio between I and Q channels
+  * usually split 50% on I and Q
+  * depending on code and band, it may be 75% on I and 25% on Q
