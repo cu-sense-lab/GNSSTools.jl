@@ -34,34 +34,34 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
 ## TODOS
 
 - [ ] Monte Carlo simulation for processing method evaluation
-  * static C/N₀ and constellation
-  * all other parameters are variable
-    + thermal and phase noise are generated for each simulation run
-    + initial code phase and carrier phase are picked from a uniform distribution at each iteration
+    * static C/N₀ and constellation
+    * all other parameters are variable
+        + thermal and phase noise are generated for each simulation run
+        + initial code phase and carrier phase are picked from a uniform distribution at each iteration
 - [ ] multi-PRN simulation
-  * each signal from a given PRN is a modulated carrier of specific C/N₀
-  * add multiple carriers together into a single raw IQ vector
+    * each signal from a given PRN is a modulated carrier of specific C/N₀
+    * add multiple carriers together into a single raw IQ vector
 - [ ] partial sample code offset (two possible methods)
-  1. everything is a function of time and is integrated over each sample period
-  2. up-sample signal by N times
-      + for each sample, N sub-samples are calculated and summed together
-      + will not store N sub-samples; will instead calculate them in place and store only the sum of them
+    1. everything is a function of time and is integrated over each sample period
+    2. up-sample signal by N times
+        + for each sample, N sub-samples are calculated and summed together
+        + will not store N sub-samples; will instead calculate them in place and store only the sum of them
 - [ ] generate L1C codes
 - [ ] User dynamics due to user motion
-  * allow user to provide a vector of user positions along with accompanying time vector
-  * this vector will be used along with satellite information to calculate Doppler frequency curve
-  * Doppler curve will be used for non-linear Doppler simulation
+    * allow user to provide a vector of user positions along with accompanying time vector
+    * this vector will be used along with satellite information to calculate Doppler frequency curve
+    * Doppler curve will be used for non-linear Doppler simulation
 - [ ] FFT based phase noise generation
-  * allow user to specify phase noise in frequency domain
-  * frequency domain phase noise is converted to time domain using inverse FFT
+    * allow user to specify phase noise in frequency domain
+    * frequency domain phase noise is converted to time domain using inverse FFT
 - [ ] allow seed input for thermal and phase noise sources
 - [ ] effects due to ionosphere
-  * not needed for X-band frequency, since ionospheric effects are negligible at that frequency
+    * not needed for X-band frequency, since ionospheric effects are negligible at that frequency
 - [ ] specify power ratio between I and Q channels
-  * usually split 50% on I and Q
-  * depending on code and band, it may be 75% on I and 25% on Q
+    * usually split 50% on I and Q
+    * depending on code and band, it may be 75% on I and 25% on Q
 - [ ] track both I and Q channels simultaneously
-  * may be able to do this by generating a replica with both I and Q codes
-  * during tracking, track each channel separately
-  * assign separate early, prompt, and late correlators for each channel
-    * will get two outputs from this step
+    * may be able to do this by generating a replica with both I and Q codes
+    * during tracking, track each channel separately
+    * assign separate early, prompt, and late correlators for each channel
+        * will get two outputs from this step
