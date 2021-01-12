@@ -25,16 +25,16 @@ It has one extra argument, `channel`, with available arguments `"both"`, `"I"`, 
 Signal simulations starts with defining a signal. Use:
 
 ```julia
-signal = definesignal(signal_type, f_s, t_length)
+signal = definesignal(signal_type, f_s, t_length; [optional args])
 ```
 
-Optional arguments such as `prn`, `CN0`, etc can be provided as well. See `definesignal` for defaults. Signal parameters can be redefined after they have been already created using:
+where `f_s` is the sampling frequency in `Hz` and `t_length` is the length of the signal in `seconds`. Optional arguments such as `prn`, `CN0`, etc can be provided as well. See `definesignal` for defaults. Signal parameters can be redefined after they have been already created using:
 
 ```julia
 signal = definesignal!(signal; prn=new_prn, phi=new_phi, CN0=new_CN0, ... )
 ```
 
-The signal has only been setup for simulation. No actual signal exists yet. Use the following to simulate the signal:
+Note that a signal's sampling frequency, length, and signal type cannot be changed once it has been defined. All other parameters can be changed. Now, the signal has only been setup for simulation. No actual signal exists yet. Use the following to simulate the signal:
 
 ```julia
 generatesignal!(signal)
