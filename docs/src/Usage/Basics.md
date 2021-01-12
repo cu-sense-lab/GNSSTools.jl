@@ -22,7 +22,7 @@ It has one extra argument, `channel`, with available arguments `"both"`, `"I"`, 
 
 ## Simulating Signals
 
-Signal simulations starts with defining a signal. Use:
+Signal simulations starts with defining a signal, in the form of a `ReplicaSignal` type. Use:
 
 ```julia
 signal = definesignal(signal_type, f_s, t_length; [optional args])
@@ -42,4 +42,10 @@ generatesignal!(signal)
 
 The simulated data will be stored in `signal.data`. There is also an accompanying time vector, `signal.t`.
 
+## Loading GNSS Data Files
+
+Data can be loaded into `GNSSTools` for processing. `GNSSTools` assumes that the data is raw IQ data with no header information in the data file. Therefore, specific properties of the
+
 ## Processing Signals
+
+All `GNSSSignal` types can be processed. These include `ReplicaSignal` and `GNSSData` types.
