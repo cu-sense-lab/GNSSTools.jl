@@ -123,8 +123,8 @@ function reloaddata!(gnss_data::GNSSData, start_data_idx,
 		                                     file_name, sample_num,
 											 start_data_idx)
         f = open(file_name, "r")
-		bit_num = 2*Int(nADC/8)
-		seek(f, bit_num*start_data_idx)
+		byte_num = Int(2*nADC/8)
+		seek(f, byte_num*start_data_idx)
 		read!(f, data)
 		close(f)
 	else
@@ -168,8 +168,8 @@ function readdatafile!(data, data_type, file_name, sample_num,
 	# Open file
 	f = open(file_name, "r")
 	# Go to start location
-	bit_num = 2*Int(nADC/8)
-	seek(f, bit_num*start_idx)
+	byte_num = 2*Int(nADC/8)
+	seek(f, byte_num*start_idx)
 	# Load Complex{IntN} values directly from file
 	read!(f, data)
 	# Get the index value for the end of the file
