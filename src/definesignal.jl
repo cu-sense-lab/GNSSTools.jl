@@ -4,7 +4,7 @@
 """
     definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                  f_if=0., f_d=0., fd_rate=0., Tsys=535.,
-                 CN0=45., ϕ=0., nADC=4, include_carrier=true,
+                 CN0=45., phi=0., nADC=4, include_carrier=true,
                  include_adc=true, include_thermal_noise=true,
                  code_start_idx=1., include_databits_I=true,
                  include_databits_Q=true, include_phase_noise=true,

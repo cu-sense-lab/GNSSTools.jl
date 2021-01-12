@@ -28,6 +28,19 @@ Signal simulations starts with defining a signal. Use:
 signal = definesignal(signal_type, f_s, t_length)
 ```
 
+Optional arguments such as `prn`, `CN0`, etc can be provided as well. See `definesignal` for defaults. Signal parameters can be redefined after they have been already created using:
+
+```julia
+signal = definesignal!(signal; prn=new_prn, phi=new_phi, CN0=new_CN0, ... )
+```
+
+The signal has only been setup for simulation. No actual signal exists yet. Use the following to simulate the signal:
+
+```julia
+generatesignal!(signal)
+```
+
+The simulated data will be stored in `signal.data`. There is also an accompanying time vector, `signal.t`.
 
 ## Custom Signal Types
 
