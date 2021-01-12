@@ -1,5 +1,5 @@
 """
-    loaddata(data_type, file_name, f_s, f_if, t_length;
+    loaddata(data_type, file_name, f_s, f_center, f_gnss, t_length;
              start_data_idx=1, site_lla=missing, data_start_time=missing)
 
 
@@ -13,11 +13,16 @@ decimal seconds.
 
 Required Arguments:
 
-- `data_type`: either `Val(:sc8)` or `Val(:sc4)` for 8-bit and 4-bit complex,
-               respectively
+- `data_type`: one of the following for `Complex{IntN}` datasets
+ 	* `:sc4`
+	* `:sc8`
+	* `:sc16`
+	* `:sc32`
+	* `:sc64`
 - `file_name::String`: data file name
 - `f_s::Float64`: sampling rate of data in Hz
-- `f_if::Float64`: IF frequency of data in Hz
+- `f_center::Float64`: center frequency of the receiver in Hz
+- `f_gnss::Float64`: center frequency of the GNSS signal in Hz
 - `t_length::Float64`: the length of data in seconds to be loaded
 
 
@@ -40,25 +45,32 @@ Returns:
 
 - `GNSSData` struct
 """
-function loaddata(data_type, file_name, f_s, f_if, t_length;
+function loaddata(data_type, file_name, f_s, f_center, f_gnss, t_length;
                   skip_to=0.1, site_loc_lla=missing,
                   data_start_time=missing)
 	# Compute number of samples to extract
 	sample_num = Int(f_s * t_length)
+	# Calculate f_if
+	f_if = f_gnss - f_center
 	# Determine nADC
-	if typeof(data_type) == Val{:sc4}
+	if typeof(data_type) == :sc4
+		data_type = Val(:sc4)
 		nADC = 4
 		data = Array{Complex{Int8}}(undef, sample_num)
-	elseif typeof(data_type) == Val{:sc8}
+	elseif typeof(data_type) == :sc8
+		data_type = Val(:sc8)
 		nADC = 8
 		data = Array{Complex{Int8}}(undef, sample_num)
-	elseif typeof(data_type) == Val{:sc16}
+	elseif typeof(data_type) == :sc16
+		data_type = Val(:sc16)
 		nADC = 16
 		data = Array{Complex{Int16}}(undef, sample_num)
-	elseif typeof(data_type) == Val{:sc32}
+	elseif typeof(data_type) == :sc32
+		data_type = Val(:sc32)
 		nADC = 32
 		data = Array{Complex{Int32}}(undef, sample_num)
-	elseif typeof(data_type) == Val{:sc64}
+	elseif typeof(data_type) == :sc64
+		data_type = Val(:sc64)
 		nADC = 64
 		data = Array{Complex{Int64}}(undef, sample_num)
 	else
