@@ -338,7 +338,7 @@ end
 
 
 The most general type of signal type used in `GNSSTools`. Used for both
-`GNSSData` and `ReplicaSignals` structs.
+`GNSSData` and `ReplicaSignal` structs.
 """
 abstract type GNSSSignal end
 
@@ -395,7 +395,7 @@ end
 
 
 """
-    ReplicaSignals
+    ReplicaSignal
 
 
 A abstract struct for the replica signal structs.
@@ -414,7 +414,7 @@ Fields:
 - `CN0::Float64`: signal carrier to noise ratio (C/N₀)
 - `phi::Float64`: initial carrier phase in radians
 - `nADC::Int64`: bit depth of receiver
-- `code_start_idx::Float64`: index in `ReplicaSignals.data` where all codes in
+- `code_start_idx::Float64`: index in `ReplicaSignal.data` where all codes in
                              signal start
 - `init_code_phases_I::T1`: array of initial code phases for all I channel codes
     * vector length is set to 0 if there are no I channel codes
@@ -442,13 +442,13 @@ Fields:
 - `f_code_dd_Q::T5`: adjusted chipping rate rate due to Doppler frequency rate
                      for Q channel codes
     * vector length is set to 0 if there are no Q channel codes
-- `sample_num::Int`: number of raw I/Q samples in `ReplicaSignals.data`
-- `isreplica::Bool`: flag used to specify that a given `ReplicaSignals` struct
+- `sample_num::Int`: number of raw I/Q samples in `ReplicaSignal.data`
+- `isreplica::Bool`: flag used to specify that a given `ReplicaSignal` struct
                      will be used as a replica for signal processing
-    * if `true`, a `ReplicaSignals` struct will not have noise added onto it
+    * if `true`, a `ReplicaSignal` struct will not have noise added onto it
       and will not undergo ADC quantization
     * signal generation will be done using the second method of `generatesignal!`,
-      `generatesignal!(signal::ReplicaSignals, isreplica::Bool)`
+      `generatesignal!(signal::ReplicaSignal, isreplica::Bool)`
 - `noexp::Bool`: used only if second method of `generatesignal!`, discussed
                  above, is used
     * does not modulate codes onto carrier
@@ -464,7 +464,7 @@ Fields:
 - `signal_type::T7`: a `SignalType` struct that was used to define the signal
 
 """
-mutable struct ReplicaSignals{T1,T2,T3,T4,T5,T7} <: GNSSSignal
+mutable struct ReplicaSignal{T1,T2,T3,T4,T5,T7} <: GNSSSignal
     name::String
     prn::Int
     f_s::Float64

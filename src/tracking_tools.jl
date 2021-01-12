@@ -579,7 +579,7 @@ end
 
 
 """
-	trackprn(data::GNSSSignal, replica::ReplicaSignals, prn, ϕ_init,
+	trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 			 fd_init, n0_idx_init, P₀, R; DLL_B=5, PLL_B=15, damping=1.4,
 			 fd_rate=0., G=0.2, h₀=1e-21, h₋₂=2e-20, σω=10., qₐ=10.,
 			 state_num=2, dynamickf=false, cov_mult=1., q_mult=1.,
@@ -594,8 +594,8 @@ amount to track a given PRN.
 
 Required Arguments:
 
-- `data::GNSSSignal`: either `GNSSData` or `ReplicaSignals` struct
-- `replica::ReplicaSignals`: struct to use for replica signal generation
+- `data::GNSSSignal`: either `GNSSData` or `ReplicaSignal` struct
+- `replica::ReplicaSignal`: struct to use for replica signal generation
 	* `replica.t_length` determines the integration time, `T`, used in tracking
 - `prn`: PRN number to track
 - `ϕ_init`: initial phase estimate in rads
@@ -630,7 +630,7 @@ Returns:
 
 - `TrackResults` struct
 """
-function trackprn(data::GNSSSignal, replica::ReplicaSignals, prn, ϕ_init,
+function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 	              fd_init, n0_idx_init, P₀, R; DLL_B=5, PLL_B=15, damping=1.4,
 				  fd_rate=0., G=0.2, h₀=1e-21, h₋₂=2e-20, qₐ=10.,
 				  state_num=2, dynamickf=false, cov_mult=1., q_mult=1.,

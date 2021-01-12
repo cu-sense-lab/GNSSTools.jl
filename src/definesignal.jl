@@ -38,7 +38,7 @@ Optional Arguments:
 - `include_adc`: flag for performing ADC quantization on signal `(default = true)`
 - `include_thermal_noise`: flag for including thermal noise in signal generation
                            `(default = true)`
-- `code_start_idx`: starting index in `ReplicaSignals.data` where all codes
+- `code_start_idx`: starting index in `ReplicaSignal.data` where all codes
                     start `(default = 1)`
 - `include_databits_I`: flag for including I channel databits in simulated signal
                         `(default = true)`
@@ -53,7 +53,7 @@ Optional Arguments:
 - `allocate_noise_vectors`: flag for allocating memory for thermal and phase
                             noise vectors `(default = true)`
     * if set to `true`, thermal and phase noise vectors have the same length as
-      `ReplicaSignals.data` vector
+      `ReplicaSignal.data` vector
     * if set to `false`, thermal and phase noise vectors have length set to 0
       and the `include_thermal_noise` and `include_phase_noise` flags are set
       to `false`
@@ -61,7 +61,7 @@ Optional Arguments:
 
 Returns:
 
-- `ReplicaSignals` struct
+- `ReplicaSignal` struct
 """
 function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                       f_if=0., f_d=0., fd_rate=0., Tsys=535.,
@@ -141,7 +141,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
     end
     # Allocate space for signal. No simulated data is stored in yet. After
     # define the signal, user can use `generatesignal!(signal)` to generate
-    # the I/Q samples which will be stored in `ReplicaSignals.data`.
+    # the I/Q samples which will be stored in `ReplicaSignal.data`.
     data = Array{Complex{Float64}}(undef, sample_num)
     isreplica = false
     noexp = false
@@ -169,7 +169,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
         include_thermal_noise = false
         include_phase_noise = false
     end
-    return ReplicaSignals(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
+    return ReplicaSignal(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
                           CN0, phi, nADC, code_start_idx, init_code_phases_I,
                           init_code_phases_Q, t, data, include_carrier,
                           include_adc, include_thermal_noise, include_databits_I,
@@ -181,7 +181,7 @@ end
 
 
 """
-    definesignal!(signal::ReplicaSignals;
+    definesignal!(signal::ReplicaSignal;
                   prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
                   fd_rate=signal.fd_rate, Tsys=signal.Tsys,
                   CN0=signal.CN0, phi=signal.phi, nADC=signal.nADC,
@@ -204,7 +204,7 @@ based off its type, PRN, etc.
 
 Required Arguments:
 
-- `signal::ReplicaSignals`: the signal already defined by the user using
+- `signal::ReplicaSignal`: the signal already defined by the user using
                             `definesignal`
 
 
@@ -221,7 +221,7 @@ Optional Arguments with Defaults Equal to `signal` Field Values:
 - `include_carrier`: flag for modulating codes onto carrier
 - `include_adc`: flag for performing ADC quantization on signal
 - `include_thermal_noise`: flag for including thermal noise in signal generation
-- `code_start_idx`: starting index in `ReplicaSignals.data` where all codes
+- `code_start_idx`: starting index in `ReplicaSignal.data` where all codes
                     start
 - `include_databits_I`: flag for including I channel databits in simulated signal
 - `include_databits_Q`: flag for including Q channel databits in simulated signal
@@ -234,10 +234,10 @@ Optional Arguments with Defaults Equal to `signal` Field Values:
       such as `courseacquisition!`, `fineacquisition`, and `trackprn`, only if
       this signal structure is being used as the replica signal, and is NOT
       the signal being processed
-    * if `true`, a `ReplicaSignals` struct will not have noise added onto it
+    * if `true`, a `ReplicaSignal` struct will not have noise added onto it
       and will not undergo ADC quantization
     * signal generation will be done using the second method of `generatesignal!`,
-      `generatesignal!(signal::ReplicaSignals, isreplica::Bool)`
+      `generatesignal!(signal::ReplicaSignal, isreplica::Bool)`
 - `noexp`: used only if second method of `generatesignal!`, discussed
            above, is used
     * does not modulate codes onto carrier
@@ -256,9 +256,9 @@ Other Optional Arguments:
 
 Modifies and Returns:
 
-- `signal::ReplicaSignals`
+- `signal::ReplicaSignal`
 """
-function definesignal!(signal::ReplicaSignals;
+function definesignal!(signal::ReplicaSignal;
                        prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
                        fd_rate=signal.fd_rate, Tsys=signal.Tsys,
                        CN0=signal.CN0, phi=signal.phi, nADC=signal.nADC,

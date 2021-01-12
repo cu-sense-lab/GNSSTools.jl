@@ -1,5 +1,5 @@
 """
-    calc_code_val(signal::ReplicaSignals, t)
+    calc_code_val(signal::ReplicaSignal, t)
 
 
 Calculates the value of the generic code with parameters defined by `signal` at
@@ -10,7 +10,7 @@ perform QPSK correctly.
 
 Required Arguments:
 
-- `signal::ReplicaSignals`: struct containing signal data and parameters
+- `signal::ReplicaSignal`: struct containing signal data and parameters
 - `t::Float64`: current time in seconds
 
 
@@ -54,7 +54,7 @@ and for codes on **only** the Q channel:
 | 0             | 1             | 90              |
 | 0             | -1            | 270             |
 """
-function calc_code_val(signal::ReplicaSignals, t)
+function calc_code_val(signal::ReplicaSignal, t)
     prn = signal.prn
     # I channel
     I_val = 0
@@ -133,7 +133,7 @@ end
 
 
 """
-    calc_code_val(signal::ReplicaSignals, t, code_chips_I, code_chips_Q)
+    calc_code_val(signal::ReplicaSignal, t, code_chips_I, code_chips_Q)
 
 
 Calculates the value of the generic code with parameters defined by `signal` at
@@ -150,7 +150,7 @@ function of `t` in seconds. This method is used when the user supplies
 
 Required Arguments:
 
-- `signal::ReplicaSignals`: struct containing signal data and parameters
+- `signal::ReplicaSignal`: struct containing signal data and parameters
 - `t::Float64`: current time in seconds
 - `code_chips_I`: N element array containing interpolated functions
                   that compute the current code chip for a given `t`
@@ -200,7 +200,7 @@ and for codes on **only** the Q channel:
 | 0             | 1             | 90              |
 | 0             | -1            | 270             |
 """
-function calc_code_val(signal::ReplicaSignals, t, code_chips_I, code_chips_Q)
+function calc_code_val(signal::ReplicaSignal, t, code_chips_I, code_chips_Q)
     prn = signal.prn
     # I channel
     I_val = 0

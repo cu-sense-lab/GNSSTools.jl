@@ -39,7 +39,7 @@ end
 
 
 """
-    fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
+    fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                     n₀_idx_course, type::Val{:fft}; fd_rate=0.,
                     t_length=replica.t_length, freq_lim=10000.,
                     σω=10., err_bin_num_ϕ=1, err_bin_num_f=2)
@@ -52,8 +52,8 @@ struct, however, `data` and `replica` must be two seperate structs.
 
 Required Arguments:
 
-- `data::GNSSSignal`: either `GNSSData` or `ReplicaSignals` struct
-- `replica::ReplicaSignals`: struct to use for replica signal generation
+- `data::GNSSSignal`: either `GNSSData` or `ReplicaSignal` struct
+- `replica::ReplicaSignal`: struct to use for replica signal generation
     * `replica.t_length` determines the integration time, `T`, used in FFT fine
       acquisition
 - `prn::Int`: PRN number to track
@@ -79,7 +79,7 @@ Returns:
 
 - `FineAcquisitionResults` struct
 """
-function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
+function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=10000.,
                          σω=1000., err_bin_num_ϕ=1, err_bin_num_f=2)
@@ -179,7 +179,7 @@ end
 
 
 """
-    fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
+    fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                     n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
                     t_length=replica.t_length, freq_lim=50000., M=10,
                     σω=1000.)
@@ -193,8 +193,8 @@ Performs an carrier based fine acquisition on `data`.
 
 Required Arguments:
 
-- `data::GNSSSignal`: either `GNSSData` or `ReplicaSignals` struct
-- `replica::ReplicaSignals`: struct to use for replica signal generation
+- `data::GNSSSignal`: either `GNSSData` or `ReplicaSignal` struct
+- `replica::ReplicaSignal`: struct to use for replica signal generation
     * `replica.t_length` determines the integration time, `T`
 - `prn::Int`: PRN number to track
 - `fd_course`: course acquired Doppler frequency in Hz
@@ -215,7 +215,7 @@ Returns:
 
 - `FineAcquisitionResults` struct
 """
-function fineacquisition(data::GNSSSignal, replica::ReplicaSignals, prn, fd_course,
+function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=50000., M=10,
                          σω=1000.)

@@ -34,7 +34,7 @@ end
 
 
 """
-    courseacquisition(data::GNSSSignal, replica::ReplicaSignals,
+    courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
                       prn; fd_center=0., fd_range=5000.,
                       fd_rate=0., Δfd=1/replica.t_length,
                       threads=nthreads(), operation="replace",
@@ -47,9 +47,9 @@ Initializes `corr_result` array and runs `courseacquisition!` method. Returns
 
 Required Arguments:
 
-- `data::GNSSSignal`: either a `GNSSData` or `ReplicaSignals`
+- `data::GNSSSignal`: either a `GNSSData` or `ReplicaSignal`
     * can be either simulated or real data
-- `replica::ReplicaSignals`: replica signal whose length determines the
+- `replica::ReplicaSignal`: replica signal whose length determines the
                              integration time used for course acquisition
 - `prn::Int`: PRN number refering to code to search for
 
@@ -75,7 +75,7 @@ Returns:
 - `n0_est::Int`: index in data where code starts
 - `SNR_est::Float64`: SNR of the correlation peak in dB
 """
-function courseacquisition(data::GNSSSignal, replica::ReplicaSignals,
+function courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
                            prn; fd_center=0., fd_range=5000.,
                            fd_rate=0., Δfd=1/replica.t_length,
                            start_idx=1, return_corrresult=false)
@@ -98,14 +98,14 @@ end
 
 """
     courseacquisition!(corr_result::Array{Float64,2},
-                       data::GNSSSignal, replica::ReplicaSignals,
+                       data::GNSSSignal, replica::ReplicaSignal,
                        prn; fd_center=0., fd_range=5000.,
                        fd_rate=0., Δfd=1/replica.t_length,
                        operation="replace", start_idx=1)
 
 
-Performs course acquisition on either `GNSSData` or `ReplicaSignals`
-type struct using defined `ReplicaSignals` type struct. No need
+Performs course acquisition on either `GNSSData` or `ReplicaSignal`
+type struct using defined `ReplicaSignal` type struct. No need
 to use `generatesignal!` before calling this function.
 Operates in place on `corr_result`.
 
@@ -123,9 +123,9 @@ Doppler bin.
 Required Arguments:
 
 - `corr_result::Array{Float64,2}`: 2D array to store acquistion result
-- `data::GNSSSignal`: either a `GNSSData` or `ReplicaSignals`
+- `data::GNSSSignal`: either a `GNSSData` or `ReplicaSignal`
     * can be either simulated or real data
-- `replica::ReplicaSignals`: replica signal whose length determines the
+- `replica::ReplicaSignal`: replica signal whose length determines the
                              integration time used for course acquisition
 - `prn::Int`: PRN number refering to code to search for
 
@@ -150,7 +150,7 @@ Modifies and Returns:
 - `corr_result::Array{Float64,2}`: 2D array to store acquistion result
 """
 function courseacquisition!(corr_result::Array{Float64,2},
-                            data::GNSSSignal, replica::ReplicaSignals,
+                            data::GNSSSignal, replica::ReplicaSignal,
                             prn; fd_center=0., fd_range=5000.,
                             fd_rate=0., Δfd=1/replica.t_length,
                             operation="replace", start_idx=1)

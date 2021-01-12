@@ -38,7 +38,7 @@
 
 
 """
-doppler2chips(signal::ReplicaSignals, doppler_curve,
+doppler2chips(signal::ReplicaSignal, doppler_curve,
               doppler_t; Δt=doppler_t[2]-doppler_t[1],
               N=length(doppler_curve))
 
@@ -55,7 +55,7 @@ they are stored in `signal.code_type.[I or Q]_codes`.
 
 Required Arguments:
 
-- `signal::ReplicaSignals`: replica signal struct
+- `signal::ReplicaSignal`: replica signal struct
 - `doppler_curve`: Doppler frequency curve in Hz
 - `doppler_t`: time vector in seconds, corresponding to `doppler_curve`
 
@@ -74,7 +74,7 @@ Returns:
                       for the I channel
 - `ϕs_sitp`: interpolated function that takes `t` and returns the phase in rads
 """
-function doppler2chips(signal::ReplicaSignals, doppler_curve,
+function doppler2chips(signal::ReplicaSignal, doppler_curve,
                        doppler_t; Δt=doppler_t[2]-doppler_t[1],
                        N=length(doppler_curve))
       # Get parameters from `signal` struct
@@ -166,7 +166,7 @@ end
 
 
 """
-    get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
+    get_chips_and_ϕ(signal::ReplicaSignal, doppler_curve, doppler_t)
 
 
 Interpolate the Doppler frequency curve and return two functions that calculate
@@ -175,7 +175,7 @@ the code and carrier phase, respectively, as a function of time.
 
 Required Arguments:
 
-- `signal::ReplicaSignals`: replica signal struct
+- `signal::ReplicaSignal`: replica signal struct
 - `doppler_curve`: Doppler frequency curve in Hz
 - `doppler_t`: time vector in seconds, corresponding to `doppler_curve`
 
@@ -186,7 +186,7 @@ Returns:
                   the I and Q channels
 - `get_ϕ`: interpolated function that takes `t` and returns the phase in rads
 """
-function get_chips_and_ϕ(signal::ReplicaSignals, doppler_curve, doppler_t)
+function get_chips_and_ϕ(signal::ReplicaSignal, doppler_curve, doppler_t)
     code_chips_I, code_chips_Q, get_ϕ = doppler2chips(signal, doppler_curve,
                                                       doppler_t)
     get_code_val(t) = calc_code_val(signal, t, code_chips_I, code_chips_Q)

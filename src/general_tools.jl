@@ -217,7 +217,7 @@ Required Arguments:
 - `f_code_d::Number`: Doppler adjusted code chipping rate in Hz
 - `f_code_dd::Number`: Doppler rate adjusted code chipping rate rate in Hz
 - `f_s::Number`: sampling rate of data in Hz
-- `code_start_idx::Number`: index in `ReplicaSignals.data` where all layers of
+- `code_start_idx::Number`: index in `ReplicaSignal.data` where all layers of
                             code start
 
 
