@@ -1,6 +1,6 @@
 """
-    process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000.,
-            fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
+    process(signal::GNSSSignal, signal_type::SignalType, prn, channel="both";
+            σω=1000., fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
             cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
             state_num=3, fd_rate=0., figsize=missing, saveto=missing,
             show_plot=true, fine_acq_method=:carrier, M=10,
@@ -50,39 +50,35 @@ Returns:
 - `SNR_est`: `[OPTIONAL]` course correlation peak SNR returned if
              `return_corrresult` is set to `true`
 """
-function process(signal::GNSSSignal, signal_type, prn, channel="both"; σω=1000.,
-                 fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
-                 cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
-                 state_num=3, fd_rate=0., figsize=missing, saveto=missing,
-                 show_plot=true, fine_acq_method=:carrier, M=10,
-                 return_corrresult=false, fine_acq=true, σ_phi=π/2)
+function process(signal::GNSSSignal, signal_type::SignalType, prn,
+                 channel="both"; σω=1000., fd_center=0., fd_range=5000., RLM=10,
+                 replica_t_length=1e-3, cov_mult=1, q_a=1, q_mult=1,
+                 dynamickf=true, dll_b=5, state_num=3, fd_rate=0.,
+                 figsize=missing, saveto=missing, show_plot=true,
+                 fine_acq_method=:carrier, M=10, return_corrresult=false,
+                 fine_acq=true, σ_phi=π/2)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
     # as long as `RLM*replica_t_length`
     f_s = signal.f_s
-    if isa(signal_type, SignalType)
-        if channel == "both"
-            # do nothing; keep as is
-        elseif channel == "I"
-            signal_type = definesignaltype(signal_type.I_codes,
-                                           signal_type.sig_freq, "I")
-        elseif channel == "Q"
-            signal_type = definesignaltype(signal_type.Q_codes,
-                                           signal_type.sig_freq, "Q")
-        else
-            error("Invalid channel `$(channel)`.")
-        end
-        replica = definesignal(signal_type, f_s, replica_t_length;
+    if channel == "both"
+        # do nothing; keep as is
+    elseif channel == "I"
+        signal_type = definesignaltype(signal_type.I_codes,
+                                       signal_type.sig_freq, "I")
+    elseif channel == "Q"
+        signal_type = definesignaltype(signal_type.Q_codes,
+                                       signal_type.sig_freq, "Q")
+    else
+        error("Invalid channel `$(channel)`.")
+    end
+    replica = definesignal(signal_type, f_s, replica_t_length;
+                           skip_noise_generation=true,
+                           allocate_noise_vectors=false)
+    replicalong = definesignal(signal_type, f_s, RLM*replica_t_length;
                                skip_noise_generation=true,
                                allocate_noise_vectors=false)
-        replicalong = definesignal(signal_type, f_s, RLM*replica_t_length;
-                                   skip_noise_generation=true,
-                                   allocate_noise_vectors=false)
-    else
-        replica = definesignal(signal_type, f_s, replica_t_length)
-        replicalong = definesignal(signal_type, f_s, RLM*replica_t_length)
-    end
     if replicalong.sample_num > signal.sample_num
         error("Signal length equal to or greater than $(RLM*replica_t_length) seconds.")
     end
