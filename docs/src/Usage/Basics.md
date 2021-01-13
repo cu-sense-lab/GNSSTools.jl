@@ -1,5 +1,7 @@
 # Basic Usage
 
+## Defining Signal Types
+
 For both signal simulation and processing, the `SignalType` must be defined. Currently, `GNSSTools` can simulate and process L1 C/A and L5 signals by default. See the `Custom Signal Types` section below for instructions on defining custom signals in `GNSSTools`. Defining the L1 C/A signal type can be done using the following:
 
 ```julia
