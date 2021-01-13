@@ -44,8 +44,28 @@ The simulated data will be stored in `signal.data`. There is also an accompanyin
 
 ## Loading GNSS Data Files
 
-Data can be loaded into `GNSSTools` for processing. `GNSSTools` assumes that the data is raw IQ data with no header information in the data file. Therefore, specific properties of the
+Data can be loaded into `GNSSTools` for processing. `GNSSTools` assumes that the data is raw IQ data with no header information in the data file. Therefore, specific properties of the data need to be provided in order to read the data correctly. Reading data can be done using:
+
+```julia
+data = loaddata(data_type, file_name, f_s, f_center, f_gnss, t_length; ... )
+```
+
+`data_type` specifies the bit depth of the complex data. The following can be used:
+
+- `sc4`: 4-bit complex
+- `sc8`: 8-bit complex
+- `sc16`: 16-bit complex
+- `sc32`: 32-bit complex
+- `sc64`: 64-bit complex
+
+`f_s` is the sampling rate of the data in Hz, while `f_center` and `f_gnss` are the center frequencies of the receiver and signal, respectively, in Hz. `t_length` is the length of the data to load in seconds. The `skip_to` argument can passes to specify the time in the data to start loading from. By default, the beginning of the data loaded is from 0.001 seconds in the file.
 
 ## Processing Signals
 
-All `GNSSSignal` types can be processed. These include `ReplicaSignal` and `GNSSData` types.
+All `GNSSSignal` types can be processed. These include `ReplicaSignal` and `GNSSData` types. Do so, the `process` function can be used to perform acquisition and tracking for a single PRN. Note that only individual channels can be processed at a time. Dual channel processing is currently not supported.
+
+```julia
+results = process(signal, signal_type, prn, channel="I")
+```
+
+`signal_type` is the signal type defined in the above sections. Make sure that it reflects the signal you are trying to process. Note that `channel` is optional, but it defaults to `"I"`. See `process` in the API docs to see the other optional arguments.

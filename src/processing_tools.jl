@@ -1,5 +1,5 @@
 """
-    process(signal::GNSSSignal, signal_type::SignalType, prn, channel="both";
+    process(signal::GNSSSignal, signal_type::SignalType, prn, channel="I";
             σω=1000., fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
             cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
             state_num=3, fd_rate=0., figsize=missing, saveto=missing,
@@ -51,7 +51,7 @@ Returns:
              `return_corrresult` is set to `true`
 """
 function process(signal::GNSSSignal, signal_type::SignalType, prn,
-                 channel="both"; σω=1000., fd_center=0., fd_range=5000., RLM=10,
+                 channel="I"; σω=1000., fd_center=0., fd_range=5000., RLM=10,
                  replica_t_length=1e-3, cov_mult=1, q_a=1, q_mult=1,
                  dynamickf=true, dll_b=5, state_num=3, fd_rate=0.,
                  figsize=missing, saveto=missing, show_plot=true,
@@ -62,9 +62,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # is used for fine acquisition only. The signal must be at least
     # as long as `RLM*replica_t_length`
     f_s = signal.f_s
-    if channel == "both"
-        # do nothing; keep as is
-    elseif channel == "I"
+    if channel == "I"
         signal_type = definesignaltype(signal_type.I_codes,
                                        signal_type.sig_freq, "I")
     elseif channel == "Q"
