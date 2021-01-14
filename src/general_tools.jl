@@ -607,9 +607,9 @@ Makes a subplot using the PyPlot module. Provides easier setup for 3D subplots.
 Required Arguments:
 
 - `fig`: PyPlot figure object
-- `row`: `Int` that specifies the number of rows in the figure
-- `col`: `Int` that specifies the number of columns in the figure
-- `i`: `Int` specifying the subplot placement in the figure `(range = (1,row*col))`
+- `row::Int`:specifies the number of rows in the figure
+- `col::Int`:specifies the number of columns in the figure
+- `i::Int`: specifies the subplot placement in the figure `(range = (1,row*col))`
 
 
 Optional Arguments:
