@@ -684,18 +684,23 @@ Gets the bounds of a normalized distribution where the sum is equal to `p`.
 
 Required Arguments:
 
-- `distribution`:
-- `p`:
+- `distribution`: histogram object that contains the bin locations and their
+                  weights
+- `p`: value rangin from 0 to 1 that specifies the ratio of the distribution to
+       include
 
 
 Optional Arguments:
 
-- `tail`: `(default = :center)`
+- `tail`: whether start from the center and obtain bounds above and below the
+          center or whether to start from the right or left.
+		  `(default = :center)`
 
 
 Returns:
 
-- `bounds`: 
+- `bounds`: 2-element vector that describes the bounds of the distribution which
+            include the bins, whose weights sum to equal `p`
 """
 function get_distribution_bounds(distribution, p, tail=:center)
 	if tail == :center
