@@ -1,62 +1,77 @@
 """
     process(signal::GNSSSignal, signal_type::SignalType, prn, channel="I";
-            σω=1000., fd_center=0., fd_range=5000., RLM=10, replica_t_length=1e-3,
-            cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
-            state_num=3, fd_rate=0., figsize=missing, saveto=missing,
+            σω=1000., fd_center=0., fd_range=5000., RLM=10,
+            replica_t_length=1e-3, cov_mult=1, q_a=1, q_mult=1, dynamickf=true,
+            dll_b=5, state_num=3, fd_rate=0., figsize=missing, saveto=missing,
             show_plot=true, fine_acq_method=:carrier, M=10,
             return_corrresult=false,  fine_acq=true, σ_phi=π/2)
 
 
-#
+Performs course acquisition and tracking on a `GNSSSignal` (either
+`ReplicaSignal` or `GNSSData`).
 
 
 Required Arguments:
 
-- `signal::GNSSSignal`:
-- `signal_type`:
-- `prn`:
+- `signal::GNSSSignal`: simulated (`ReplicaSignal`) or real (`GNSSData`) data
+- `signal_type`: `SignaType` struct that defines the signal being processed
+    * i.e. L1 C/A or L5
+- `prn`: PRN to processed (only one can be processed at a time)
 
 
 Optional Arguments:
 
-- `channel`:
-- `σω`:
-- `fd_center`:
-- `fd_range`:
-- `RLM`:
-- `replica_t_length`:
-- `cov_mult`:
-- `q_a`:
-- `q_mult`:
-- `dynamickf`:
-- `dll_b`:
-- `state_num`:
-- `fd_rate`:
-- `figsize`:
-- `saveto`:
-- `show_plot`:
-- `fine_acq_method`:
-- `M`:
+- `channel`: the channel to process (must be either `"I"` or `"Q"`)
+             `(default = "I")`
+- `σω`: Doppler rate uncertainty in Hz/s `(default = 1000)`
+- `fd_center`: center frequency of the Doppler search area in Hz `(default = 0)`
+- `fd_range`: range around the center frequency, `fd_center`, to search around
+              during course acquisiton in Hz `(default = 5000)`
+- `M`: multiplier for the length of time to perform fine acquisition
+       `(default = 10)`
+- `replica_t_length`: integration time used for course acquisition and tracking
+                      in seconds `(default = 0.001)`
+- `cov_mult`: scalar that can be applied to the covariance matrix in the
+              tracking loop `(default = 1)`
+- `q_a`: line of site platform dynamics in m²/s⁶ `(default = 1)`
+- `q_mult`: scalar that can be applied to the process noise matrix, Q
+            `(default = 1)`
+- `dynamickf`: flag to specify whether dynamic KF gain is used or if only the
+               steady state gain is used isntead `(default = true)`
+- `dll_b`: delay lock loop bandwidth in Hz `(default = 5)`
+- `state_num`: number of states to track in the carrier tracking loop
+               `(default = 3)`
+    * when `state_num = 2`: track only carrier phase and Doppler frequency
+    * when `state_num = 3`: track the carrier phase, Doppler frequency, and
+                            Doppler rate
+- `fd_rate`: the initial estimate of the Doppler rate in Hz/s
+- `figsize`: 2-element `Tuple` that specifies the height and width of the
+             tracking results figure in inches
+- `saveto`: path to save tracking results plot `(default = missing)`
+- `show_plot`: flag to show tracking results plot `(default = true)`
+- `fine_acq_method`: whether to use FFT or consecutive carrier based fine
+                     acquisition method `(default = :carrier)`
+    * can be either `:fft` of `:carrier`
 - `return_corrresult`: flag, if set to true, will return the course correlation
                        result
 
 
 Returns:
 
-- `results`:
-- `trackresults`:
+- `results`: `FineAcquisitionResults` struct
+- `trackresults`: `TrackResults` struct
 - `corr_result`: `[OPTIONAL]` course correlation result returned if
                  `return_corrresult` is set to `true`
 - `SNR_est`: `[OPTIONAL]` course correlation peak SNR returned if
              `return_corrresult` is set to `true`
 """
 function process(signal::GNSSSignal, signal_type::SignalType, prn,
-                 channel="I"; σω=1000., fd_center=0., fd_range=5000., RLM=10,
-                 replica_t_length=1e-3, cov_mult=1, q_a=1, q_mult=1,
-                 dynamickf=true, dll_b=5, state_num=3, fd_rate=0.,
-                 figsize=missing, saveto=missing, show_plot=true,
-                 fine_acq_method=:carrier, M=10, return_corrresult=false,
-                 fine_acq=true, σ_phi=π/2)
+                 channel="I"; σω=1000., fd_center=0., fd_range=5000.,
+                 M=10, replica_t_length=1e-3, cov_mult=1, q_a=1,
+                 q_mult=1, dynamickf=true, dll_b=5, state_num=3,
+                 fd_rate=0., figsize=missing, saveto=missing,
+                 show_plot=true, fine_acq_method=:carrier,
+                 return_corrresult=false, fine_acq=true, σ_phi=π/2)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
@@ -74,7 +89,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     replica = definesignal(signal_type, f_s, replica_t_length;
                            skip_noise_generation=true,
                            allocate_noise_vectors=false)
-    replicalong = definesignal(signal_type, f_s, RLM*replica_t_length;
+    replicalong = definesignal(signal_type, f_s, M*replica_t_length;
                                skip_noise_generation=true,
                                allocate_noise_vectors=false)
     if replicalong.sample_num > signal.sample_num
@@ -106,7 +121,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
         elseif fine_acq_method == :carrier
             results = fineacquisition(signal, replica, prn, fd_course,
                                       n0_est, Val(fine_acq_method); σω=σω,
-                                      fd_rate=fd_rate, M=RLM)
+                                      fd_rate=fd_rate, M=M)
         else
             error("Invalid value for argument `fine_acq_method`.")
         end
