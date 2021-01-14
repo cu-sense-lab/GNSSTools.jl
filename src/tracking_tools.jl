@@ -608,22 +608,23 @@ Required Arguments:
 
 Optional Arguments:
 
-- `DLL_B`: bandwidth of the DLL filter in Hz
-- `PLL_B`: bandwidth of the PLL filter in Hz
-- `damping`: PLL filter damping coefficient
-- `fd_rate`: Doppler rate in Hz
+- `DLL_B`: bandwidth of the DLL filter in Hz `(default = 5)`
+- `PLL_B`: bandwidth of the PLL filter in Hz `(default = 15)`
+- `damping`: PLL filter damping coefficient `(default = 1.4)`
+- `fd_rate`: Doppler rate in Hz `(default = 0)`
 - `G`: `[DEPRICATED]` carrier phase filter gain
-- `h₀`:
-- `h₋₂`:
-- `qₐ`: line of site platform dynamics in m²/s⁶
-- `state_num`: number of states to track
+- `h₀`: `(default = 1e-21)`
+- `h₋₂`: `(default = 2e-20)`
+- `qₐ`: line of site platform dynamics in m²/s⁶ `(default = 1)`
+- `state_num`: number of states to track `(default = 3)`
 	* if set to `3`, carrier phase, Doppler, and Doppler rate are tracked
 	* if set to `2`, only carrier phase and Doppler are tracked
 - `dynamickf`: flag to specify if steady state KF gain is used or if KF can
-               change from time step to time step
+               change from time step to time step `(default = true)`
 - `cov_mult`: scalar to inflate the initial covariance matrix `P₀`
-- `q_mult`: scalar to inflate the process noise matrix `Q`
-- `channel`: `[NOT USED]`
+              `(default = 1)`
+- `q_mult`: scalar to inflate the process noise matrix `Q` `(default = true)`
+- `channel`: `[NOT USED]` `(default = "I")`
 
 
 Returns:
@@ -850,7 +851,7 @@ Optional Arguments:
                    estimate `(default = missing)`
 - `doppler_t`: time vector that must be included with `doppler_curve`
                `(default = missing)`
-- `CN0`: expected carrier-to-noise ratio `C/N₀` value
+- `CN0`: expected carrier-to-noise ratio `C/N₀` value `(default = missing)`
 
 
 Plots tracking results figure.
