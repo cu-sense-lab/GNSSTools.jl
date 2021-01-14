@@ -44,16 +44,16 @@ Optional Arguments:
     * when `state_num = 2`: track only carrier phase and Doppler frequency
     * when `state_num = 3`: track the carrier phase, Doppler frequency, and
                             Doppler rate
-- `fd_rate`: the initial estimate of the Doppler rate in Hz/s
+- `fd_rate`: the initial estimate of the Doppler rate in Hz/s `(default = 0)`
 - `figsize`: 2-element `Tuple` that specifies the height and width of the
-             tracking results figure in inches
+             tracking results figure in inches `(default = missing)`
 - `saveto`: path to save tracking results plot `(default = missing)`
 - `show_plot`: flag to show tracking results plot `(default = true)`
 - `fine_acq_method`: whether to use FFT or consecutive carrier based fine
                      acquisition method `(default = :carrier)`
     * can be either `:fft` of `:carrier`
 - `return_corrresult`: flag, if set to true, will return the course correlation
-                       result
+                       result `(default = false)`
 
 
 Returns:
