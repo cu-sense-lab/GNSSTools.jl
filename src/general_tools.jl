@@ -486,7 +486,7 @@ Required Arguments:
 
 Optioonal Arguments:
 
-- `prns`: vector containing PRN numbers
+- `prns`: vector containing PRN numbers `(default = missing)`
 
 
 Returns:
@@ -654,7 +654,7 @@ Optional Arguments:
 
 - `log_freq::Bool`: flag for if plot shows linear frequency or `log10(freqs)`
                     where `freqs` is the array of frequencies spanning
-					`(0, f_s/2) Hz`
+					`(0, f_s/2) Hz` `(default = false)`
 
 
 Returns `nothing`
@@ -680,6 +680,22 @@ end
 
 
 Gets the bounds of a normalized distribution where the sum is equal to `p`.
+
+
+Required Arguments:
+
+- `distribution`:
+- `p`:
+
+
+Optional Arguments:
+
+- `tail`: `(default = :center)`
+
+
+Returns:
+
+- `bounds`: 
 """
 function get_distribution_bounds(distribution, p, tail=:center)
 	if tail == :center

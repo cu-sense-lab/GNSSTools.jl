@@ -62,8 +62,8 @@ Required Arguments:
 
 Optional Arguments:
 
-- `Δt`: time step size in seconds
-- `N`: number of samples in `doppler_curve`
+- `Δt`: time step size in seconds `(default = doppler_t[2]-doppler_t[1])`
+- `N`: number of samples in `doppler_curve` `(default = length(doppler_curve))`
 
 
 Returns:

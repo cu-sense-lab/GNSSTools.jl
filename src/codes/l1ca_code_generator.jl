@@ -127,6 +127,9 @@ Generates a dictionary containing all the L1 C/A codes for PRNS 1 through 32.
 The PRN number is the dictionary key.
 
 
+Arguments: `None`
+
+
 Returns:
 
 - `l1ca_codes::Dict`: dictionary containing a 1023-element array of C/A code

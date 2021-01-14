@@ -106,8 +106,8 @@ Optional Arguments:
                       array where the first element is the databits
                       as either a dictionary or array and the second
                       element is the chipping rate in Hz of the
-                      databits
-- `name::String`: name of code type (default is `custom`)
+                      databits `(default = missing)`
+- `name::String`: name of code type `(default is "custom")`
 
 
 Returns:
@@ -203,8 +203,8 @@ Optional Arguments:
                       array where the first element is the databits
                       as either a dictionary or array and the second
                       element is the chipping rate in Hz of the
-                      databits
-- `name::String`: name of code type (default is `custom`)
+                      databits `(default = missing)`
+- `name::String`: name of code type `(default is "custom")`
 
 
 Returns:
@@ -277,7 +277,7 @@ Required Arguments:
 
 Optional Arguments:
 
-- `name::String`: name of signal type (default is `custom`)
+- `name::String`: name of signal type `(default is "custom")`
 
 
 Returns:

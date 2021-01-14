@@ -67,6 +67,9 @@ signals:
 - Beidou B1i
 
 
+Arguments: `None`
+
+
 Returns:
 
 - `(f_s, f_if, f_center, L1_freq, sigtype)::Tuple`: where
@@ -97,6 +100,9 @@ signals:
 
 - GPS L5
 - Galileo E5a
+
+
+Arguments: `None`
 
 
 Returns:
@@ -147,6 +153,9 @@ end
 
 
 Initializes the WGS84 constants and stores them in a `WGS84` struct.
+
+
+Arguments: `None`
 
 
 Returns:

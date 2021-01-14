@@ -16,7 +16,7 @@ Required Arguments:
 
 Optional Arguments:
 
-- `N`: length of the noise vectors
+- `N`: length of the noise vectors `(default = length(noise1))`
 
 
 Modifies and Returns:
@@ -80,7 +80,7 @@ Required Arguments:
 
 Optional Arguments:
 
-- `scale`: the amplitude of the noise in rad
+- `scale`: the amplitude of the noise in rad `(default = 1/10)`
 
 
 Returns:
@@ -109,8 +109,8 @@ Required Arguments:
 
 Optional Arguments:
 
-- `N::Int`: the length of the noise vector
-- `scale`: the amplitude of the noise in rad
+- `N::Int`: the length of the noise vector `(default = length(noise))`
+- `scale`: the amplitude of the noise in rad `(default = 1/10)`
 
 
 Returns:
@@ -139,7 +139,7 @@ Required Arguments:
 
 Optional Arguments:
 
-- `scale`: the amplitude of the noise in rad
+- `scale`: the amplitude of the noise in rad `(default = 1/10)`
 
 
 Returns:

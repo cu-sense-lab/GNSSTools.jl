@@ -65,7 +65,7 @@ Optional Arguments:
     * integration time is determined by the length of the replica
       `replica.t_length`
 - `start_idx::Int`: starting sample in data plus `replica.sample_num` that is
-                    used for processing
+                    used for processing `(default = 1)`
 
 
 Returns:
@@ -141,7 +141,7 @@ Optional Arguments:
     * integration time is determined by the length of the replica
       `replica.t_length`
 - `start_idx::Int`: starting sample in data plus `replica.sample_num` that is
-                    used for processing
+                    used for processing `(default = 1)`
 
 
 

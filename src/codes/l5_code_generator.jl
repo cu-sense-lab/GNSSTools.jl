@@ -193,6 +193,9 @@ where it repeats a second time until the 2040th state where it is reset again
 for the start of the next 1ms.
 
 
+Arguments: `None`
+
+
 Returns:
 
 - `xa_code::Vector`: vector containg the XA register result for 1ms period of
@@ -260,6 +263,9 @@ const xa_code = xaregister()
 Generates the output of the XB registers for all PRNs in `XB_intial_conditions.`
 
 
+Arguments: `None`
+
+
 Returns:
 
 - `xb_codes::Dict`: dictionary containing the output of the XB register for all
@@ -290,6 +296,9 @@ end
 Generates the L5Q codes for each PRN listed in `XB_Q_intial_conditions.`
 
 
+Arguments: `None`
+
+
 Returns:
 
 - `l5q_codes::Dict`: dictionary containing L5Q codes for all PRN numbers
@@ -308,6 +317,9 @@ end
 
 
 Generates the L5I codes for each PRN listed in `XB_I_intial_conditions.`
+
+
+Arguments: `None`
 
 
 Returns:

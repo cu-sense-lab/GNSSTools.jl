@@ -35,10 +35,10 @@ Optional Arguments:
 	* `lat`, latitude, is in degrees
 	* `lon`, longitude, is in degrees
 	* `height` is in meters
-	* set to `missing` by default
+	* `(default = missing)`
 - `data_start_time`: data UTC start time `(year, month, day, hour, minute, seconds)`
 	* `seconds` can be `Int` or `Float64`, all others are `Int`
-	* set to `missing` by default
+	* `(default = missing)`
 
 
 Returns:
@@ -154,7 +154,7 @@ Required Arguments:
 Optional Arguments:
 
 - `start_idx::Int`: where the first data sample will be loaded in the data
-	* `default = 1`5
+                    `(default = 0)`
 
 
 Returns:
@@ -203,7 +203,7 @@ Required Arguments:
 Optional Arguments:
 
 - `start_idx::Int`: where the first data sample will be loaded in the data
-	* `default = 1`
+	                `(default = 0)`
 
 
 Returns:
