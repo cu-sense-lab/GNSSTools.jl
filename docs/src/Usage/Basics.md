@@ -42,7 +42,13 @@ Note that a signal's sampling frequency, length, and signal type cannot be chang
 generatesignal!(signal)
 ```
 
-The simulated data will be stored in `signal.data`. There is also an accompanying time vector, `signal.t`.
+The simulated data will be stored in `signal.data`. There is also an accompanying time vector, `signal.t`. Only constant or linear Doppler is simulated using this method. To simulate non-linear Doppler, provide a Doppler curve and associated time vector.
+
+```julia
+generatesignal!(signal; doppler_curve=doppler_curve, doppler_t=doppler_t)
+```
+
+Doing this will cause the values in `data.f_d` and `data.fd_rate` to be ignore. `doppler_curve` is interpolated and used to generate a signal that contains non-linear Doppler.  
 
 ## Loading GNSS Data Files
 

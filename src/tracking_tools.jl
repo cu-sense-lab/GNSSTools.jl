@@ -62,7 +62,7 @@ end
     TrackResults
 
 
-A struct containing the parameters for tracking and its results
+A struct containing the parameters for tracking and its results.
 
 
 Fields:
@@ -296,7 +296,7 @@ Calculates the code phase error.
 
 Required Arguments:
 
-- `dll_parms::DLLParms`:
+- `dll_parms::DLLParms`: struct containing DLL filter parameters
 - `ZE`: early correlator value
 - `ZP`: prompt correlator value
 - `ZL`: late correlator value
