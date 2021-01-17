@@ -33,6 +33,7 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
 
 ## TODOS
 
+- [ ] Use h-parameters to produce oscillator noise instead of the Voss-McCartney method
 - [ ] Monte Carlo simulation for processing method evaluation
     * static C/N₀ and constellation
     * all other parameters are variable
@@ -51,9 +52,6 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
     * allow user to provide a vector of user positions along with accompanying time vector
     * this vector will be used along with satellite information to calculate Doppler frequency curve
     * Doppler curve will be used for non-linear Doppler simulation
-- [ ] FFT based phase noise generation
-    * allow user to specify phase noise in frequency domain
-    * frequency domain phase noise is converted to time domain using inverse FFT
 - [ ] allow seed input for thermal and phase noise sources
 - [ ] effects due to ionosphere
     * not needed for X-band frequency, since ionospheric effects are negligible at that frequency

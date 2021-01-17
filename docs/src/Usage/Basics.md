@@ -10,7 +10,7 @@ signal_type = define_l1ca_code_type()
 
 This defines a `SignalType` struct that contains the codes for the L1 C/A signal and its carrier frequency. This version does not contain databits by default. Whether a `SignalType` contains databits or not, will not affect data processing. However, dual channel processing is not supported. Either the I or Q channel can be processed, but not both. Defining the L1 C/A signal type this way, places all the codes on the I channel. The Q channel is empty. To define an L1 C/A signal type that has databits, the length of time must be specified.
 
-```julia
+```juliavpn asdas
 signal_type = define_l1ca_code_type(1)
 ```
 
