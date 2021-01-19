@@ -149,3 +149,40 @@ Returns:
 function generate_phase_noise!(noise::Vector, noise_temp::Vector; scale=1/10)
     return voss!(noise, noise_temp, scale, length(noise))
 end
+
+
+"""
+    generate_phase_noise(t_length, f_s, h₋₂=2*4e-22, h₋₁=2*4e-21, h₀=3*9e-22,
+                         h₁=2*5e-23, h₂=2*0e-26)
+
+
+Generate phase noise using the h-paramters `hₐ` where `a` is [-2, -1, 0, 1, 2].
+"""
+function generate_phase_noise(t_length, f_s, h₋₂=2*4e-22, h₋₁=2*4e-21, h₀=3*9e-22,
+                              h₁=2*5e-23, h₂=2*0e-26)
+    N = floor(Int, t_length*f_s)
+    N_over_2 = floor(Int, N/2)
+    # Square root of the spectral density
+    Δf = 1/t_length
+    # S_y_sqrt = Array{Complex{Float64}}(undef, N)
+    # S_y_sqrt = Array{Complex{Float64}}(undef, N)
+    S_y_sqrt = zeros(N_over_2+1)
+    freqs = zeros(N_over_2+1)
+    # ifftshift, reverse
+    # for i in 1:(N_over_2+1)
+    for i in 1:length(S_y_sqrt)
+        f = (i-1)*Δf
+        freqs[i] = f
+        val = h₋₂*f^(-2) + h₋₁*f^(-1) + h₀*f^0 + h₁*f^1 + h₂*f^2
+        # val = f^(-2) + f^(-1) + f^0 + f^1 + f^2
+        # if (i > 1) && (i < (N_over_2+1))
+        #     val = val/2
+        # end
+        # val = sqrt(val*f_s*N)
+        S_y_sqrt[i] = val
+    end
+    # Copy the positive frequency powers to the negative frequencies, except
+    # the DC and Nyquist frequency
+    S_y_sqrt[N_over_2+2:end] = reverse(S_y_sqrt[2:N_over_2])
+    return S_y_sqrt
+end
