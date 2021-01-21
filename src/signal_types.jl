@@ -464,7 +464,7 @@ Fields:
 - `signal_type::T7`: a `SignalType` struct that was used to define the signal
 
 """
-mutable struct ReplicaSignal{T1,T2,T3,T4,T5,T7} <: GNSSSignal
+mutable struct ReplicaSignal{T1,T2} <: GNSSSignal
     name::String
     prn::Int
     f_s::Float64
@@ -476,9 +476,9 @@ mutable struct ReplicaSignal{T1,T2,T3,T4,T5,T7} <: GNSSSignal
     CN0::Float64
     phi::Float64
     nADC::Int
-    code_start_idx::Float64
-    init_code_phases_I::T1
-    init_code_phases_Q::T2
+    code_start_idx::T1
+    init_code_phases_I::Array{Float64,1}
+    init_code_phases_Q::Array{Float64,1}
     t::Array{Float64,1}
     data::Array{Complex{Float64},1}
     include_carrier::Bool
@@ -487,14 +487,51 @@ mutable struct ReplicaSignal{T1,T2,T3,T4,T5,T7} <: GNSSSignal
     include_databits_I::Bool
     include_databits_Q::Bool
     include_phase_noise::Bool
-    f_code_d_I::T2
-    f_code_dd_I::T3
-    f_code_d_Q::T4
-    f_code_dd_Q::T5
+    f_code_d_I::Array{Float64,1}
+    f_code_dd_I::Array{Float64,1}
+    f_code_d_Q::Array{Float64,1}
+    f_code_dd_Q::Array{Float64,1}
     sample_num::Int
     isreplica::Bool
     noexp::Bool
     thermal_noise::Array{Complex{Float64},1}
     phase_noise::Array{Float64,1}
-    signal_type::T7
+    signal_type::T2
+end
+
+
+"""
+    ReplicaSignal(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
+                  CN0, phi, nADC, code_start_idx::T1, init_code_phases_I,
+                  init_code_phases_Q, t, data, include_carrier,
+                  include_adc, include_thermal_noise, include_databits_I,
+                  include_databits_Q, include_phase_noise, f_code_d_I,
+                  f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
+                  isreplica, noexp, thermal_noise, phase_noise,
+                  signal_type::T2) where {T1,T2}
+
+
+Outer constructor function for `ReplicaSignal` struct initialization.
+
+
+Returns:
+
+- `ReplicaSignal` struct
+"""
+function ReplicaSignal(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
+                       CN0, phi, nADC, code_start_idx::T1, init_code_phases_I,
+                       init_code_phases_Q, t, data, include_carrier,
+                       include_adc, include_thermal_noise, include_databits_I,
+                       include_databits_Q, include_phase_noise, f_code_d_I,
+                       f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
+                       isreplica, noexp, thermal_noise, phase_noise,
+                       signal_type::T2) where {T1,T2}
+    return ReplicaSignal{T1,T2}(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
+                                CN0, phi, nADC, code_start_idx, init_code_phases_I,
+                                init_code_phases_Q, t, data, include_carrier,
+                                include_adc, include_thermal_noise, include_databits_I,
+                                include_databits_Q, include_phase_noise, f_code_d_I,
+                                f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
+                                isreplica, noexp, thermal_noise, phase_noise,
+                                signal_type)
 end

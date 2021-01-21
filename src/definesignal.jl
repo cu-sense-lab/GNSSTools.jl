@@ -170,13 +170,13 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
         include_phase_noise = false
     end
     return ReplicaSignal(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
-                          CN0, phi, nADC, code_start_idx, init_code_phases_I,
-                          init_code_phases_Q, t, data, include_carrier,
-                          include_adc, include_thermal_noise, include_databits_I,
-                          include_databits_Q, include_phase_noise, f_code_d_I,
-                          f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
-                          isreplica, noexp, thermal_noise, phase_noise,
-                          signal_type)
+                         CN0, phi, nADC, code_start_idx, init_code_phases_I,
+                         init_code_phases_Q, t, data, include_carrier,
+                         include_adc, include_thermal_noise, include_databits_I,
+                         include_databits_Q, include_phase_noise, f_code_d_I,
+                         f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
+                         isreplica, noexp, thermal_noise, phase_noise,
+                         signal_type)
 end
 
 
