@@ -139,12 +139,11 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         print("Processing signal...")
     end
     results = process(data, signal_type, prn, channel;
-                      σω=σω, fd_center=fd_center, fd_range=fd_range, RLM=RLM,
+                      σω=σω, fd_center=fd_center, fd_range=fd_range, M=RLM,
                       replica_t_length=replica_t_length, cov_mult=cov_mult,
                       q_a=q_a, q_mult=q_mult, dynamickf=dynamickf, dll_b=dll_b,
                       state_num=state_num, fd_rate=fd_rate, show_plot=false,
-                      fine_acq_method=fine_acq_method, return_corrresult=true,
-                      M=M)
+                      fine_acq_method=fine_acq_method, return_corrresult=true)
     acqresults, trackresults, corr_result, SNR_est = results
     # Plot results and save if `saveto` is a string
     n0_est = acqresults.n0_idx_course
@@ -341,12 +340,11 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     Δfd = 1/replica_t_length  # Hz
     fd_center = round(doppler_curve[1]/Δfd)*Δfd  # Hz
     results = process(data, signal_type, prn, channel;
-                      σω=σω, fd_center=fd_center, fd_range=fd_range, RLM=RLM,
+                      σω=σω, fd_center=fd_center, fd_range=fd_range, M=RLM,
                       replica_t_length=replica_t_length, cov_mult=cov_mult,
                       q_a=q_a, q_mult=q_mult, dynamickf=dynamickf, dll_b=dll_b,
                       state_num=state_num, fd_rate=fd_rate, show_plot=false,
-                      fine_acq_method=fine_acq_method, return_corrresult=true,
-                      M=M)
+                      fine_acq_method=fine_acq_method, return_corrresult=true)
     acqresults, trackresults, corr_result, SNR_est = results
     # Plot results and save if `saveto` is a string
     n0_est = acqresults.n0_idx_course
