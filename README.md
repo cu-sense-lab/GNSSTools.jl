@@ -42,9 +42,8 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
 - [ ] multi-PRN simulation
     * each signal from a given PRN is a modulated carrier of specific C/N₀
     * add multiple carriers together into a single raw IQ vector
-- [ ] partial sample code offset (two possible methods)
-    1. everything is a function of time and is integrated over each sample period
-    2. up-sample signal by N times
+- [x] partial sample code offset
+    * up-sample signal by N times
         + for each sample, N sub-samples are calculated and summed together
         + will not store N sub-samples; will instead calculate them in place and store only the sum of them
 - [ ] generate L1C codes
