@@ -527,11 +527,44 @@ function ReplicaSignal(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
                        isreplica, noexp, thermal_noise, phase_noise,
                        signal_type::T) where {T}
     return ReplicaSignal{T}(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
-                                CN0, phi, nADC, code_start_idx, init_code_phases_I,
-                                init_code_phases_Q, t, data, include_carrier,
-                                include_adc, include_thermal_noise, include_databits_I,
-                                include_databits_Q, include_phase_noise, f_code_d_I,
-                                f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
-                                isreplica, noexp, thermal_noise, phase_noise,
-                                signal_type)
+                            CN0, phi, nADC, code_start_idx, init_code_phases_I,
+                            init_code_phases_Q, t, data, include_carrier,
+                            include_adc, include_thermal_noise, include_databits_I,
+                            include_databits_Q, include_phase_noise, f_code_d_I,
+                            f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
+                            isreplica, noexp, thermal_noise, phase_noise,
+                            signal_type)
+end
+
+
+"""
+    ReplicaSignals
+
+
+Struct containing array of `ReplicaSignal` structs to generate a signal that
+contains signals from multiple PRNs.
+
+
+Fields:
+
+- `replica_signals::Array{ReplicaSignal,1}`:
+- `data::Array{Complex{Float64},1}`:
+- `t::Array{Float64,1}`:
+- `t_length::Float64`:
+- `f_s::Float64`:
+- `sample_num::Int`:
+- `nADC::Int`:
+- `thermal_noise::Array{Complex{Float64},1}`:
+- `phase_noise::Array{Float64,1}`:
+"""
+mutable struct ReplicaSignals <: GNSSSignal
+    replica_signals::Array{ReplicaSignal,1}
+    data::Array{Complex{Float64},1}
+    t::Array{Float64,1}
+    t_length::Float64
+    f_s::Float64
+    sample_num::Int
+    nADC::Int
+    thermal_noise::Array{Complex{Float64},1}
+    phase_noise::Array{Float64,1}
 end
