@@ -547,24 +547,32 @@ contains signals from multiple PRNs.
 
 Fields:
 
+- `name::String`:
 - `replica_signals::Array{ReplicaSignal,1}`:
 - `data::Array{Complex{Float64},1}`:
 - `t::Array{Float64,1}`:
 - `t_length::Float64`:
 - `f_s::Float64`:
+- `f_if::Float64`:
 - `sample_num::Int`:
 - `nADC::Int`:
 - `thermal_noise::Array{Complex{Float64},1}`:
 - `phase_noise::Array{Float64,1}`:
 """
 mutable struct ReplicaSignals <: GNSSSignal
+    name::String
     replica_signals::Array{ReplicaSignal,1}
     data::Array{Complex{Float64},1}
     t::Array{Float64,1}
     t_length::Float64
     f_s::Float64
+    f_if::Float64
     sample_num::Int
     nADC::Int
+    include_carrier::Bool
+    include_adc::Bool
+    include_thermal_noise::Bool
+    include_phase_noise::Bool
     thermal_noise::Array{Complex{Float64},1}
     phase_noise::Array{Float64,1}
 end
