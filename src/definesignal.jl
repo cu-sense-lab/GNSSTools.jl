@@ -451,7 +451,12 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
     end
     # Define vector of `length(prn)` `ReplicaSignal` structs with 0 `t_length`
     replica_signals = Array{ReplicaSignal}(undef, N)
+    B_Is = []
+    B_Qs = []
+    # xor.(1, ismissing.(a))
     for i in 1:N
+        push!(B_Is, signal_type[i].B_I)
+        push!(B_Qs, signal_type[i].B_Q)
         replica_signals[i] = definesignal(signal_type[i], f_s, 0.; prn=prn[i],
                                           f_if=f_if, f_d=f_d[i], 
                                           fd_rate=fd_rate[i], Tsys=Tsys[i],
@@ -466,6 +471,9 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
                                           skip_noise_generation=true,
                                           allocate_noise_vectors=false) 
     end
+    B_I = maximuma(xor.(1, ismissing.(B_Is)))
+    B_Q = maximuma(xor.(1, ismissing.(B_Qs)))
+    B = max(B_I, B_Q)
     sample_num = Int(f_s * t_length)
     # Generate time vector
     t = calctvector(sample_num, f_s)
@@ -537,7 +545,11 @@ function definesignal!(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
     end
     # Define vector of `length(prn)` `ReplicaSignal` structs with 0 `t_length`
     signal.replica_signals = Array{ReplicaSignal}(undef, N)
+    B_Is = []
+    B_Qs = []
     for i in 1:N
+        push!(B_Is, signal_type[i].B_I)
+        push!(B_Qs, signal_type[i].B_Q)
         signal.replica_signals[i] = definesignal(signal_type[i], f_s, 0.; 
                                                  prn=prn[i],
                                                  f_if=f_if, f_d=f_d[i], 
@@ -553,6 +565,10 @@ function definesignal!(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
                                                  skip_noise_generation=true,
                                                  allocate_noise_vectors=false) 
     end
+    B_I = maximuma(xor.(1, ismissing.(B_Is)))
+    B_Q = maximuma(xor.(1, ismissing.(B_Qs)))
+    B = max(B_I, B_Q)
+    signal.B = B
     if new_thermal_noise
         randn!(signal.thermal_noise)
     end
