@@ -117,7 +117,6 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
     include_adc = signal.include_adc
     thermal_noise = signal.thermal_noise
     phase_noise = signal.phase_noise
-    sigtype = eltype(signal.data)
     adc_scale = 2^(nADC-1)-1
     carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
     noise_amp = sqrt(k*B*Tsys)
@@ -288,13 +287,7 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     Tsys = signal.Tsys
     CN0 = signal.CN0
     f_s = signal.f_s
-    if ~signal.signal_type.include_I && signal.signal_type.include_Q
-        B = signal.signal_type.B_Q
-    elseif signal.signal_type.include_I && ~signal.signal_type.include_Q
-        B = signal.signal_type.B_I
-    else  # assume both channels are included and determine highes bandwidth
-        B = max(signal.signal_type.B_I, signal.signal_type.B_Q)
-    end
+    B = signal.B
     nADC = signal.nADC
     include_carrier = signal.include_carrier
     include_thermal_noise = signal.include_thermal_noise
@@ -302,7 +295,6 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     include_adc = signal.include_adc
     thermal_noise = signal.thermal_noise
     phase_noise = signal.phase_noise
-    sigtype = eltype(signal.data)
     adc_scale = 2^(nADC-1)-1
     carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
     noise_amp = sqrt(k*B*Tsys)
