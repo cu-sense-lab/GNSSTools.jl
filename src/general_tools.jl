@@ -661,17 +661,38 @@ Returns `nothing`
 
 Displays plot of frequencies against power of `fft(x)`
 """
-function plot_spectrum(x::Vector, f_s::Number, log_freq::Bool=false)
+function plot_spectrum(x::Vector, f_s::Number; log_freq::Bool=true, 
+	                   new_fig=true, log_X=false)
     N = length(x)
     t_length = N/f_s
-    freqs = f = Array(0:1/t_length:f_s/2)
-    X = 20*log10.(abs2.(fft(x)))[1:length(freqs)]
-    fig = figure()
-    ax = fig.add_subplot(1, 1, 1)
-    if flog
-        ax.set_xscale("log")
-    end
-    plot(freqs, X)
+	X = fft(x)[1:floor(Int, N/2)+1]
+	X = (1/(f_s*N)) .* abs2.(X)
+	X[2:end-1] .= 2 .* X[2:end-1]
+	freqs = Array(range(0, f_s/2, length=length(X)))
+	if new_fig
+    	fig = figure()
+		ax = fig.add_subplot(1, 1, 1)
+	end
+    if log_freq
+		if new_fig
+			ax.set_xscale("log")
+			if log_X
+				ax.set_yscale("log")
+			end
+		else
+			xscale("log")
+			if log_X
+				yscale("log")
+			end
+		end
+	end
+	if log_X
+		plot(freqs, X)
+	else
+		plot(freqs, 10 .* log10.(X))
+	end
+	xlabel("Frequency (Hz)")
+	ylabel("Sₓ(f)")
 end
 
 
@@ -740,3 +761,4 @@ function get_distribution_bounds(distribution, p, tail=:center)
 	end
 	return bounds
 end
+
