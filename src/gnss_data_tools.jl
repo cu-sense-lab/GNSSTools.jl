@@ -53,23 +53,23 @@ function loaddata(data_type, file_name, f_s, f_center, f_gnss, t_length;
 	# Calculate f_if
 	f_if = f_gnss - f_center
 	# Determine nADC
-	if typeof(data_type) == :sc4
+	if data_type == :sc4
 		data_type = Val(:sc4)
 		nADC = 4
 		data = Array{Complex{Int8}}(undef, sample_num)
-	elseif typeof(data_type) == :sc8
+	elseif data_type == :sc8
 		data_type = Val(:sc8)
 		nADC = 8
 		data = Array{Complex{Int8}}(undef, sample_num)
-	elseif typeof(data_type) == :sc16
+	elseif data_type == :sc16
 		data_type = Val(:sc16)
 		nADC = 16
 		data = Array{Complex{Int16}}(undef, sample_num)
-	elseif typeof(data_type) == :sc32
+	elseif data_type == :sc32
 		data_type = Val(:sc32)
 		nADC = 32
 		data = Array{Complex{Int32}}(undef, sample_num)
-	elseif typeof(data_type) == :sc64
+	elseif data_type == :sc64
 		data_type = Val(:sc64)
 		nADC = 64
 		data = Array{Complex{Int64}}(undef, sample_num)
