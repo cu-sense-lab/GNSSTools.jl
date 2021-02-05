@@ -567,6 +567,8 @@ mutable struct ReplicaSignals <: GNSSSignal
     t_length::Float64
     f_s::Float64
     f_if::Float64
+    B::Float64
+    Tsys::Float64
     sample_num::Int
     nADC::Int
     include_carrier::Bool

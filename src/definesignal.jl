@@ -436,7 +436,6 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
     N = length(prn)
     f_d = check_length(f_d, N)
     fd_rate = check_length(fd_rate, N)
-    Tsys = check_length(Tsys, N)
     CN0 = check_length(CN0, N)
     phi = check_length(phi, N)
     code_start_idx = check_length(code_start_idx, N)
@@ -482,9 +481,9 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
         phase_noise = Array{Float64}(undef, sample_num)
     end
     return ReplicaSignals(name, replica_signals, data, t, t_length, f_s, f_if, 
-                          nADC, sample_num, include_carrier, include_adc, 
-                          include_thermal_noise, include_phase_noise,
-                          thermal_noise, phaser_noise)
+                          B, Tsys, sample_num, nADC, include_carrier, 
+                          include_adc,  include_thermal_noise, 
+                          include_phase_noise, thermal_noise, phaser_noise)
 end
 
 
@@ -520,7 +519,6 @@ function definesignal!(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
     N = length(prn)
     f_d = check_length(f_d, N)
     fd_rate = check_length(fd_rate, N)
-    Tsys = check_length(Tsys, N)
     CN0 = check_length(CN0, N)
     phi = check_length(phi, N)
     code_start_idx = check_length(code_start_idx, N)
@@ -528,6 +526,7 @@ function definesignal!(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
     include_databits_Q = check_length(include_databits_Q, N)
     signal.include_thermal_noise = include_thermal_noise
     signal.include_phase_noise = include_phase_noise
+    signal.Tsys = Tsys 
     # Check that `signal_type` is either an array of signal types or singular
     if isa(signal_type, Array{eltype(signal_type)})
        @assert length(signal_type) == N 
