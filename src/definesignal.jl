@@ -1,6 +1,3 @@
-##################################################################
-######################## Generic Signal ##########################
-##################################################################
 """
     definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                  f_if=0., f_d=0., fd_rate=0., Tsys=535.,
@@ -91,7 +88,8 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
             # I channel
             f_code = I_codes.chipping_rates[i]
             code_length = I_codes.code_lengths[i]
-            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq,
+                                                         f_d, fd_rate)
             f_code_d_I[i] = f_code_d
             f_code_dd_I[i] = f_code_dd
             init_code_phases_I[i] = calcinitcodephase(code_length, f_code_d,
@@ -120,11 +118,13 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
             # Q channel
             f_code = Q_codes.chipping_rates[i]
             code_length = Q_codes.code_lengths[i]
-            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq,
+                                                         f_d, fd_rate)
             f_code_d_Q[i] = f_code_d
             f_code_dd_Q[i] = f_code_dd
             init_code_phases_Q[i] = calcinitcodephase(code_length, f_code_d,
-                                                      f_code_dd, f_s, code_start_idx)
+                                                      f_code_dd, f_s,
+                                                      code_start_idx)
         end
         if Q_codes.databits
             if ~include_databits_Q
@@ -159,7 +159,8 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
             # Phase noise is scaled based off the value of `phase_noise_scaler`.
             thermal_noise = randn(Complex{Float64}, sample_num)
             phase_noise = randn(Float64, sample_num)
-            generate_phase_noise!(phase_noise, sample_num; scale=phase_noise_scaler)
+            generate_phase_noise!(phase_noise, sample_num;
+                                  scale=phase_noise_scaler)
         end
     else
         # Create 0 sized thermal and phase noise vectors and set the
@@ -288,10 +289,12 @@ function definesignal!(signal::ReplicaSignal;
             # I channel
             f_code = I_codes.chipping_rates[i]
             code_length = I_codes.code_lengths[i]
-            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq,
+                                                         f_d, fd_rate)
             signal.f_code_d_I[i] = f_code_d
             signal.f_code_dd_I[i] = f_code_dd
-            signal.init_code_phases_I[i] = calcinitcodephase(code_length, f_code_d,
+            signal.init_code_phases_I[i] = calcinitcodephase(code_length,
+                                                             f_code_d,
                                                              f_code_dd, f_s,
                                                              code_start_idx)
         end
@@ -329,10 +332,12 @@ function definesignal!(signal::ReplicaSignal;
             # Q channel
             f_code = Q_codes.chipping_rates[i]
             code_length = Q_codes.code_lengths[i]
-            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq, f_d, fd_rate)
+            f_code_d, f_code_dd = calc_doppler_code_rate(f_code, sig_freq,
+                                                         f_d, fd_rate)
             signal.f_code_d_Q[i] = f_code_d
             signal.f_code_dd_Q[i] = f_code_dd
-            signal.init_code_phases_Q[i] = calcinitcodephase(code_length, f_code_d,
+            signal.init_code_phases_Q[i] = calcinitcodephase(code_length,
+                                                             f_code_d,
                                                              f_code_dd, f_s,
                                                              code_start_idx)
         end
@@ -369,7 +374,8 @@ function definesignal!(signal::ReplicaSignal;
     end
     if new_phase_noise
         randn!(signal.phase_noise)
-        generate_phase_noise!(signal.phase_noise, sample_num; scale=phase_noise_scaler)
+        generate_phase_noise!(signal.phase_noise, sample_num;
+                              scale=phase_noise_scaler)
     end
     signal.name = name
     signal.prn = prn
@@ -389,5 +395,191 @@ function definesignal!(signal::ReplicaSignal;
     signal.include_phase_noise = include_phase_noise
     signal.isreplica = isreplica
     signal.noexp = noexp
+    return signal
+end
+
+
+
+"""
+    check_length(a, N)
+"""
+function check_length(a, N)
+    @assert (length(a) == N) || (length(a) == 1)
+    if length(a) > 1
+        @assert length(a) == N
+        return a
+    else
+        return fill(a, N)
+    end
+end
+
+
+
+"""
+    definesignal(prn::Vector, signal_type::SignalType, f_s, t_length;
+                 f_if=0., f_d=0., fd_rate=0., Tsys=535.,
+                 CN0=45., phi=0., nADC=4, include_carrier=true,
+                 include_adc=true, include_thermal_noise=true,
+                 code_start_idx=1., include_databits_I=true,
+                 include_databits_Q=true, include_phase_noise=true,
+                 phase_noise_scaler=1/10, name="custom")
+"""
+function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
+                      f_if=0., f_d=0., fd_rate=0., Tsys=535.,
+                      CN0=45., phi=0., nADC=4, include_carrier=true,
+                      include_adc=true, include_thermal_noise=true,
+                      code_start_idx=1., include_databits_I=true,
+                      include_databits_Q=true, include_phase_noise=true,
+                      phase_noise_scaler=1/10, name="custom")
+    # Check that parameters are either length of 1 or N. If they are length 1,
+    # then they are globally asigned to all signals defined.
+    N = length(prn)
+    f_d = check_length(f_d, N)
+    fd_rate = check_length(fd_rate, N)
+    Tsys = check_length(Tsys, N)
+    CN0 = check_length(CN0, N)
+    phi = check_length(phi, N)
+    code_start_idx = check_length(code_start_idx, N)
+    include_databits_I = check_length(include_databits_I, N)
+    include_databits_Q = check_length(include_databits_Q, N)
+    # Check that `signal_type` is either an array of signal types or singular
+    if isa(signal_type, Array{eltype(signal_type)})
+       @assert length(signal_type) == N 
+    elseif isa(signal_type, SignalType)
+        signal_type = fill(signal_type, N)
+    else
+        error("Invalid `signal_type` specified.")
+    end
+    # Define vector of `length(prn)` `ReplicaSignal` structs with 0 `t_length`
+    replica_signals = Array{ReplicaSignal}(undef, N)
+    for i in 1:N
+        replica_signals[i] = definesignal(signal_type[i], f_s, 0.; prn=prn[i],
+                                          f_if=f_if, f_d=f_d[i], 
+                                          fd_rate=fd_rate[i], Tsys=Tsys[i],
+                                          CN0=CN0[i], phi=phi[i], nADC=nADC,
+                                          code_start_idx=code_start_idx[i],
+                                          include_databits_I=include_databits_I[i],
+                                          include_databits_Q=include_databits_Q[i],
+                                          include_thermal_noise=false,
+                                          include_phase_noise=false,
+                                          include_carrier=include_carrier,
+                                          include_adc=false, 
+                                          skip_noise_generation=true,
+                                          allocate_noise_vectors=false) 
+    end
+    sample_num = Int(f_s * t_length)
+    # Generate time vector
+    t = calctvector(sample_num, f_s)
+    data = Array{Complex{Float64}}(undef, sample_num)
+    if include_thermal_noise
+        thermal_noise = randn(Complex{Float64}, sample_num)
+    else
+        thermal_noise = Array{Complex{Float64}}(undef, sample_num)
+    end
+    if include_phase_noise
+        phase_noise = randn(Float64, sample_num)
+    else
+        phase_noise = Array{Float64}(undef, sample_num)
+    end
+    return ReplicaSignals(name, replica_signals, data, t, t_length, f_s, f_if, 
+                          nADC, sample_num, include_carrier, include_adc, 
+                          include_thermal_noise, include_phase_noise,
+                          thermal_noise, phaser_noise)
+end
+
+
+"""
+Make definesignal! function for ReplicaSignals struct that redefines all the
+`ReplicaSignal` structs in `ReplicaSignals.replica_signals` array and keep
+the current `t`, `data`, `thermal_noise` and `phase_noise` vectos the same.
+
+
+definesignal!(signal::ReplicaSignal;
+prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
+fd_rate=signal.fd_rate, Tsys=signal.Tsys,
+CN0=signal.CN0, phi=signal.phi, nADC=signal.nADC,
+include_carrier=signal.include_carrier,
+include_adc=signal.include_adc,
+include_thermal_noise=signal.include_thermal_noise,
+code_start_idx=signal.code_start_idx,
+include_databits_I=signal.include_databits_I,
+include_databits_Q=signal.include_databits_Q,
+include_phase_noise=signal.include_phase_noise,
+phase_noise_scaler=1/10, name=signal.name,
+new_thermal_noise=false, new_phase_noise=false,
+isreplica=signal.isreplica, noexp=signal.noexp,
+new_databits=false)
+"""
+
+
+"""
+    definesignal(signal::ReplicaSignals ; 
+                 prn::Vector, signal_type::SignalType, f_s, t_length;
+                 f_if=0., f_d=0., fd_rate=0., Tsys=535.,
+                 CN0=45., phi=0., nADC=4, include_carrier=true,
+                 include_adc=true, include_thermal_noise=true,
+                 code_start_idx=1., include_databits_I=true,
+                 include_databits_Q=true, include_phase_noise=true,
+                 phase_noise_scaler=1/10, name="custom")
+"""
+function definesignal(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
+                      f_if=signal.f_if, f_d=0., fd_rate=0., Tsys=535.,
+                      CN0=45., phi=0., nADC=4, 
+                      include_carrier=signal.include_carrier,
+                      include_adc=signal.include_adc, 
+                      include_thermal_noise=signal.include_thermal_noise,
+                      code_start_idx=1., include_databits_I=true,
+                      include_databits_Q=true, 
+                      include_phase_noise=signal.include_phase_noise,
+                      name="custom", new_thermal_noise=false,
+                      new_phase_noise=false)
+    # Check that parameters are either length of 1 or N. If they are length 1,
+    # then they are globally asigned to all signals defined.
+    f_s = signal.f_s
+    t_length = signal.t_length
+    include_carrier = signal.include_carrier
+    N = length(prn)
+    f_d = check_length(f_d, N)
+    fd_rate = check_length(fd_rate, N)
+    Tsys = check_length(Tsys, N)
+    CN0 = check_length(CN0, N)
+    phi = check_length(phi, N)
+    code_start_idx = check_length(code_start_idx, N)
+    include_databits_I = check_length(include_databits_I, N)
+    include_databits_Q = check_length(include_databits_Q, N)
+    signal.include_thermal_noise = include_thermal_noise
+    signal.include_phase_noise = include_phase_noise
+    # Check that `signal_type` is either an array of signal types or singular
+    if isa(signal_type, Array{eltype(signal_type)})
+       @assert length(signal_type) == N 
+    elseif isa(signal_type, SignalType)
+        signal_type = fill(signal_type, N)
+    else
+        error("Invalid `signal_type` specified.")
+    end
+    # Define vector of `length(prn)` `ReplicaSignal` structs with 0 `t_length`
+    signal.replica_signals = Array{ReplicaSignal}(undef, N)
+    for i in 1:N
+        signal.replica_signals[i] = definesignal(signal_type[i], f_s, 0.; 
+                                                 prn=prn[i],
+                                                 f_if=f_if, f_d=f_d[i], 
+                                                 fd_rate=fd_rate[i], Tsys=Tsys[i],
+                                                 CN0=CN0[i], phi=phi[i], nADC=nADC,
+                                                 code_start_idx=code_start_idx[i],
+                                                 include_databits_I=include_databits_I[i],
+                                                 include_databits_Q=include_databits_Q[i],
+                                                 include_thermal_noise=false,
+                                                 include_phase_noise=false,
+                                                 include_carrier=include_carrier,
+                                                 include_adc=false, 
+                                                 skip_noise_generation=true,
+                                                 allocate_noise_vectors=false) 
+    end
+    if new_thermal_noise
+        randn!(signal.thermal_noise)
+    end
+    if new_phase_noise
+        randn!(signal.phase_noise)
+    end
     return signal
 end
