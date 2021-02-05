@@ -79,10 +79,12 @@ function doppler2chips(signal::ReplicaSignal, doppler_curve,
                        N=length(doppler_curve))
       # Get parameters from `signal` struct
       ϕ_init = signal.phi
+      f_s = signal.f_s
       f_if = signal.f_if
       sig_freq = signal.signal_type.sig_freq
       include_I = signal.signal_type.include_I
       include_Q = signal.signal_type.include_Q
+      code_start_idx = signal.code_start_idx
       # chipping_rates_I = signal.signal_type.I_codes.chipping_rates
       # chipping_rates_Q = signal.signal_type.Q_codes.chipping_rates
       # chip_init_I = signal.init_code_phases_I
@@ -100,9 +102,20 @@ function doppler2chips(signal::ReplicaSignal, doppler_curve,
           code_chips_I = zeros(N, signal.signal_type.I_codes.code_num)
           for i in 1:signal.signal_type.I_codes.code_num
               chipping_rate = chipping_rates_I[i]
-              code_chips_I[1,i] = chip_init_I[i]
               f_code_d = chipping_rate .* (1 .+ doppler_curve./sig_freq)
-              push!(f_code_d_I_sitps, CubicSplineInterpolation(t_range, f_code_d))
+              f_code_d_I_interp = CubicSplineInterpolation(t_range, f_code_d)
+              f_code_d_ = f_code_d_I_interp(0.)
+              f_code_dd_ = (f_code_d_I_interp(0.001) - f_code_d_)/0.001
+              code_length = I_codes.code_lengths[i]
+              code_phase_init = calcinitcodephase(code_length, f_code_d_,
+                                                  f_code_dd_, f_s, 
+                                                  code_start_idx)
+              code_chips_I[1,i] = code_phase_init
+            #   code_chips_I[1,i] = chip_init_I[i]
+              signal.f_code_d_I[i] = f_code_d_
+              signal.f_code_dd_I[i] = f_code_dd_
+              signal.init_code_phases_I[i] = code_phase_init
+              push!(f_code_d_I_sitps, f_code_d_I_interp)
           end
       end
       # Q channel
@@ -112,9 +125,20 @@ function doppler2chips(signal::ReplicaSignal, doppler_curve,
           code_chips_Q = zeros(N, signal.signal_type.Q_codes.code_num)
           for i in 1:signal.signal_type.Q_codes.code_num
               chipping_rate = chipping_rates_Q[i]
-              code_chips_Q[1,i] = chip_init_Q[i]
               f_code_d = chipping_rate .* (1 .+ doppler_curve./sig_freq)
-              push!(f_code_d_Q_sitps, CubicSplineInterpolation(t_range, f_code_d))
+              f_code_d_Q_interp = CubicSplineInterpolation(t_range, f_code_d)
+              f_code_d_ = f_code_d_Q_interp(0.)
+              f_code_dd_ = (f_code_d_Q_interp(0.001) - f_code_d_)/0.001
+              code_length = Q_codes.code_lengths[i]
+              code_phase_init = calcinitcodephase(code_length, f_code_d_,
+                                                  f_code_dd_, f_s, 
+                                                  code_start_idx)
+              code_chips_Q[1,i] = code_phase_init
+              # code_chips_Q[1,i] = chip_init_Q[i]
+              signal.f_code_d_Q[i] = f_code_d_
+              signal.f_code_dd_Q[i] = f_code_dd_
+              signal.init_code_phases_Q[i] = code_phase_init
+              push!(f_code_d_Q_sitps, f_code_d_Q_interp)
           end
       end
       ϕs = zeros(N)
