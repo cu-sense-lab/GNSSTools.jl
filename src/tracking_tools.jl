@@ -548,8 +548,8 @@ they will not be included.
 Required Arguments:
 
 - `T`: integration time in seconds
-- `h₀`:
-- `h₋₂`:
+- `h₀`: white frequency noise
+- `h₋₂`: random walk frequency noise
 - `qₐ`: platform dynamics in m²/s⁶
 - `f_L`: carrier frequency in Hz
 
