@@ -489,50 +489,29 @@ end
 
 
 """
-Make definesignal! function for ReplicaSignals struct that redefines all the
-`ReplicaSignal` structs in `ReplicaSignals.replica_signals` array and keep
-the current `t`, `data`, `thermal_noise` and `phase_noise` vectos the same.
-
-
-definesignal!(signal::ReplicaSignal;
-prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
-fd_rate=signal.fd_rate, Tsys=signal.Tsys,
-CN0=signal.CN0, phi=signal.phi, nADC=signal.nADC,
-include_carrier=signal.include_carrier,
-include_adc=signal.include_adc,
-include_thermal_noise=signal.include_thermal_noise,
-code_start_idx=signal.code_start_idx,
-include_databits_I=signal.include_databits_I,
-include_databits_Q=signal.include_databits_Q,
-include_phase_noise=signal.include_phase_noise,
-phase_noise_scaler=1/10, name=signal.name,
-new_thermal_noise=false, new_phase_noise=false,
-isreplica=signal.isreplica, noexp=signal.noexp,
-new_databits=false)
+    definesignal!(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
+                  f_if=signal.f_if, f_d=0., fd_rate=0., Tsys=535.,
+                  CN0=45., phi=0., nADC=4, 
+                  include_carrier=signal.include_carrier,
+                  include_adc=signal.include_adc, 
+                  include_thermal_noise=signal.include_thermal_noise,
+                  code_start_idx=1., include_databits_I=true,
+                  include_databits_Q=true, 
+                  include_phase_noise=signal.include_phase_noise,
+                  name="custom", new_thermal_noise=false,
+                  new_phase_noise=false)
 """
-
-
-"""
-    definesignal(signal::ReplicaSignals ; 
-                 prn::Vector, signal_type::SignalType, f_s, t_length;
-                 f_if=0., f_d=0., fd_rate=0., Tsys=535.,
-                 CN0=45., phi=0., nADC=4, include_carrier=true,
-                 include_adc=true, include_thermal_noise=true,
-                 code_start_idx=1., include_databits_I=true,
-                 include_databits_Q=true, include_phase_noise=true,
-                 phase_noise_scaler=1/10, name="custom")
-"""
-function definesignal(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
-                      f_if=signal.f_if, f_d=0., fd_rate=0., Tsys=535.,
-                      CN0=45., phi=0., nADC=4, 
-                      include_carrier=signal.include_carrier,
-                      include_adc=signal.include_adc, 
-                      include_thermal_noise=signal.include_thermal_noise,
-                      code_start_idx=1., include_databits_I=true,
-                      include_databits_Q=true, 
-                      include_phase_noise=signal.include_phase_noise,
-                      name="custom", new_thermal_noise=false,
-                      new_phase_noise=false)
+function definesignal!(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
+                       f_if=signal.f_if, f_d=0., fd_rate=0., Tsys=535.,
+                       CN0=45., phi=0., nADC=4, 
+                       include_carrier=signal.include_carrier,
+                       include_adc=signal.include_adc, 
+                       include_thermal_noise=signal.include_thermal_noise,
+                       code_start_idx=1., include_databits_I=true,
+                       include_databits_Q=true, 
+                       include_phase_noise=signal.include_phase_noise,
+                       name="custom", new_thermal_noise=false,
+                       new_phase_noise=false)
     # Check that parameters are either length of 1 or N. If they are length 1,
     # then they are globally asigned to all signals defined.
     f_s = signal.f_s
