@@ -103,11 +103,11 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
     Tsys = signal.Tsys
     CN0 = signal.CN0
     f_s = signal.f_s
-    if ~signal.signal_type.include_I
+    if ~signal.signal_type.include_I && signal.signal_type.include_Q
         B = signal.signal_type.B_Q
-    elseif ~signal.signal_type.include_Q
+    elseif signal.signal_type.include_I && ~signal.signal_type.include_Q
         B = signal.signal_type.B_I
-    else
+    else  # assume both channels are included and determine highes bandwidth
         B = max(signal.signal_type.B_I, signal.signal_type.B_Q)
     end
     nADC = signal.nADC
@@ -288,11 +288,11 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     Tsys = signal.Tsys
     CN0 = signal.CN0
     f_s = signal.f_s
-    if ~signal.signal_type.include_I
+    if ~signal.signal_type.include_I && signal.signal_type.include_Q
         B = signal.signal_type.B_Q
-    elseif ~signal.signal_type.include_Q
+    elseif signal.signal_type.include_I && ~signal.signal_type.include_Q
         B = signal.signal_type.B_I
-    else
+    else  # assume both channels are included and determine highes bandwidth
         B = max(signal.signal_type.B_I, signal.signal_type.B_Q)
     end
     nADC = signal.nADC

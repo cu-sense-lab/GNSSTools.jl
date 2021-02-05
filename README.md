@@ -33,6 +33,7 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
 
 ## TODOS
 
+- [ ] Simulate Starlink satellites and test LEO sat acquisition methods
 - [ ] Use h-parameters to produce oscillator noise instead of the Voss-McCartney method
 - [ ] Monte Carlo simulation for processing method evaluation
     * static C/N₀ and constellation
