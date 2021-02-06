@@ -276,13 +276,10 @@ Optional Arguments:
 
 Returns:
 
-- `doppler_means`: vector of Doppler frequencies observed in Hz
-- `doppler_rates`: vector of Doppler rates observed in Hz/s
-- `doppler_rate_ts`: vector time in Julian days corresponding to the Doppler
-                     rates observed
-- `ids`: satellite IDs corresponding observed Doppler freqency
-- `elevations`: elevations corresponding to observed Doppler frequencies in
-                degrees
+- `doppler_hist`: Doppler frequency histogram
+- `doppler_rate_hist`: Doppler frequency rate histogram
+- `doppler_bounds`: bounds of the Doppler frequency histgram for the given p-val
+- `doppler_rate_bounds`: bounds of the Doppler rate histgram for the given p-val
 """
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_lla, sig_freq; eop=get_eop(),
