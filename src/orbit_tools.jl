@@ -141,7 +141,7 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_eop(), show_plot=true, Ω₀=0., f₀=0.,
                               ω=0., e=0., t_start=0., obs_lla=missing,
                               ΔΩ=360/plane_num, a_lim=1.5, ax=missing,
-                              figsize=missing, print_steps=false)
+                              figsize=missing, print_steps=false, aspect=[1,1])
     a = float(a)
     incl = deg2rad(incl)
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
@@ -210,9 +210,13 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
         y = Rₑ.*sin.(u).*sin.(v)
         z = Rₑ.*cos.(v)
         plot_wireframe(x, y, z, color="grey", linestyle=":", rcount=20, ccount=30)
-        ax.axes.set_xlim3d(left=-a*a_lim/2, right=a*a_lim/2)
-        ax.axes.set_ylim3d(bottom=-a*a_lim/2, top=a*a_lim/2)
-        ax.axes.set_zlim3d(bottom=-a*a_lim/2, top=a*a_lim/2)
+        plot_lim = [-a*a_lim/2, a*a_lim/2]
+        ax.axes.set_xlim3d(plot_lim)
+        ax.axes.set_ylim3d(plot_lim)
+        ax.axes.set_zlim3d(plot_lim)
+        # Equivalent to setting the aspect ratio since `Axes3D` does not support
+        # `ax.set_aspect` with a value other than `auto`.
+        ax.set_box_aspect((aspect[1]*1, aspect[1]*1, aspect[2]*1))
     end
     return Constellation(t_start, plane_num, satellite_per_plane, Ω₀, f₀, ω, e, incl,
                          t_range, ΔΩ, Δf, a, satellites)
@@ -287,7 +291,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                               bins=150, heatmap_bins=[bins, bins], a_lim=1.25,
                               figsize=missing, print_steps=true, p=0.5,
-                              plot_with_bounds=true)
+                              plot_with_bounds=true, aspect=[1,1])
     if show_plot
         if ismissing(figsize)
             fig = figure()
@@ -303,7 +307,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                                          t_range; eop=eop, show_plot=show_plot,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
                                          obs_lla=obs_lla, ΔΩ=ΔΩ, ax=ax1, a_lim=a_lim,
-                                         print_steps=print_steps)
+                                         print_steps=print_steps, aspect=aspect)
     obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
                               obs_lla[3])
     N = length(t_range)*plane_num*satellite_per_plane
