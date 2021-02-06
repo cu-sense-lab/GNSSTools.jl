@@ -106,7 +106,7 @@ function doppler2chips(signal::ReplicaSignal, doppler_curve,
               f_code_d_I_interp = CubicSplineInterpolation(t_range, f_code_d)
               f_code_d_ = f_code_d_I_interp(0.)
               f_code_dd_ = (f_code_d_I_interp(0.001) - f_code_d_)/0.001
-              code_length = I_codes.code_lengths[i]
+              code_length = signal.signal_type.I_codes.code_lengths[i]
               code_phase_init = calcinitcodephase(code_length, f_code_d_,
                                                   f_code_dd_, f_s, 
                                                   code_start_idx)
@@ -129,7 +129,7 @@ function doppler2chips(signal::ReplicaSignal, doppler_curve,
               f_code_d_Q_interp = CubicSplineInterpolation(t_range, f_code_d)
               f_code_d_ = f_code_d_Q_interp(0.)
               f_code_dd_ = (f_code_d_Q_interp(0.001) - f_code_d_)/0.001
-              code_length = Q_codes.code_lengths[i]
+              code_length = signal.signal_type.Q_codes.code_lengths[i]
               code_phase_init = calcinitcodephase(code_length, f_code_d_,
                                                   f_code_dd_, f_s, 
                                                   code_start_idx)
