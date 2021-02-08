@@ -177,7 +177,7 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
             a_ecef = Array{Float64,2}(undef, length(orbit), 3)
             for i in 1:length(orbit)
                 orbit_teme = kepler_to_sv(orbit[i])
-                orbit_ecef = svECItoECEF(orbit_teme, TEME(), ITRF(), t_start, eop)
+                orbit_ecef = svECItoECEF(orbit_teme, TEME(), ITRF(), t_range[i], eop)
                 r_ecef[i,:] = [orbit_ecef.r[1], orbit_ecef.r[2], orbit_ecef.r[3]]
                 v_ecef[i,:] = [orbit_ecef.v[1], orbit_ecef.v[2], orbit_ecef.v[3]]
                 a_ecef[i,:] = [orbit_ecef.a[1], orbit_ecef.a[2], orbit_ecef.a[3]]
