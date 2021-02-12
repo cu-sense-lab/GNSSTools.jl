@@ -33,21 +33,22 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
 
 ## TODOS
 
-- [ ] Simulate Starlink satellites and test LEO sat acquisition methods
+- [x] Simulate Starlink satellites (See [LabVideo Gitlab Repo](http://192.168.3.66/bilardis/LabVideo))
+- [x] partial sample code offset
+    * up-sample signal by N times
+        + for each sample, N sub-samples are calculated and summed together
+        + will not store N sub-samples; will instead calculate them in place and store only the sum of them
 - [ ] Use h-parameters to produce oscillator noise instead of the Voss-McCartney method
+- [ ] multi-PRN simulation
+    * each signal from a given PRN is a modulated carrier of specific C/N₀
+    * add multiple carriers together into a single raw IQ vector
+- [ ] Test LEO sat acquisition methods
+- [ ] generate L1C codes
 - [ ] Monte Carlo simulation for processing method evaluation
     * static C/N₀ and constellation
     * all other parameters are variable
         + thermal and phase noise are generated for each simulation run
         + initial code phase and carrier phase are picked from a uniform distribution at each iteration
-- [ ] multi-PRN simulation
-    * each signal from a given PRN is a modulated carrier of specific C/N₀
-    * add multiple carriers together into a single raw IQ vector
-- [x] partial sample code offset
-    * up-sample signal by N times
-        + for each sample, N sub-samples are calculated and summed together
-        + will not store N sub-samples; will instead calculate them in place and store only the sum of them
-- [ ] generate L1C codes
 - [ ] User dynamics due to user motion
     * allow user to provide a vector of user positions along with accompanying time vector
     * this vector will be used along with satellite information to calculate Doppler frequency curve
