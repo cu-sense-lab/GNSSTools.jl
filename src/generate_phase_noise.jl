@@ -158,33 +158,35 @@ end
 
 Generate phase noise using the h-paramters `hₐ` where `a` is [-2, -1, 0, 1, 2].
 """
-function generate_phase_noise2(t_length, f_s, v_0=f_s, h₋₂=2*4e-22, h₋₁=2*4e-21, h₀=3*9e-22,
-                              h₁=2*5e-23, h₂=2*0e-26)
+function generate_phase_noise2(t_length, f_s, v_0, h_parms)
+    h₋₂, h₋₁, h₀, h₁, h₂ = h_parms
     N = floor(Int, t_length*f_s)
     N_over_2 = floor(Int, N/2)
     # Square root of the spectral density
     Δf = 1/t_length
-    S_y_sqrt = zeros(N)
+    S_y_sqrt = zeros(Complex{Float64}, N)
     for i in 1:(N_over_2+1)
         f = (i-1)*Δf
         if i == 1
+            # f = Δf
+            # val = v_0^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
             val = 0
         else
-            val = v_0^2 * (h₋₂*f^(-2) + h₋₁*f^(-1) + h₀*f^0 + h₁*f^1 + h₂*f^2)
-            # val = v_0^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
+            # val = v_0^2 * (h₋₂*f^(-2) + h₋₁*f^(-1) + h₀*f^0 + h₁*f^1 + h₂*f^2)
+            val = v_0^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
         end
         if (i > 1) && (i < (N_over_2+1))
             val = val/2
         end
-        val = sqrt(val*f_s*N)
-        S_y_sqrt[i] = val
+        S_y_sqrt[i] = sqrt(val) * t_length
     end
     # Copy the positive frequency powers to the negative frequencies, except
     # the DC and Nyquist frequency
-    S_y_sqrt[N_over_2+2:end] = reverse(S_y_sqrt[2:N_over_2])
-    # return S_y_sqrt
-    # return ifft(S_y_sqrt.*randn(Complex{Float64}, N))
-    return ifft(S_y_sqrt.*fft(randn(N)))
+    S_y_sqrt[N_over_2+2:end] = reverse(conj.(S_y_sqrt[2:N_over_2]))
+    noise = zeros(Complex{Float64}, N)
+    noise[1:N_over_2+1] = cis.(2π .* rand(Float64, N_over_2+1))
+    noise[N_over_2+2:end] = reverse(conj.(noise[2:N_over_2]))
+    return (ifft(S_y_sqrt .* noise) .* (N*Δf), S_y_sqrt[1:N_over_2+1])
 end
 
 
