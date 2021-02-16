@@ -55,6 +55,45 @@ const L5_freq = 1176.45e6  # Hz
 
 
 """
+    h_parms_tcxo
+
+
+TCXXO typical oscillator h-parameters.
+
+Order: [h₋₂, h₋₁, h₀, h₁, h₂]
+"""
+const h_parms_tcxo = [[2.0e-20, 7.0e-21, 2.0e-29,       0,       0],
+                      [2.0E-20, 1.0E-20, 1.0e-21,       0,       0],
+                      [3.8e-21, 1.8e-19, 9.4e-20,       0,       0],
+                      [2.4e-22, 2.4e-21, 3.9e-22, 2.5e-23, 2.0e-26],
+                      [8.5e-22, 4.5e-20, 3.5e-20, 6.0e-23,       0],
+                      [2.5e-23, 3.5e-21, 1.9e-21, 6.0e-23, 2.8e-24]]
+
+
+"""
+    h_parms_ocxo
+
+
+OCXO typical oscillator h-parameters.
+
+Order: [h₋₂, h₋₁, h₀, h₁, h₂]
+"""
+const h_parms_ocxo = [[4.0e-26, 3.6e-25, 2.6e-22, 2.0e-23, 2.2e-26],
+                      [4.0e-23, 2.0e-21, 8.0e-20,       0,       0]]                    
+
+
+"""
+    h_parms_cesium
+
+
+Cesium typical oscillator h-parameters.
+
+Order: [h₋₂, h₋₁, h₀, h₁, h₂]
+"""
+const h_parms_cesium = [4.0e-29, 7.0e-23, 2.0e-20,      0,       0]
+
+
+"""
     g1b1()
 
 
