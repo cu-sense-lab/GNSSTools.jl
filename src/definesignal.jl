@@ -71,7 +71,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                       include_databits_Q=true, include_phase_noise=true,
                       phase_noise_scaler=1/10, name="custom",
                       skip_noise_generation=false, allocate_noise_vectors=true,
-                      receiver_h_parms=TCXO[1])
+                      receiver_h_parms=h_parms_tcxo[1])
     # Obtain sample number based off the sampling frequency and duration of
     # signal
     sample_num = Int(f_s * t_length)
@@ -438,7 +438,7 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
                       code_start_idx=1., include_databits_I=true,
                       include_databits_Q=true, include_phase_noise=true,
                       phase_noise_scaler=1/10, name="custom",
-                      receiver_h_parms=TCXO[1])
+                      receiver_h_parms=h_parms_tcxo[1])
     # Check that parameters are either length of 1 or N. If they are length 1,
     # then they are globally asigned to all signals defined.
     N = length(prn)
