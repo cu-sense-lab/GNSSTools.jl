@@ -497,6 +497,7 @@ mutable struct ReplicaSignal{T} <: GNSSSignal
     thermal_noise::Array{Complex{Float64},1}
     phase_noise::Array{Float64,1}
     signal_type::T
+    receiver_h_parms::Array{Float64,1}
 end
 
 
@@ -577,4 +578,5 @@ mutable struct ReplicaSignals <: GNSSSignal
     include_phase_noise::Bool
     thermal_noise::Array{Complex{Float64},1}
     phase_noise::Array{Float64,1}
+    receiver_h_parms::Array{Float64,1}
 end
