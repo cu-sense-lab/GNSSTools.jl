@@ -58,7 +58,9 @@ const L5_freq = 1176.45e6  # Hz
     h_parms_tcxo
 
 
-TCXXO typical oscillator h-parameters.
+TCXXO typical oscillator h-parameters. Taken from Table 1 in 
+*Digital GNSS PLL DesignConditioned on Thermal andOscillator Phase Noise* by
+Curran & Murphy located [https://ieeexplore.ieee.org/document/6129629](https://ieeexplore.ieee.org/document/6129629)
 
 Order: [h₋₂, h₋₁, h₀, h₁, h₂]
 """
@@ -74,7 +76,9 @@ const h_parms_tcxo = [[2.0e-20, 7.0e-21, 2.0e-29,       0,       0],
     h_parms_ocxo
 
 
-OCXO typical oscillator h-parameters.
+OCXO typical oscillator h-parameters. Taken from Table 1 in 
+*Digital GNSS PLL DesignConditioned on Thermal andOscillator Phase Noise* by
+Curran & Murphy located [https://ieeexplore.ieee.org/document/6129629](https://ieeexplore.ieee.org/document/6129629)
 
 Order: [h₋₂, h₋₁, h₀, h₁, h₂]
 """
@@ -86,7 +90,9 @@ const h_parms_ocxo = [[4.0e-26, 3.6e-25, 2.6e-22, 2.0e-23, 2.2e-26],
     h_parms_cesium
 
 
-Cesium typical oscillator h-parameters.
+Cesium typical oscillator h-parameters. Taken from Table 1 in 
+*Digital GNSS PLL DesignConditioned on Thermal andOscillator Phase Noise* by
+Curran & Murphy located [https://ieeexplore.ieee.org/document/6129629](https://ieeexplore.ieee.org/document/6129629)
 
 Order: [h₋₂, h₋₁, h₀, h₁, h₂]
 """
