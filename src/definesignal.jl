@@ -54,6 +54,9 @@ Optional Arguments:
     * if set to `false`, thermal and phase noise vectors have length set to 0
       and the `include_thermal_noise` and `include_phase_noise` flags are set
       to `false`
+- `receiver_h_parms`: vector of oscillator h parameters for use in simulating 
+                      oscillator phase noise
+    * format is `[h₋₂, h₋₁, h₀, h₁, h₂]`
 
 
 Returns:
@@ -67,7 +70,8 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                       code_start_idx=1., include_databits_I=true,
                       include_databits_Q=true, include_phase_noise=true,
                       phase_noise_scaler=1/10, name="custom",
-                      skip_noise_generation=false, allocate_noise_vectors=true)
+                      skip_noise_generation=false, allocate_noise_vectors=true,
+                      receiver_h_parms=TCXO[1])
     # Obtain sample number based off the sampling frequency and duration of
     # signal
     sample_num = Int(f_s * t_length)
@@ -158,9 +162,11 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
             # but is scaled in `generatesignal!` when the signal is generated.
             # Phase noise is scaled based off the value of `phase_noise_scaler`.
             thermal_noise = randn(Complex{Float64}, sample_num)
-            phase_noise = randn(Float64, sample_num)
-            generate_phase_noise!(phase_noise, sample_num;
-                                  scale=phase_noise_scaler)
+            phase_noise = generate_phase_noise(t_length, f_s, v_0, 
+                                               receiver_h_parms)
+            # phase_noise = randn(Float64, sample_num)
+            # generate_phase_noise!(phase_noise, sample_num;
+            #                       scale=phase_noise_scaler)
         end
     else
         # Create 0 sized thermal and phase noise vectors and set the
@@ -177,7 +183,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                          include_databits_Q, include_phase_noise, f_code_d_I,
                          f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
                          isreplica, noexp, thermal_noise, phase_noise,
-                         signal_type)
+                         signal_type, receiver_h_parms)
 end
 
 
@@ -273,7 +279,8 @@ function definesignal!(signal::ReplicaSignal;
                        phase_noise_scaler=1/10, name=signal.name,
                        new_thermal_noise=false, new_phase_noise=false,
                        isreplica=signal.isreplica, noexp=signal.noexp,
-                       new_databits=false)
+                       receiver_h_parms=signal.receiver_h_parms,
+                       new_databits=false,)
     # Calculate code chipping rates with Doppler applied for all codes on
     # each channel and their initial code phases
     f_s = signal.f_s
@@ -430,7 +437,8 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
                       include_adc=true, include_thermal_noise=true,
                       code_start_idx=1., include_databits_I=true,
                       include_databits_Q=true, include_phase_noise=true,
-                      phase_noise_scaler=1/10, name="custom")
+                      phase_noise_scaler=1/10, name="custom",
+                      receiver_h_parms=TCXO[1])
     # Check that parameters are either length of 1 or N. If they are length 1,
     # then they are globally asigned to all signals defined.
     N = length(prn)
@@ -491,7 +499,8 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
     return ReplicaSignals(name, replica_signals, data, t, t_length, f_s, f_if, 
                           B, Tsys, sample_num, nADC, include_carrier, 
                           include_adc,  include_thermal_noise, 
-                          include_phase_noise, thermal_noise, phaser_noise)
+                          include_phase_noise, thermal_noise, phaser_noise,
+                          receiver_h_parms)
 end
 
 
@@ -518,7 +527,8 @@ function definesignal!(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
                        include_databits_Q=true, 
                        include_phase_noise=signal.include_phase_noise,
                        name="custom", new_thermal_noise=false,
-                       new_phase_noise=false)
+                       new_phase_noise=false,
+                       receiver_h_parms=signal.receiver_h_parms)
     # Check that parameters are either length of 1 or N. If they are length 1,
     # then they are globally asigned to all signals defined.
     f_s = signal.f_s
