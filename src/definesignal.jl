@@ -162,8 +162,9 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
             # but is scaled in `generatesignal!` when the signal is generated.
             # Phase noise is scaled based off the value of `phase_noise_scaler`.
             thermal_noise = randn(Complex{Float64}, sample_num)
-            phase_noise = generate_phase_noise(t_length, f_s, v_0, 
-                                               receiver_h_parms)
+            phase_noise, S_phase = generate_phase_noise(t_length, f_s, 
+                                                        signal_type.sig_freq, 
+                                                        receiver_h_parms)
             # phase_noise = randn(Float64, sample_num)
             # generate_phase_noise!(phase_noise, sample_num;
             #                       scale=phase_noise_scaler)
@@ -280,7 +281,7 @@ function definesignal!(signal::ReplicaSignal;
                        new_thermal_noise=false, new_phase_noise=false,
                        isreplica=signal.isreplica, noexp=signal.noexp,
                        receiver_h_parms=signal.receiver_h_parms,
-                       new_databits=false,)
+                       new_databits=false)
     # Calculate code chipping rates with Doppler applied for all codes on
     # each channel and their initial code phases
     f_s = signal.f_s
@@ -380,9 +381,12 @@ function definesignal!(signal::ReplicaSignal;
         randn!(signal.thermal_noise)
     end
     if new_phase_noise
-        randn!(signal.phase_noise)
-        generate_phase_noise!(signal.phase_noise, sample_num;
-                              scale=phase_noise_scaler)
+        signal.phase_noise, S_phase = generate_phase_noise(t_length, f_s, 
+                                                           signal.signal_type.sig_freq, 
+                                                           receiver_h_parms)
+        # randn!(signal.phase_noise)
+        # generate_phase_noise!(signal.phase_noise, sample_num;
+        #                       scale=phase_noise_scaler)
     end
     signal.name = name
     signal.prn = prn
@@ -492,7 +496,10 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
         thermal_noise = Array{Complex{Float64}}(undef, sample_num)
     end
     if include_phase_noise
-        phase_noise = randn(Float64, sample_num)
+        # phase_noise = randn(Float64, sample_num)
+        phase_noise, S_phase = generate_phase_noise(t_length, f_s, 
+                                                    signal_type[1].sig_freq, 
+                                                    receiver_h_parms)
     else
         phase_noise = Array{Float64}(undef, sample_num)
     end
@@ -583,6 +590,9 @@ function definesignal!(signal::ReplicaSignals, prn::Vector{Int}, signal_type;
         randn!(signal.thermal_noise)
     end
     if new_phase_noise
+        signal.phase_noise, S_phase = generate_phase_noise(t_length, f_s, 
+                                                           signal.replica_signals[1].signal_type.sig_freq, 
+                                                           receiver_h_parms)
         randn!(signal.phase_noise)
     end
     return signal
