@@ -746,19 +746,13 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 		K[:,i] = Kᵢ
 		# Correct state uncertaninty
 		P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
-		# Correct state
-		if state_num == 3
-			state = [dϕ_meas, dfd, 0.]
-		else
-			state = [dϕ_meas, dfd]
-		end
+        # Correct state
 		if dynamickf
 			KF_gain = Kᵢ
-			correction = KF_gain.*dϕ_meas
 		else
 			KF_gain = Kfixed
-			correction =  KF_gain.*state
 		end
+        correction = KF_gain.*dϕ_meas
 		x⁺ᵢ = x⁻ᵢ + correction
         if i > 1
             # Filter raw code phase error measurement
