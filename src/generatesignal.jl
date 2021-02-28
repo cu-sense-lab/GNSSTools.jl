@@ -144,7 +144,7 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
         if include_carrier & include_thermal_noise & include_phase_noise
             # Calculate code value with carrier, thermal and phase noise
             ϕ = get_ϕ(t)
-            ϕ_noise = phase_noise[i]
+            ϕ_noise = real(phase_noise[i])
             # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise) +
             #                            noise_amp * thermal_noise[i]
             @inbounds signal.data[i] = carrier_amp * cis_sum * cis(ϕ_noise) +
@@ -158,6 +158,7 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
                                        noise_amp * thermal_noise[i]
         elseif include_carrier & ~include_thermal_noise & include_phase_noise
             # Calculate code value with noise and no carrier
+            ϕ_noise = real(phase_noise[i])
             # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise)
             @inbounds signal.data[i] = carrier_amp * cis_sum * cis(ϕ_noise)
         elseif include_carrier & ~include_thermal_noise & ~include_phase_noise
@@ -322,7 +323,7 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
         if include_carrier & include_thermal_noise & include_phase_noise
             # Calculate code value with carrier, thermal and phase noise
             ϕ = get_ϕ(t)
-            ϕ_noise = phase_noise[i]
+            ϕ_noise = real(phase_noise[i])
             # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise) +
             #                            noise_amp * thermal_noise[i]
             @inbounds signal.data[i] = carrier_amp * cis_sum * cis(ϕ_noise) +
@@ -336,6 +337,7 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
                                        noise_amp * thermal_noise[i]
         elseif include_carrier & ~include_thermal_noise & include_phase_noise
             # Calculate code value with noise and no carrier
+            ϕ_noise = real(phase_noise[i])
             # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise)
             @inbounds signal.data[i] = carrier_amp * cis_sum * cis(ϕ_noise)
         elseif include_carrier & ~include_thermal_noise & ~include_phase_noise

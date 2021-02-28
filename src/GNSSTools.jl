@@ -31,8 +31,8 @@ module GNSSTools
 
     include("constants.jl")
     include("general_tools.jl")
-    include("generate_phase_noise.jl")
     include("signal_types.jl")
+    include("generate_phase_noise.jl")
     include("calc_code_val.jl")
     include("definesignal.jl")
     include("generatesignal.jl")
@@ -107,7 +107,7 @@ module GNSSTools
     export doppler_distribution
     export definecodetype, definesignaltype
     export get_eop
-    export generate_phase_noise, plot_spectrum
+    export generate_phase_noise, generate_phase_noise!, plot_spectrum
     export calc_code_val
     export process
     export CN0_monte_carlo
