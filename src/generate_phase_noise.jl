@@ -161,36 +161,15 @@ the order is `[h₋₂, h₋₁, h₀, h₁, h₂]`.
 """
 function generate_phase_noise(t_length::Number, f_s::Number, v_0::Number, 
                               h_parms::Vector)
-    h₋₂, h₋₁, h₀, h₁, h₂ = h_parms
     N = floor(Int, t_length*f_s)
-    N_over_2 = floor(Int, N/2)
-    # Square root of the spectral density
-    Δf = 1/t_length
-    S_y_sqrt = zeros(Complex{Float64}, N)
-    # f = Δf
-    # S_y_sqrt[1] = v_0^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
-    S_y_sqrt[1] = 0
-    for i in 2:(N_over_2+1)
-        f = (i-1)*Δf
-        # val = v_0^2 * (h₋₂*f^(-2) + h₋₁*f^(-1) + h₀*f^0 + h₁*f^1 + h₂*f^2)
-        val = v_0^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
-        if (i > 1) && (i < (N_over_2+1))
-            val = val/2
-        end
-        S_y_sqrt[i] = sqrt(val)
-    end
-    # Copy the positive frequency powers to the negative frequencies, except
-    # the DC and Nyquist frequency
-    S_y_sqrt[N_over_2+2:end] = reverse(conj.(S_y_sqrt[2:N_over_2]))
-    noise = zeros(Complex{Float64}, N)
-    noise[1:N_over_2+1] = cis.(2π .* rand(Float64, N_over_2+1))
-    noise[N_over_2+2:end] = reverse(conj.(noise[2:N_over_2]))
-    return (ifft(S_y_sqrt .* noise) .* (N*Δf), S_y_sqrt[1:N_over_2+1])
+    phase_noise = Array{Complex{Float64}}(undef, N)
+    generate_phase_noise!(phase_noise::Vector, t_length,  v_0, h_parms)
+    return phase_noise
 end
 
 
 """
-    generate_phase_noise!(phase_noise::Vector t_length::Number, f_s::Number, 
+    generate_phase_noise!(phase_noise::Vector t_length::Number,
                           v_0::Number, h_parms::Vector)
 
 
@@ -209,7 +188,7 @@ function generate_phase_noise!(phase_noise::Vector, t_length::Number,
     # f = Δf
     # val = v_0^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
     val = 0
-    phase_noise[1] = val * cis(2π * phase_noise[1])
+    phase_noise[1] = val * cis(2π * real(phase_noise[1]))
     for i in 2:(N_over_2+1)
         f = (i-1)*Δf
         # val = v_0^2 * (h₋₂*f^(-2) + h₋₁*f^(-1) + h₀*f^0 + h₁*f^1 + h₂*f^2)
@@ -217,7 +196,8 @@ function generate_phase_noise!(phase_noise::Vector, t_length::Number,
         if (i > 1) && (i < (N_over_2+1))
             val = val/2
         end
-        phase_noise[i] = sqrt(val) * cis(2π * phase_noise[i])
+        val = sqrt(val) * cis(2π * real(phase_noise[i]))
+        phase_noise[i] = val
     end
     # Copy the positive frequency powers to the negative frequencies, except
     # the DC and Nyquist frequency
