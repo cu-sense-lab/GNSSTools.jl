@@ -162,9 +162,9 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
             # but is scaled in `generatesignal!` when the signal is generated.
             # Phase noise is scaled based off the value of `phase_noise_scaler`.
             thermal_noise = randn(Complex{Float64}, sample_num)
-            phase_noise, S_phase = generate_phase_noise(t_length, f_s, 
-                                                        signal_type.sig_freq, 
-                                                        receiver_h_parms)
+            phase_noise = generate_phase_noise(t_length, f_s, 
+                                               signal_type.sig_freq, 
+                                               receiver_h_parms)
             # phase_noise = randn(Float64, sample_num)
             # generate_phase_noise!(phase_noise, sample_num;
             #                       scale=phase_noise_scaler)
@@ -497,9 +497,9 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
     end
     if include_phase_noise
         # phase_noise = randn(Float64, sample_num)
-        phase_noise, S_phase = generate_phase_noise(t_length, f_s, 
-                                                    signal_type[1].sig_freq, 
-                                                    receiver_h_parms)
+        phase_noise = generate_phase_noise(t_length, f_s, 
+                                           signal_type[1].sig_freq, 
+                                           receiver_h_parms)
     else
         phase_noise = Array{Float64}(undef, sample_num)
     end
