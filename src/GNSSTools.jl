@@ -55,6 +55,7 @@ module GNSSTools
 
     export Rₑ
     export L1_freq
+    export h_parms_tcxo, h_parms_ocxo, h_parms_cesium
     export l1ca_code_length
     export l1ca_db_chipping_rate
     export l1ca_chipping_rate
