@@ -140,8 +140,9 @@ Returns:
 function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_eop(), show_plot=true, Ω₀=0., f₀=0.,
                               ω=0., e=0., t_start=0., obs_lla=missing,
-                              ΔΩ=360/plane_num, a_lim=1.5, ax=missing,
-                              figsize=missing, print_steps=false, aspect=[1,1])
+                              ΔΩ=360/plane_num, a_lim=1.5, Δf_per_plane=0,
+                              ax=missing, figsize=missing, print_steps=false, 
+                              aspect=[1,1])
     a = float(a)
     incl = deg2rad(incl)
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
@@ -168,7 +169,7 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
         for sat in 1:satellite_per_plane
             id = k
             Ω = Ω₀ + (plane-1)*ΔΩ
-            f = f₀ + (sat-1)*Δf
+            f = f₀ + (sat-1)*Δf + (plane-1)*Δf_per_plane
             init_orbit = init_orbit_propagator(Val(:twobody), 0., a, e, incl,
                                                Ω, ω, f)
             orbit, r, v = propagate_to_epoch!(init_orbit, t_range)
@@ -286,7 +287,7 @@ Returns:
 - `doppler_rate_bounds`: bounds of the Doppler rate histgram for the given p-val
 """
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
-                              obs_lla, sig_freq; eop=get_eop(),
+                              obs_lla, sig_freq; eop=get_eop(), Δf_per_plane=0,
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                               bins=150, heatmap_bins=[bins, bins], a_lim=1.25,
@@ -307,7 +308,8 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                                          t_range; eop=eop, show_plot=show_plot,
                                          Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
                                          obs_lla=obs_lla, ΔΩ=ΔΩ, ax=ax1, a_lim=a_lim,
-                                         print_steps=print_steps, aspect=aspect)
+                                         print_steps=print_steps, aspect=aspect,
+                                         Δf_per_plane=Δf_per_plane)
     obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
                               obs_lla[3])
     N = length(t_range)*plane_num*satellite_per_plane
