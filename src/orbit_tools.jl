@@ -148,6 +148,7 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
     t_range = float.(t_range) ./ (60*60*24) .+ t_start
     ΔΩ = deg2rad(ΔΩ)
     Δf = 2π/satellite_per_plane
+    Δf_per_plane = deg2rad(Δf_per_plane)
     if f₀ == 0.
         f₀ += Δf/satellite_per_plane
     end
