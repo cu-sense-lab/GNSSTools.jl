@@ -70,6 +70,7 @@ Optional Arguments:
 - `fine_acq_method`:
 - `M`: a multiple of the replica signal length and used for carrier based fine
        acquisition `(default = 10)`
+- `h_parms`: 5 element vector containing oscillator h parameeters
 
 
 Returns:
@@ -84,7 +85,8 @@ function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I
                          f_if=0., include_adc=true, Tsys=535., include_carrier=true,
                          σω=1000., fd_range=5000., RLM=10, replica_t_length=1e-3,
                          cov_mult=1, q_a=1, q_mult=1, dynamickf=true, dll_b=5,
-                         state_num=3, fine_acq_method=:fft, M=10)
+                         state_num=3, fine_acq_method=:fft, M=10, 
+                         h_parms=h_parms_tcxo[1], σ_phi=π/2, fd_center=fd_center)
     if (channel != "I") && (channel != "Q")
         error("Invalid channel. Channel to be processed must be either I or Q.")
     end
@@ -112,7 +114,7 @@ function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I
                           include_thermal_noise=include_thermal_noise,
                           include_databits_I=include_databits_I,
                           include_databits_Q=include_databits_Q,
-                          skip_noise_generation=true)
+                          skip_noise_generation=true, receiver_h_parms=h_parms)
     ϕ = rand(0:0.0001:2π, iterations)
     code_start_idx = rand(1:signal.sample_num, iterations)
     T_num = floor(Int, signal.t_length/replica_t_length)
@@ -120,7 +122,9 @@ function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I
     p = Progress(iterations, 1, "Processing...")
     for i in 1:iterations
         f_d = sample(doppler_hist.edges[1], doppler_weights)
-        fd_center = fd_center = round(f_d/Δfd)*Δfd
+        if ismissing(fd_center)
+            fd_center = fd_center = round(f_d/Δfd)*Δfd
+        end
         fd_rate = sample(doppler_rate_hist.edges[1], doppler_rate_weights)
         definesignal!(signal; f_d=f_d, fd_rate=fd_rate, phi=ϕ[i],
                       code_start_idx=code_start_idx[i], new_databits=true,
@@ -134,7 +138,9 @@ function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I
                                            state_num=state_num, fd_rate=fd_rate,
                                            fine_acq_method=fine_acq_method, M=M,
                                            replica_t_length=replica_t_length,
-                                           fd_center=fd_center)
+                                           fd_center=fd_center,
+                                           return_corrresult=false, 
+                                           fine_acq=fine_acq, σ_phi=σ_phi)
         # Truth data
         if channel == "I"
             init_code_phase = calcinitcodephase(signal_type.I_codes.code_lengths[1],

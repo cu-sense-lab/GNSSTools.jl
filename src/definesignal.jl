@@ -6,7 +6,8 @@
                  code_start_idx=1., include_databits_I=true,
                  include_databits_Q=true, include_phase_noise=true,
                  phase_noise_scaler=1/10, name="custom",
-                 skip_noise_generation=false, allocate_noise_vectors=true)
+                 skip_noise_generation=false, allocate_noise_vectors=true,
+                 receiver_h_parms=h_parms_tcxo[1])
 
 
 Define properties of locally generated generic signal

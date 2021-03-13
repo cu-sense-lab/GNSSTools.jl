@@ -38,7 +38,7 @@ Julia will automatically install the neccessary dependencies and GNSSTools. Once
     * up-sample signal by N times
         + for each sample, N sub-samples are calculated and summed together
         + will not store N sub-samples; will instead calculate them in place and store only the sum of them
-- [ ] Use h-parameters to produce oscillator noise instead of the Voss-McCartney method
+- [x] Use h-parameters to produce oscillator noise instead of the Voss-McCartney method
 - [ ] multi-PRN simulation
     * each signal from a given PRN is a modulated carrier of specific C/N₀
     * add multiple carriers together into a single raw IQ vector
