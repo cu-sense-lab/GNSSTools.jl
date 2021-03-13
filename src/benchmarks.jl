@@ -173,5 +173,5 @@ function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I
         end
         truth_doppler = f_d .+ fd_rate.*t
         next!(p)
-    end
+    end 
 end
