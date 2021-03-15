@@ -176,6 +176,9 @@ end
 Generate phase noise using the h-paramters, stored in the vector `h_parms` where
 the order is `[h₋₂, h₋₁, h₀, h₁, h₂]`. Performs in-place operation on 
 pre-existing `phase_noise` vector.
+
+Generates phase noise using methods from
+[https://www.mathworks.com/matlabcentral/fileexchange/47342-timeseriesfrompsd-sxx-fs-t-plot_on](https://www.mathworks.com/matlabcentral/fileexchange/47342-timeseriesfrompsd-sxx-fs-t-plot_on)
 """
 function generate_phase_noise!(phase_noise::Vector, t_length::Number, 
                                v_0::Number, h_parms::Vector)
