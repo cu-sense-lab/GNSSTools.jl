@@ -140,7 +140,8 @@ Returns:
 function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
                               eop=get_eop(), show_plot=true, Ω₀=0., f₀=0.,
                               ω=0., e=0., t_start=0., obs_lla=missing,
-                              ΔΩ=360/plane_num, a_lim=1.5, Δf_per_plane=0,
+                              ΔΩ=360/plane_num, a_lim=1.5,
+                              Δf_per_plane=360/satellite_per_plane/2,
                               ax=missing, figsize=missing, print_steps=false, 
                               aspect=[1,1])
     a = float(a)
@@ -288,12 +289,13 @@ Returns:
 - `doppler_rate_bounds`: bounds of the Doppler rate histgram for the given p-val
 """
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
-                              obs_lla, sig_freq; eop=get_eop(), Δf_per_plane=0,
+                              obs_lla, sig_freq; eop=get_eop(),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                               bins=150, heatmap_bins=[bins, bins], a_lim=1.25,
                               figsize=missing, print_steps=true, p=0.5,
-                              plot_with_bounds=true, aspect=[1,1])
+                              plot_with_bounds=true, aspect=[1,1],
+                              Δf_per_plane=360/satellite_per_plane/2)
     if show_plot
         if ismissing(figsize)
             fig = figure()
