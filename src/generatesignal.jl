@@ -132,8 +132,8 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
             for j in 0:(upsample_factor-1)
                 code_val, code_ϕ = get_code_val(t+j*dΔt)
                 ϕ = get_ϕ(t+j*dΔt)
-                # cis_sum += cis(ϕ+code_ϕ)
-                cis_sum += code_val*cis(ϕ)
+                cis_sum += cis(ϕ+code_ϕ)
+                # cis_sum += code_val*cis(ϕ)
             end
         else
             for j in 0:(upsample_factor-1)
