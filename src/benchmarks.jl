@@ -123,7 +123,7 @@ function CN0_monte_carlo(CN0, dopplers, doppler_rates, t_length, f_s, channel="I
     for i in 1:iterations
         f_d = sample(doppler_hist.edges[1], doppler_weights)
         if ismissing(fd_center)
-            fd_center = fd_center = round(f_d/Δfd)*Δfd
+            fd_center = round(f_d/Δfd)*Δfd
         end
         fd_rate = sample(doppler_rate_hist.edges[1], doppler_rate_weights)
         definesignal!(signal; f_d=f_d, fd_rate=fd_rate, phi=ϕ[i],
