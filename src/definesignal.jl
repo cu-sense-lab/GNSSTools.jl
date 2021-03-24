@@ -382,7 +382,7 @@ function definesignal!(signal::ReplicaSignal;
         randn!(signal.thermal_noise)
     end
     if new_phase_noise
-        generate_phase_noise!(signal.phase_noise, t_length, 
+        generate_phase_noise!(signal.phase_noise, signal.t_length, 
                               signal.signal_type.sig_freq, 
                               receiver_h_parms)
         # randn!(signal.phase_noise)
