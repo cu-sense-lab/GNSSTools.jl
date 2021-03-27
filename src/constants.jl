@@ -64,7 +64,7 @@ Curran & Murphy located [https://ieeexplore.ieee.org/document/6129629](https://i
 
 Order: [h₋₂, h₋₁, h₀, h₁, h₂]
 """
-const h_parms_tcxo = [[2.0e-20, 7.0e-21, 2.0e-29,       0,       0],
+const h_parms_tcxo = [[2.0e-20, 7.0e-21, 2.0e-19,       0,       0],
                       [2.0E-20, 1.0E-20, 1.0e-21,       0,       0],
                       [3.8e-21, 1.8e-19, 9.4e-20,       0,       0],
                       [2.4e-22, 2.4e-21, 3.9e-22, 2.5e-23, 2.0e-26],
