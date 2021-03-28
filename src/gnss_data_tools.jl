@@ -173,7 +173,7 @@ function readdatafile!(data, data_type, file_name, sample_num,
 	# Load Complex{IntN} values directly from file
 	read!(f, data)
 	# Get the index value for the end of the file
-	end_idx = Int(position(seekend(f))/bit_num)
+	end_idx = Int(position(seekend(f))/byte_num)
     close(f)
     return (data, end_idx, gnsstypes[data_type])
 end
