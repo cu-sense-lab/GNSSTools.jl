@@ -71,7 +71,8 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  q_mult=1, dynamickf=true, dll_b=5, state_num=3,
                  fd_rate=0., figsize=missing, saveto=missing,
                  show_plot=true, fine_acq_method=:carrier,
-                 return_corrresult=false, fine_acq=true, σ_phi=π/2)
+                 return_corrresult=false, fine_acq=true, σ_phi=π/2,
+                 h₀=1e-21, h₋₂=2e-20)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
@@ -143,7 +144,8 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     trackresults = trackprn(signal, replica, prn, results.phi_init,
                             fd_est, n0_est, P, R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
-                            cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
+                            cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult,
+                            h₀=h₀, h₋₂=h₋₂)
     if show_plot
         plotresults(trackresults; saveto=saveto, figsize=figsize)
     end

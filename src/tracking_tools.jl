@@ -779,6 +779,9 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         end
         # Calculate main code chipping rate at next `i`
         f_code_d = chipping_rate*(1. + (x⁺ᵢ[2]/2π - f_if)/sig_freq)
+        if state_num == 3
+            f_code_dd = chipping_rate*(x⁺ᵢ[3]/2π)/sig_freq
+        end
         # Update code phase with filtered code phase error and propagate to next `i`
 		# This essetially makes the DLL rate aided.
         if i > 1
