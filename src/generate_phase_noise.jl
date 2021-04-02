@@ -152,25 +152,39 @@ end
 
 
 """
-    generate_phase_noise(t_length::Number, f_s::Number, v_0::Number, 
+    generate_phase_noise(t_length::Number, f_s::Number, f_carrier::Number, 
                          h_parms::Vector)
 
 
 Generate phase noise using the h-paramters, stored in the vector `h_parms` where
 the order is `[h₋₂, h₋₁, h₀, h₁, h₂]`.
+
+
+Required Arguments:
+
+- `t_length`: length of of the phase noise array to generate in seconds
+- `f_s`: sampling rate of the data in Hz
+- `f_carrier`: receiver center frequency in Hz (i.e. L1 C/A carrier frequency)
+- `h_parms`: vector containing the oscillator h parameters in the from
+             of `[h₋₂, h₋₁, h₀, h₁, h₂]`
+
+
+Returns:
+
+- `phase_noise`: vector of generated oscillator phase noise in radians
 """
-function generate_phase_noise(t_length::Number, f_s::Number, v_0::Number, 
+function generate_phase_noise(t_length::Number, f_s::Number, f_carrier::Number, 
                               h_parms::Vector)
     N = floor(Int, t_length*f_s)
     phase_noise = Array{Complex{Float64}}(undef, N)
-    generate_phase_noise!(phase_noise::Vector, t_length,  v_0, h_parms)
+    generate_phase_noise!(phase_noise, t_length,  f_carrier, h_parms)
     return phase_noise
 end
 
 
 """
     generate_phase_noise!(phase_noise::Vector t_length::Number,
-                          v_0::Number, h_parms::Vector)
+                          f_carrier::Number, h_parms::Vector)
 
 
 Generate phase noise using the h-paramters, stored in the vector `h_parms` where
@@ -179,9 +193,25 @@ pre-existing `phase_noise` vector.
 
 Generates phase noise using methods from
 [https://www.mathworks.com/matlabcentral/fileexchange/47342-timeseriesfrompsd-sxx-fs-t-plot_on](https://www.mathworks.com/matlabcentral/fileexchange/47342-timeseriesfrompsd-sxx-fs-t-plot_on)
+
+
+Required Arguments:
+
+Required Arguments:
+
+- `phase_noise`: vector to store generated oscillator phase noise 
+- `t_length`: length of of the phase noise array to generate in seconds
+- `f_carrier`: receiver center frequency in Hz (i.e. L1 C/A carrier frequency)
+- `h_parms`: vector containing the oscillator h parameters in the from
+             of `[h₋₂, h₋₁, h₀, h₁, h₂]`
+
+
+Returns:
+
+- `phase_noise`: vector of generated oscillator phase noise in radians
 """
 function generate_phase_noise!(phase_noise::Vector, t_length::Number, 
-                               v_0::Number, h_parms::Vector)
+                               f_carrier::Number, h_parms::Vector)
     h₋₂, h₋₁, h₀, h₁, h₂ = h_parms
     N = length(phase_noise)
     N_over_2 = floor(Int, N/2)
@@ -189,13 +219,12 @@ function generate_phase_noise!(phase_noise::Vector, t_length::Number,
     # Square root of the spectral density
     Δf = 1/t_length
     # f = Δf
-    # val = v_0^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
+    # val = f_carrier^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
     val = 0
     phase_noise[1] = val * cis(2π * phase_noise[1])
     for i in 2:(N_over_2+1)
         f = (i-1)*Δf
-        # val = v_0^2 * (h₋₂*f^(-2) + h₋₁*f^(-1) + h₀*f^0 + h₁*f^1 + h₂*f^2)
-        val = v_0^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
+        val = f_carrier^2 * (h₋₂*f^(-4) + h₋₁*f^(-3) + h₀*f^(-2) + h₁*f^(-1) + h₂*f^0)
         if (i > 1) && (i < (N_over_2+1))
             val = val/2
         end
@@ -211,77 +240,3 @@ function generate_phase_noise!(phase_noise::Vector, t_length::Number,
     end
     return phase_noise
 end
-
-
-# function generate_phase_noise(t_length, f_s; hₐ=1, α=-1)
-#     N = floor(Int, t_length*f_s)
-#     T₀ = 1/f_s
-#     Q_d = hₐ/(2 * (2π)^α * T₀^(α-1))
-#     w = sqrt(Q_d) .* randn(Float64, N)
-#     h = Array{Float64}(undef, N)
-#     β = -α/2
-#     h[1] = 1
-#     for i in 2:N
-#         h[i] = h[i-1]*(β + (i-2))/(i-1)
-#     end
-#     W = fft(w)
-#     H = fft(h)
-#     result = ifft(H.*W)./N
-#     return (result, h, w, Q_d)
-# end
-
-
-# function phase_noise(t_length, f_s; h₋₂=2*4e-22, h₋₁=2*4e-21, h₀=3*9e-22)
-#     N = floor(Int, t_length*f_s)
-#     τ = 1/f_s
-#     Q_d_2 = sqrt(h₋₂ * (2π)^2 * τ / 6)
-#     Q_d_1 = sqrt(h₋₁ * 2 * log(2))
-#     Q_d_0 = sqrt(h₀ / (2*τ))
-#     w_2 = Q_d_2 .* randn(Float64, N)
-#     w_1 = Q_d_1 .* randn(Float64, N)
-#     w_0 = Q_d_0 .* randn(Float64, N)
-#     h_2 = zeros(N)
-#     h_1 = zeros(N)
-#     h_0 = zeros(N)
-#     h_2[1] = 1
-#     h_1[1] = 1
-#     h_0[1] = 1
-#     for i in 2:N
-#         h_2[i] = (i - 2 - (-1.99/2)) * h_2[i-1] / (i-1)
-#         h_1[i] = (i - 2 - (-1/2)) * h_1[i-1] / (i-1)
-#         h_0[i] = (i - 2 - (-0/2)) * h_0[i-1] / (i-1)
-#     end
-#     H_2 = fft(h_2)
-#     H_1 = fft(h_1)
-#     H_0 = fft(h_0)
-#     W_2 = fft(w_2)
-#     W_1 = fft(w_1)
-#     W_0 = fft(w_0)
-#     w_2 = ifft(W_2 .* H_2)
-#     w_1 = ifft(W_1 .* H_1)
-#     w_0 = ifft(W_0 .* H_0)
-#     w = w_2.+w_1.+w_0
-#     return (w_2, w_1, w_0, w)
-# end
-
-
-# function test(t_length, f_s; hₐ=1, α=-1, Nscale=2, spectrum=false, log_X=true, figsize=missing)
-#     results, h, w, Q_d = generate_phase_noise(t_length, f_s; hₐ=hₐ, α=α); 
-#     if ismissing(figsize)
-#         figure();
-#     else
-#         figure(figsize=figsize);
-#     end 
-#     subplot(1,2,1);
-#     if spectrum
-#         plot_spectrum(results, f_s; log_freq=true, new_fig=false, log_X=log_X)
-#     else
-#         psd(results, Fs=f_s, NFFT=Int(length(results)/Nscale)); 
-#     end
-#     xscale("log"); 
-#     subplot(1,2,2); 
-#     plot(Array(range(0, t_length, length=length(results))), results);
-#     xlabel("Time (s)")
-#     ylabel("x(t)")
-#     return (results, h, w, Q_d)
-# end
