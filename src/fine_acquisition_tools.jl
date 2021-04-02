@@ -160,7 +160,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     ϕ_high = atan(imag(pk_high)/real(pk_high))
     ϕ_init_err = mean([abs(ϕ_init-ϕ_low), abs(ϕ_init-ϕ_high)])
     replica.isreplica = false
-    P = diagm([ϕ_init_err^2, (2π*err_bin_num_f*Δf)^2, σω^2])
+    P = diagm([ϕ_init_err^2, (2π*err_bin_num_f*Δf)^2, (2π*σω)^2])
     R = [ϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:fft), fd_course, fd_rate, n₀_idx_course,
@@ -286,7 +286,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     definesignal!(replica; isreplica=false)
     # P = diagm([dϕ_init_err^2, 74.7*fd_err^2, σω^2])
     # P = diagm([dϕ_init_err^2, fd_err^2, σω^2])
-    P = diagm([dϕ_init_err^2, (1/replica.t_length)^2, σω^2])
+    P = diagm([dϕ_init_err^2, (2π*replica.t_length)^2, (2π*σω)^2])
     R = [dϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:carrier), fd_course, fd_rate, n₀_idx_course,
