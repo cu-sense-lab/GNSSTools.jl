@@ -107,6 +107,9 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # anc the SNR estimate (`SNR_est`)
     n0_est, fd_course, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
                                                 Δfd)
+    # Estimate the C/N₀ and determine the value of the R matrix
+    CN0_est = snr2cn0(SNR_est, replica.t_length)
+    R = [phase_noise_variance(CN0_est, replica.t_length)]
     # Perform fine acquisition using FFT based method
     # Returns structure containing the fine acquisition results,
     # fine Doppler (`fd_est`) and inital phase estimate (`phi_est`).

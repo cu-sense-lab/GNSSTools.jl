@@ -762,3 +762,48 @@ function get_distribution_bounds(distribution, p, tail=:center)
 	return bounds
 end
 
+
+"""
+	snr2cn0(SNR, T)
+
+
+Convert SNR to C/N₀ for an SNR estimate determined
+at an integration time of `T`.
+
+
+Required Arguments:
+
+- `SNR`: the signal-to-noise ratio in dB
+- `T`: the integration time in seconds
+
+Returns:
+
+
+- `CN0`: carrier-to-noise ratio in dB⋅Hz
+"""
+function snr2cn0(SNR, T)
+	return SNR + 10*log10(1/T)
+end
+
+
+"""
+	phase_noise_variance(CN0, T)
+
+
+Calculate the expected carrier phase measurement variance, `σᵩ²`. 
+
+
+Required Arguments:
+
+- `CN0`: the carrier-to-noise ratio of the signal in dB⋅Hz
+- `T`: the integration time in seconds
+
+
+Returns:
+
+- `σᵩ²`: the expected carrier phase measurement variance in rad²
+"""
+function phase_noise_variance(CN0, T)
+	CN0_linear = 10^(CN0/10)
+	return (1 + 1/(2*T*CN0_linear)) / (2*T*CN0_linear)
+end
