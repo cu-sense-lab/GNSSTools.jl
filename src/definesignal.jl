@@ -236,7 +236,7 @@ Optional Arguments with Defaults Equal to `signal` Field Values:
 - `include_databits_Q`: flag for including Q channel databits in simulated signal
 - `include_phase_noise`: flag for including phase noise
 - `name`: name of signal
-- `isreplica`: flag to identify whether signal is being for processing
+- `isreplica`: `[DEPRICATED]` flag to identify whether signal is being for processing
     * replica signals being used for processing simulated or real signals
       should not include any noise source
     * this is usually set to `true` when being used by processing functions

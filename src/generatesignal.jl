@@ -364,7 +364,7 @@ end
 
 
 """
-    generatesignal!(signal::ReplicaSignal, isreplica::Bool)
+generatereplica!(signal::ReplicaSignal)
 
 
 Generates local GNSS signal using paramters defined in a
@@ -373,23 +373,23 @@ Generates local GNSS signal using paramters defined in a
 Generates a signal with carrier, ADC quantization, noise,
 and Neuman sequence.
 
-This version is used only when `isreplica` is set to `true`
-in `signal` and ignores all the `include_*` flags in `signal`.
-Exponential without the amplitude is included automatically.
+This version is used only when for when this signal struct is
+used as a known replica for use in course/fine acquisition and 
+tracking. When this function is used instead of `generatesignal!`,
+all the `include_*` flags in `signal` are ignored. The bool flag,
+`noexp` in `signal`, Exponential without the amplitude is included automatically.
 
 
 Required Arguments:
 
 - `signal::ReplicaSignal`: struct containing signal data and parameters
-- `isreplica::Bool`: typically set to `true` and clarifies that `signal` is
-                     being used for processing only with no noise added
 
 
 Modifies in Place and Returns:
 
 - `signal::ReplicaSignal`: generated signal data stored in `signal.data`
 """
-function generatesignal!(signal::ReplicaSignal, isreplica::Bool)
+function generatereplica!(signal::ReplicaSignal)
     # Common parmeters used for entire signal
     prn = signal.prn
     f_d = signal.f_d
@@ -401,12 +401,13 @@ function generatesignal!(signal::ReplicaSignal, isreplica::Bool)
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
         code_val, code_ϕ = calc_code_val(signal, t)
+        # Produce the code only with no carrier modulation
+        # Code is still generated with Doppler effects
         if noexp
-            # @inbounds signal.data[i] = complex(float(code_val))
             @inbounds signal.data[i] = cis(code_ϕ)
+        # Doppler effected code is modulated onto carrier.
+        # Carrier has amplitude of 1. It is not rescaled.
         else
-            # @inbounds signal.data[i] = (code_val *
-            #                             cis(2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ))
             @inbounds signal.data[i] = cis(2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ + code_ϕ)
         end
     end

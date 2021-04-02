@@ -108,7 +108,7 @@ end
 
 Performs course acquisition on either `GNSSData` or `ReplicaSignal`
 type struct using defined `ReplicaSignal` type struct. No need
-to use `generatesignal!` before calling this function.
+to use `generatereplica!` before calling this function.
 Operates in place on `corr_result`.
 
 *NOTE:* If `data` is a replica signal structure type,
@@ -179,7 +179,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
                       nADC=nADC, isreplica=true,
                       noexp=false)
         # Generate signal
-        generatesignal!(replica, replica.isreplica)
+        generatereplica!(replica)
         # Perform in place FFT on replica
         pfft*replica.data
         # Take conjugate of FFT(replica) and multiply with FFT of

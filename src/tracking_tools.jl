@@ -373,7 +373,7 @@ end
 
 Calculate the early, prompt, and late correlator ouputs. Note that
 replica already containts the prompt correlator. Be sure to set
-the parameters to `replica` and run `generatesignal!(replica)` before
+the parameters to `replica` and run `generatereplica!(replica)` before
 calling this method.
 
 
@@ -706,7 +706,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                       code_start_idx=code_start_idx,
                       isreplica=true, noexp=true)
         # Generate prompt correlator
-        generatesignal!(replica, replica.isreplica)
+        generatereplica!(replica)
         # Calculate early, prompt, and late correlator outputs
         ze, zp, zl, snr = getcorrelatoroutput!(datafft, data, replica, i, N,
 		                                       f_if, f_d, fd_rate, ϕ, d,

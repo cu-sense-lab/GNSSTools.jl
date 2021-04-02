@@ -73,7 +73,7 @@ module GNSSTools
     export l5i_codes
     export definesignal
     export definesignal!
-    export generatesignal!
+    export generatesignal!, generatereplica!
     export fft_correlate
     export GNSSData
     export loaddata, reloaddata!
