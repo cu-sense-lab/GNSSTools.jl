@@ -389,6 +389,7 @@ Required Arguments:
 - `fd_rate`: current Doppler frequency rate estimate in Hz/s
 - `ϕ`: current phase estimate in rads
 - `d`: current correlator spacing in sample space
+- `pfft`: result from `plan_fft(replica.data` which speeds up FFTs and IFFTs
 
 
 Optional Arguments:
@@ -435,105 +436,6 @@ function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
     SNR = 10*log10(sqrt(PS/PN))
     return (ze, zp, zl, SNR)
 end
-
-
-# """
-# 	getcorrelatoroutput!(ZP_array, data, replica, i, N, f_if, f_d,
-# 						 fd_rate, ϕ, d, bin_width=1)
-
-
-# Calculate the early, prompt, and late correlator ouputs. Note that
-# replica already containts the prompt correlator. Be sure to set
-# the parameters to `replica` and run `generatesignal!(replica)` before
-# calling this method.
-
-
-# Required Arguments:
-
-# - `ZP_array`: allocated memory for ZP values to use to get SNR of peak
-# - `data`: vector containin I/Q samples to process
-# - `replica`: replica generated signal
-# - `i`: current `iᵗʰ` integration time `T`
-# - `N`: number of samples in `data` and `replica`
-# - `f_if`: intermediate frequency (IF) of `data` in Hz
-# - `f_d`: current Doppler frequency estimate in Hz
-# - `fd_rate`: current Doppler frequency rate estimate in Hz/s
-# - `ϕ`: current phase estimate in rads
-# - `d`: current correlator spacing in sample space
-
-
-# Optional Arguments:
-
-# - `bin_width`: half width of frequency range to sum when estimating the SNR
-#                `(default = 1)`
-
-
-# Returns:
-
-# - `ze`: early correlator value
-# - `zp`: prompt correlator value
-# - `zl`: late correlator value
-# - `SNR`: signal-to-noise ratio of frequency domain correlation peak in dB
-# """
-# function getcorrelatoroutput!(ZP_array, data, replica, i, N, f_if, f_d,
-# 	                          fd_rate, ϕ, d, bin_width=1)
-#     # Initialize correlator results
-#     ze = 0. + 0im
-#     zp = 0. + 0im
-#     zl = 0. + 0im
-#     datasegment = view(data.data, (i-1)*N+1:i*N)
-#     ts = view(data.t, 1:N)
-# 	Δf = 1/replica.t_length
-#     # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
-#     for j in 1:N
-# 		# Perform carrier wipeoff
-# 		# NOTE: # cis(A) = exp(1im*A)
-#         @inbounds wipeoff = datasegment[j]*cis(-(2π*(f_if+f_d+0.5*fd_rate*ts[j])*ts[j] + ϕ))
-# 		# Calculate prompt correlator output at specific t
-# 		ZP = conj(replica.data[j]) * wipeoff
-#         @inbounds zp += ZP
-# 		# Get the index of the ZE and ZL correlators at given t
-# 		zeidx = shiftandcheck(j,  d, N)
-# 		zlidx = shiftandcheck(j, -d, N)
-# 		# Calculate early and late correlator outputs
-#         @inbounds ze += conj(replica.data[zeidx]) * wipeoff
-#         @inbounds zl += conj(replica.data[zlidx]) * wipeoff
-# 		# Store ZP result at `j` in `jᵗʰ` index in `ZP_array`
-# 		ZP_array[j] = ZP
-#     end
-# 	ze = ze/N
-#     zp = zp/N
-#     zl = zl/N
-# 	# In-place FFT on ZP_array
-# 	fft!(ZP_array)
-# 	# Find peak of FFT result and sum
-# 	zp_abs_sqrd_max = 0.
-# 	zp_abs_sqrd = 0.
-# 	zp_max_idx = 1
-# 	for j in 1:N
-# 		ZP_abs_sqrd = abs2(ZP_array[j])
-# 		if ZP_abs_sqrd > zp_abs_sqrd_max
-# 			zp_abs_sqrd_max = ZP_abs_sqrd
-# 			zp_max_idx = j
-# 		end
-# 		zp_abs_sqrd += ZP_abs_sqrd
-# 	end
-# 	# Calculate SNR
-# 	max_low = shiftandcheck(zp_max_idx, -bin_width, N)
-# 	max_high = shiftandcheck(zp_max_idx, bin_width, N)
-# 	# PS = zp_abs_sqrd_max
-# 	# PS = abs2(ZP_array[1]) + abs2(ZP_array[N])
-# 	# PN = (zp_abs_sqrd - PS)/(N-2)
-# 	PS = sum(abs2.(ZP_array[max_low:N])) + sum(abs2.(ZP_array[1:max_high]))
-# 	PN = (zp_abs_sqrd - PS)/(N-max_high-(N-max_low))
-# 	SNR = 0.
-# 	try
-# 		SNR = 10*log10(sqrt(PS/PN))
-# 	catch
-# 		SNR = NaN
-# 	end
-#     return (ze, zp, zl, SNR)
-# end
 
 
 """
