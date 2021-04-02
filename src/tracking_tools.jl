@@ -857,7 +857,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
             # Filter raw code phase error measurement
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
         else
-            # n0_err_filtered = n0_err
             n0_err_filtered = filtercodephase(dll_parms, n0_err, 0)
         end
         # Save to allocated arrays
@@ -884,9 +883,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         end
         # Update code phase with filtered code phase error and propagate to next `i`
 		# This essetially makes the DLL rate aided.
-        # if i > 1
         n0 += (n0_err_filtered + f_code_d*T + 0.5*f_code_dd*T^2)%code_length
-        # end
 		# Propagate x⁺ᵢ to next time step
 		x⁻ᵢ = A*x⁺ᵢ
         # next!(p)
