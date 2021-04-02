@@ -821,10 +821,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         definesignal!(replica;
                       prn=prn, f_d=f_d,
                       fd_rate=fd_rate, phi=0., f_if=0.,
-                      # include_carrier=true,
-                      # include_thermal_noise=false,
-					  # include_phase_noise=false,
-                      # include_adc=false,
                       code_start_idx=code_start_idx,
                       isreplica=true, noexp=true)
         # Generate prompt correlator
@@ -858,6 +854,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
         else
             n0_err_filtered = filtercodephase(dll_parms, n0_err, 0)
+            # n0_err_filtered = 0
         end
         # Save to allocated arrays
         code_err_meas[i] = n0_err

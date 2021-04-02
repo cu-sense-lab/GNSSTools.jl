@@ -88,10 +88,6 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     definesignal!(replica;
                   prn=prn, f_d=fd_course,
                   fd_rate=fd_rate, phi=0., f_if=0.,
-                  # include_carrier=true,
-                  # include_thermal_noise=false,
-                  # include_phase_noise=false,
-                  # include_adc=false,
                   code_start_idx=n₀_idx_course,
                   isreplica=true,
                   noexp=true)
@@ -124,9 +120,6 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     @inbounds for i in pos_freq_interval[1]:pos_freq_interval[2]
         data_abs2 = abs2(replica.data[i])
         if data_abs2 > pk_valabs2
-            # global pk_valabs2
-            # global pk_val
-            # global pk_idx
             pk_valabs2 = data_abs2
             pk_val = replica.data[i]
             pk_idx = i
@@ -136,9 +129,6 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     @inbounds for i in neg_freq_interval[1]:neg_freq_interval[2]
         data_abs2 = abs2(replica.data[i])
         if data_abs2 > pk_valabs2
-            # global pk_valabs2
-            # global pk_val
-            # global pk_idx
             pk_valabs2 = data_abs2
             pk_val = replica.data[i]
             pk_idx = i
@@ -152,7 +142,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     end
     fd_est = fd_course + fd_fine
     # Calculate initial phase
-    ϕ_init = atan(imag(pk_val)/real(pk_val))
+    ϕ_init = atan(imag(pk_val), real(pk_val))
     # Calculate the covariance matrix
     # We estimate the error to be ±2 Doppler bin for the frequency error
     # and ±1 for the phase error.
@@ -237,9 +227,6 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
         definesignal!(replica;
                       prn=prn, f_d=fd_course,
                       fd_rate=fd_rate, phi=0, f_if=0.,
-                      # include_carrier=true,
-                      # include_noise=false,
-                      # include_adc=false,
                       code_start_idx=n₀_idx_course,
                       noexp=true,
                       isreplica=true)
