@@ -76,7 +76,7 @@ module GNSSTools
     export generatesignal!
     export fft_correlate
     export GNSSData
-    export loaddata
+    export loaddata, reloaddata!
     export gencorrresult
     export courseacquisition, courseacquisition!
     export fineacquisition
