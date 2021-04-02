@@ -431,8 +431,8 @@ function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
     zp = replica.data[zp_idx]/N
     zl = replica.data[zl_idx]/N
     # Calculate SNR
-    PS = abs2(replica.data[1])
     # PS = abs2(replica.data[1])
+    PS = abs2(replica.data[1])
     PN = (sum(abs2, replica.data) - PS) / (N - 1)
     SNR = 10*log10(sqrt(PS/PN))
     return (ze, zp, zl, SNR)
@@ -880,6 +880,9 @@ function plotresults(results::TrackResults; saveto=missing,
 	end
     xlabel("Time (s)")
     ylabel("SNR (dB)")
+    twinx()
+    plot(results.t, real(results.ZP), "k:")
+    ylabel("real(ZP)")
     title("SNR Estimate")
     # Plot ZP real and imaginary parts
     subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
