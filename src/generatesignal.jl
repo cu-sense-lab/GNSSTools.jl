@@ -377,7 +377,8 @@ This version is used only when for when this signal struct is
 used as a known replica for use in course/fine acquisition and 
 tracking. When this function is used instead of `generatesignal!`,
 all the `include_*` flags in `signal` are ignored. The bool flag,
-`noexp` in `signal`, Exponential without the amplitude is included automatically.
+`noexp` in `signal`, Exponential without the amplitude is included 
+automatically.
 
 
 Required Arguments:
