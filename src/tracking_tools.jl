@@ -418,7 +418,7 @@ function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
     pfft * replica.data
     # Conjugate multiply `datafft` and `replica.data` and store result in 
     # `replica.data`
-    conjAmultB1D!(replica.data, datafft, replica.sample_num)
+    conjAmultB1D!(replica.data, datafft, N)
     # In-place IFFT of `replica.data`
     pfft \ replica.data
     # Correlation peak is in 1st index since replica was generated with same 
@@ -432,6 +432,7 @@ function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
     zl = replica.data[zl_idx]/N
     # Calculate SNR
     PS = abs2(replica.data[1])
+    # PS = abs2(replica.data[1])
     PN = (sum(abs2, replica.data) - PS) / (N - 1)
     SNR = 10*log10(sqrt(PS/PN))
     return (ze, zp, zl, SNR)
@@ -607,9 +608,9 @@ Returns:
 - `TrackResults` struct
 """
 function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
-	              fd_init, n0_idx_init, P₀, R; DLL_B=5, PLL_B=15, damping=1.4,
-				  fd_rate=0., G=0.2, h₀=1e-21, h₋₂=2e-20, qₐ=10.,
-				  state_num=2, dynamickf=false, cov_mult=1., q_mult=1.,
+	              fd_init, n0_idx_init, P₀, R; DLL_B=0.1, PLL_B=15, damping=1.4,
+				  fd_rate=0., G=0.2, h₀=1e-21, h₋₂=2e-20, qₐ=1.,
+				  state_num=3, dynamickf=true, cov_mult=1., q_mult=1.,
 				  channel="I")
     # Assign signal specific parameters
     sig_freq = replica.signal_type.sig_freq
@@ -681,7 +682,9 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 	x⁻ᵢ = deepcopy(x⁺ᵢ)
 	P⁺ᵢ = cov_mult .* P⁺ᵢ
 	Kᵢ = zeros(size(x⁻ᵢ))
-	Kfixed = dkalman(A, C, Q, Diagonal(R))
+    if ~dynamickf
+	    Kfixed = dkalman(A, C, Q, Diagonal(R))
+    end
     # p = Progress(M, 1, message)
     # Perform code, carrier phase, and Doppler frequency tracking
     for i in 1:M
@@ -720,17 +723,15 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         dϕ_meas = measurephase(zp)  # rad
         dfd = dϕ_meas/T  # rad/s
 		# Estimate Kalman gain
-		Kᵢ = (P⁻ᵢ*C')/(C*P⁻ᵢ*C' + R)
-		K[:,i] = Kᵢ
-		# Correct state uncertaninty
-		P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
-        # Correct state
 		if dynamickf
-			KF_gain = Kᵢ
+            Kᵢ = (P⁻ᵢ*C')/(C*P⁻ᵢ*C' + R)
 		else
-			KF_gain = Kfixed
+			Kᵢ = Kfixed
 		end
-        correction = KF_gain.*dϕ_meas
+        # Correct state uncertaninty
+		P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
+        # Correct current state estimate
+        correction = Kᵢ.*dϕ_meas
 		x⁺ᵢ = x⁻ᵢ + correction
         if i > 1
             # Filter raw code phase error measurement
@@ -750,6 +751,9 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         fds[i] = x⁺ᵢ[2]/2π - f_if
         ZP[i] = zp
 		SNR[i] = snr
+        K[:,i] = Kᵢ
+        x[:,i] = x⁺ᵢ
+        P[:,i] = diag(P⁺ᵢ)
         if real(zp) > 0
             data_bits[i] = 1
         else
