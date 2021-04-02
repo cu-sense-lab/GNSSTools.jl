@@ -404,63 +404,35 @@ Returns:
 - `zl`: late correlator value
 - `SNR`: signal-to-noise ratio of frequency domain correlation peak in dB
 """
-function getcorrelatoroutput!(ZP_array, data, replica, i, N, f_if, f_d,
-	                          fd_rate, ϕ, d, bin_width=1)
-    # Initialize correlator results
-    ze = 0. + 0im
-    zp = 0. + 0im
-    zl = 0. + 0im
+function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
+	                          fd_rate, ϕ, d, pfft)
     datasegment = view(data.data, (i-1)*N+1:i*N)
     ts = view(data.t, 1:N)
-	Δf = 1/replica.t_length
-    # Perform carrier and phase wipeoff and apply early, prompt, and late correlators
-    for j in 1:N
-		# Perform carrier wipeoff
-		# NOTE: # cis(A) = exp(1im*A)
-        @inbounds wipeoff = datasegment[j]*cis(-(2π*(f_if+f_d+0.5*fd_rate*ts[j])*ts[j] + ϕ))
-		# Calculate prompt correlator output at specific t
-		ZP = conj(replica.data[j]) * wipeoff
-        @inbounds zp += ZP
-		# Get the index of the ZE and ZL correlators at given t
-		zeidx = shiftandcheck(j,  d, N)
-		zlidx = shiftandcheck(j, -d, N)
-		# Calculate early and late correlator outputs
-        @inbounds ze += conj(replica.data[zeidx]) * wipeoff
-        @inbounds zl += conj(replica.data[zlidx]) * wipeoff
-		# Store ZP result at `j` in `jᵗʰ` index in `ZP_array`
-		ZP_array[j] = ZP
+    @inbounds for j in 1:N
+        datafft[j] = datasegment[j]*cis(-(2π*(f_if+f_d+0.5*fd_rate*ts[j])*ts[j]+ϕ))
     end
-	ze = ze/N
-    zp = zp/N
-    zl = zl/N
-	# In-place FFT on ZP_array
-	fft!(ZP_array)
-	# Find peak of FFT result and sum
-	zp_abs_sqrd_max = 0.
-	zp_abs_sqrd = 0.
-	zp_max_idx = 1
-	for j in 1:N
-		ZP_abs_sqrd = abs2(ZP_array[j])
-		if ZP_abs_sqrd > zp_abs_sqrd_max
-			zp_abs_sqrd_max = ZP_abs_sqrd
-			zp_max_idx = j
-		end
-		zp_abs_sqrd += ZP_abs_sqrd
-	end
-	# Calculate SNR
-	max_low = shiftandcheck(zp_max_idx, -bin_width, N)
-	max_high = shiftandcheck(zp_max_idx, bin_width, N)
-	# PS = zp_abs_sqrd_max
-	# PS = abs2(ZP_array[1]) + abs2(ZP_array[N])
-	# PN = (zp_abs_sqrd - PS)/(N-2)
-	PS = sum(abs2.(ZP_array[max_low:N])) + sum(abs2.(ZP_array[1:max_high]))
-	PN = (zp_abs_sqrd - PS)/(N-max_high-(N-max_low))
-	SNR = 0.
-	try
-		SNR = 10*log10(sqrt(PS/PN))
-	catch
-		SNR = NaN
-	end
+    # In-place FFT of `datafft`
+    pfft * datafft
+    # In-place FFT of `replica.data`
+    pfft * replica.data
+    # Conjugate multiply `datafft` and `replica.data` and store result in 
+    # `replica.data`
+    conjAmultB1D!(replica.data, datafft, replica.sample_num)
+    # In-place IFFT of `replica.data`
+    pfft \ replica.data
+    # Correlation peak is in 1st index since replica was generated with same 
+    # code phase offset as the estimate
+    ze_idx = N - (d - 1)
+    zp_idx = 1
+    zl_idx = 1 + d
+    # Correlator outputs are the sum. Need to divide by the sample number, `N`.
+    ze = replica.data[ze_idx]/N
+    zp = replica.data[zp_idx]/N
+    zl = replica.data[zl_idx]/N
+    # Calculate SNR
+    PS = abs2(replica.data[1])
+    PN = (sum(abs2, replica.data) - PS) / (N - 1)
+    SNR = 10*log10(sqrt(PS/PN))
     return (ze, zp, zl, SNR)
 end
 
@@ -748,6 +720,12 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 	else
 		error("Cannot track since there are no codes defined in signal type.")
 	end
+    # Place holder for fft of data wipeoff calculated at each T interval
+    N = replica.sample_num
+    datafft = Array{Complex{Float64}}(undef, N)
+    # Pre-plan FFTs and IFFTs
+    pfft = plan_fft!(replica.data)  # In-place FFT plan
+    # pifft = plan_ifft!(replica.data)  # In-place IFFT plan
     # Compute the spacing between the ZE, ZP, and ZL correlators
 	# d = floor(Int, (data.f_s/chipping_rate - 1)/2)
 	d = floor(Int, data.f_s/chipping_rate/2)
@@ -756,7 +734,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     t_length = data.t_length
     f_s = data.f_s
     f_if = data.f_if
-    N = replica.sample_num
     f_d = fd_init
     ϕ = ϕ_init
     f_code_d = chipping_rate*(1. + f_d/sig_freq)
@@ -764,7 +741,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                                 f_code_d, 0.,
                                 f_s, n0_idx_init)
     n0 = n0_init
-    M = Int64(floor(data.t_length/replica.t_length))
+    M = floor(Int, data.t_length/replica.t_length)
     t = Array(0:T:M*T-T)
     # Define DLL and PLL parameter structs
     dll_parms = definedll(T, DLL_B, d)
@@ -780,7 +757,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     delta_fd = Array{Float64}(undef, M)
     fds = Array{Float64}(undef, M)
     ZP = Array{Complex{Float64}}(undef, M)
-	ZP_array = Array{Complex{Float64}}(undef, N)
     SNR = Array{Float64}(undef, M)
     data_bits = Array{Int64}(undef, M)
     A = calcA(T, state_num)
@@ -789,6 +765,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     P = Array{Float64}(undef, size(A)[1], M)
     x = Array{Float64}(undef, size(A)[1], M)
 	K = Array{Float64}(undef, size(A)[1], M)
+    datafft = Array{Complex{Float64}}(undef, N)
 	FFTW.set_num_threads(1)
 	if state_num == 3
     	x⁺ᵢ = [ϕ_init; 2π*(f_if+fd_init); 0.]
@@ -823,13 +800,15 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         definesignal!(replica;
                       prn=prn, f_d=f_d,
                       fd_rate=fd_rate, phi=0., f_if=0.,
+                    #   code_start_idx=1,
                       code_start_idx=code_start_idx,
                       isreplica=true, noexp=true)
         # Generate prompt correlator
         generatesignal!(replica, replica.isreplica)
         # Calculate early, prompt, and late correlator outputs
-        ze, zp, zl, snr = getcorrelatoroutput!(ZP_array, data, replica, i, N,
-		                                       f_if, f_d, fd_rate, ϕ, d)
+        ze, zp, zl, snr = getcorrelatoroutput!(datafft, data, replica, i, N,
+		                                       f_if, f_d, fd_rate, ϕ, d,
+                                               pfft)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)  # chips
 		# Propogate state uncertaninty
