@@ -173,10 +173,6 @@ function courseacquisition!(corr_result::Array{Float64,2},
         definesignal!(replica;
                       prn=prn, f_d=f_d,
                       fd_rate=fd_rate, phi=0., f_if=0.,
-                      # include_carrier=true,
-                      # include_thermal_noise=false,
-                      # include_phase_noise=false,
-                      # include_adc=false,
                       code_start_idx=1,
                       nADC=nADC, isreplica=true,
                       noexp=false)
