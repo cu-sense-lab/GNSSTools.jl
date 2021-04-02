@@ -133,7 +133,6 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
                 code_val, code_ϕ = get_code_val(t+j*dΔt)
                 ϕ = get_ϕ(t+j*dΔt)
                 cis_sum += cis(ϕ+code_ϕ)
-                # cis_sum += code_val*cis(ϕ)
             end
         else
             for j in 0:(upsample_factor-1)
@@ -144,32 +143,22 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
         cis_sum = cis_sum/upsample_factor
         if include_carrier & include_thermal_noise & include_phase_noise
             # Calculate code value with carrier, thermal and phase noise
-            # ϕ = get_ϕ(t)
             ϕ_noise = real(phase_noise[i])
-            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise) +
-            #                            noise_amp * thermal_noise[i]
             @inbounds signal.data[i] = carrier_amp * cis_sum * cis(ϕ_noise) +
                                        noise_amp * thermal_noise[i]
         elseif include_carrier & include_thermal_noise & ~include_phase_noise
             # Calculate code value with carrier and noise
-            # ϕ = get_ϕ(t)
-            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
-            #                            noise_amp * thermal_noise[i]
             @inbounds signal.data[i] = carrier_amp * cis_sum +
                                        noise_amp * thermal_noise[i]
         elseif include_carrier & ~include_thermal_noise & include_phase_noise
             # Calculate code value with noise and no carrier
             ϕ_noise = real(phase_noise[i])
-            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise)
             @inbounds signal.data[i] = carrier_amp * cis_sum * cis(ϕ_noise)
         elseif include_carrier & ~include_thermal_noise & ~include_phase_noise
             # Calculate code value with carrier and no noise
-            # ϕ = get_ϕ(t)
-            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ)
             @inbounds signal.data[i] = carrier_amp * cis_sum
         else
             # Calculate code value only
-            # @inbounds signal.data[i] = complex(float(code_val))
             @inbounds signal.data[i] = cis_sum
         end
     end
@@ -325,30 +314,23 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
             # Calculate code value with carrier, thermal and phase noise
             ϕ = get_ϕ(t)
             ϕ_noise = real(phase_noise[i])
-            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise) +
-            #                            noise_amp * thermal_noise[i]
             @inbounds signal.data[i] = carrier_amp * cis_sum * cis(ϕ_noise) +
                                        noise_amp * thermal_noise[i]
         elseif include_carrier & include_thermal_noise & ~include_phase_noise
             # Calculate code value with carrier and noise
             ϕ = get_ϕ(t)
-            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ) +
-            #                            noise_amp * thermal_noise[i]
             @inbounds signal.data[i] = carrier_amp * cis_sum +
                                        noise_amp * thermal_noise[i]
         elseif include_carrier & ~include_thermal_noise & include_phase_noise
             # Calculate code value with noise and no carrier
             ϕ_noise = real(phase_noise[i])
-            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ+ϕ_noise)
             @inbounds signal.data[i] = carrier_amp * cis_sum * cis(ϕ_noise)
         elseif include_carrier & ~include_thermal_noise & ~include_phase_noise
             # Calculate code value with carrier and no noise
             ϕ = get_ϕ(t)
-            # @inbounds signal.data[i] = code_val * carrier_amp * cis(ϕ)
             @inbounds signal.data[i] = carrier_amp * cis_sum
         else
             # Calculate code value only
-            # @inbounds signal.data[i] = complex(float(code_val))
             @inbounds signal.data[i] = cis_sum
         end
     end
