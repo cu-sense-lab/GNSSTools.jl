@@ -85,11 +85,8 @@ function loaddata(data_type, file_name, f_s, f_center, f_gnss, t_length;
 	# Generate time vector
 	t = calctvector(sample_num, f_s)
 	return GNSSData(file_name, f_s, f_if, t_length, start_data_idx,
-	                t, float.(data), String(dtype), data_start_time,
+	                t, data, String(dtype), data_start_time,
 	                site_loc_lla, sample_num, total_data_length, nADC)
-	# return GNSSData(file_name, f_s, f_if, t_length, start_data_idx,
-	#                 t, data, String(dtype), data_start_time,
-	#                 site_loc_lla, sample_num, total_data_length, nADC)
 end
 
 
@@ -113,15 +110,15 @@ Modifies in Place and Returns:
 
 - `gnss_data::GNSSData`
 """
-function reloaddata!(gnss_data::GNSSData, start_data_idx,
-	                 nADC, sample_num=gnss_data.sample_num)
+function reloaddata!(gnss_data::GNSSData, skip_to)
+	f_s = gnss_data.f_s
+	nADC = gnss_data.nADC
+	start_data_idx = floor(Int, f_s*skip_to)
+	sample_num=gnss_data.sample_num
 	file_name = gnss_data.file_name
 	data_type = gnss_data.data_type
 	data = gnss_data.data
 	if sample_num <= gnss_data.sample_num
-		data, end_idx, dtype = readdatafile!(data, Val(Symbol(data_type)),
-		                                     file_name, sample_num,
-											 start_data_idx)
         f = open(file_name, "r")
 		byte_num = Int(2*nADC/8)
 		seek(f, byte_num*start_data_idx)
@@ -334,13 +331,19 @@ Returns:
 - `FileInfo` struct
 """
 function data_info_from_name(file_name)
-	# Get file type (8- or 4-bit complex)
-	if occursin("sc8", file_name)
+	# Get file type (N-bit complex)
+	if occursin("sc64", file_name)
+		data_type = Val(:sc64)
+	elseif occursin("sc32", file_name)
+		data_type = Val(:sc32)
+	elseif occursin("sc16", file_name)
+		data_type = Val(:sc16)
+	elseif occursin("sc8", file_name)
 		data_type = Val(:sc8)
 	elseif occursin("sc4", file_name)
 		data_type = Val(:sc4)
 	else
-		error("File type not supported. Only sc8 and sc4 files are supported.")
+		error("File type not supported. Only sc4, sc8, sc16, sc32 and sc64 files are supported.")
 	end
 	# Determine sampling and IF frequency and frequency center
 	f_s, f_if, f_center, sig_freq, sigtype = get_signal_type(file_name)
