@@ -27,10 +27,6 @@ Optional Arguments:
 - `fd_center`: center frequency of the Doppler search area in Hz `(default = 0)`
 - `fd_range`: range around the center frequency, `fd_center`, to search around
               during course acquisiton in Hz `(default = 5000)`
-- `M`: multiplier for the length of time to perform fine acquisition
-       `(default = 10)`
-- `replica_t_length`: integration time used for course acquisition and tracking
-                      in seconds `(default = 0.001)`
 - `cov_mult`: scalar that can be applied to the covariance matrix in the
               tracking loop `(default = 1)`
 - `q_a`: line of site platform dynamics in m²/s⁶ `(default = 1)`
@@ -54,6 +50,12 @@ Optional Arguments:
     * can be either `:fft` of `:carrier`
 - `return_corrresult`: flag, if set to true, will return the course correlation
                        result `(default = false)`
+- `acquisiton_T`: integration time used for course acquisition in 
+                  seconds `(default = 1e-3)`
+- `fine_acq_T`: integration time used for fine acquisition in
+                seconds `(default = 10e-3)`
+- `tracking_T`: integration time used for code phase and carrier tracking in
+                seconds `(default = 1e-3)`
 
 
 Returns:
@@ -67,12 +69,12 @@ Returns:
 """
 function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  channel="I"; σω=1000., fd_center=0., fd_range=5000.,
-                 M=10, replica_t_length=1e-3, cov_mult=1, q_a=1,
-                 q_mult=1, dynamickf=true, dll_b=5, state_num=3,
-                 fd_rate=0., figsize=missing, saveto=missing,
-                 show_plot=true, fine_acq_method=:carrier,
+                 cov_mult=1, q_a=1, q_mult=1, dynamickf=true, 
+                 dll_b=5, state_num=3, fd_rate=0.,  figsize=missing, 
+                 saveto=missing, show_plot=true, fine_acq_method=:carrier,
                  return_corrresult=false, fine_acq=true, σ_phi=π/2,
-                 h₀=1e-21, h₋₂=2e-20)
+                 h₀=1e-21, h₋₂=2e-20, acquisiton_T=1e-3, fine_acq_T=10e-3, 
+                 tracking_T=1e-3)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
@@ -87,29 +89,18 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     else
         error("Invalid channel `$(channel)`.")
     end
-    replica = definesignal(signal_type, f_s, replica_t_length;
+    replica = definesignal(signal_type, f_s, acquisiton_T;
                            skip_noise_generation=true,
                            allocate_noise_vectors=false)
-    replicalong = definesignal(signal_type, f_s, M*replica_t_length;
-                               skip_noise_generation=true,
-                               allocate_noise_vectors=false)
-    if replicalong.sample_num > signal.sample_num
-        error("Signal length equal to or greater than $(RLM*replica_t_length) seconds.")
-    end
-    # Initlalize 2D acquisition array
-    Δfd = 1/replica.t_length  # Hz
-    corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
-    # Peform course acquisition
-    courseacquisition!(corr_result, signal, replica, prn;
-                       fd_center=fd_center, fd_range=fd_range,
-                       fd_rate=fd_rate, Δfd=Δfd)
-    # Calculate the code start index (`n0_est`), Doppler estimate (`fd_est`),
-    # anc the SNR estimate (`SNR_est`)
-    n0_est, fd_course, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
-                                                Δfd)
-    # Estimate the C/N₀ and determine the value of the R matrix
-    CN0_est = snr2cn0(SNR_est, replica.t_length)
-    R = [phase_noise_variance(CN0_est, replica.t_length)]
+    # Perform course acquisition
+    fd_course, n0_est, SNR_est, 
+    corr_result = courseacquisition(signal, 
+                                    replica,
+                                    prn; 
+                                    fd_center=fd_center, 
+                                    fd_range=fd_range,
+                                    fd_rate=fd_rate,
+                                    return_corrresult=true)
     # Perform fine acquisition using FFT based method
     # Returns structure containing the fine acquisition results,
     # fine Doppler (`fd_est`) and inital phase estimate (`phi_est`).
@@ -119,10 +110,14 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # by default.
     if fine_acq
         if fine_acq_method == :fft
+            replicalong = definesignal(signal_type, f_s, fine_acq_T;
+                                       skip_noise_generation=true,
+                                       allocate_noise_vectors=false)
             results = fineacquisition(signal, replicalong, prn, fd_course,
                                       n0_est, Val(fine_acq_method); σω=σω,
                                       fd_rate=fd_rate)
         elseif fine_acq_method == :carrier
+            M = floor(Int, fine_acq_T/acquisiton_T)
             results = fineacquisition(signal, replica, prn, fd_course,
                                       n0_est, Val(fine_acq_method); σω=σω,
                                       fd_rate=fd_rate, M=M)
@@ -131,6 +126,9 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
         end
         P = results.P
         if fine_acq_method == :fft
+            # Estimate the C/N₀ and determine the value of the R matrix
+            CN0_est = snr2cn0(SNR_est, replica.t_length)
+            R = [phase_noise_variance(CN0_est, replica.t_length)]
             P[1] = sqrt(R[1])
         else
             R = results.R
@@ -147,6 +145,11 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     end
     # Peform tracking on signal using the initial estimates and
     # uncertainties calculated above.
+    if tracking_T != acquisiton_T 
+        replica = definesignal(signal_type, f_s, tracking_T;
+                               skip_noise_generation=true,
+                               allocate_noise_vectors=false)
+    end
     trackresults = trackprn(signal, replica, prn, results.phi_init,
                             fd_est, n0_est, P, R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
