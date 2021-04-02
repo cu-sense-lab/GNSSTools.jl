@@ -130,12 +130,11 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
             error("Invalid value for argument `fine_acq_method`.")
         end
         P = results.P
-        R = results.R
+        # P[1] = sqrt(R[1])
         phi_init = results.phi_init
         fd_est = results.fd_est
     else
-        P = diagm([σ_phi, 1/replica_t_length, σω]).^2
-        R = [σ_phi].^2
+        P = diagm([sqrt(R[1]), 1/replica_t_length, σω]).^2
         phi_init = 0.
         fd_est = fd_course
         results = FineAcquisitionResults(prn, "N/A", fd_course, fd_rate, n0_est,
