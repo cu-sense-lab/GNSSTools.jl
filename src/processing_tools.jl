@@ -130,7 +130,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
             error("Invalid value for argument `fine_acq_method`.")
         end
         P = results.P
-        # P[1] = sqrt(R[1])
+        P[1] = sqrt(R[1])
         phi_init = results.phi_init
         fd_est = results.fd_est
     else
