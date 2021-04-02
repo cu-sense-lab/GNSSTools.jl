@@ -856,7 +856,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
             n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
         else
             n0_err_filtered = filtercodephase(dll_parms, n0_err, 0)
-            # n0_err_filtered = 0
         end
         # Save to allocated arrays
         code_err_meas[i] = n0_err
