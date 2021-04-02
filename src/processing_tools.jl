@@ -126,6 +126,9 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                                       fd_rate=fd_rate)
         elseif fine_acq_method == :carrier
             M = floor(Int, fine_acq_T/acquisiton_T)
+            if M < 3
+                error("Carrier based fine acquisition requires three iterations or more.")
+            end
             results = fineacquisition(signal, replica, prn, fd_course,
                                       n0_est, Val(fine_acq_method); σω=σω,
                                       fd_rate=fd_rate, M=M)
