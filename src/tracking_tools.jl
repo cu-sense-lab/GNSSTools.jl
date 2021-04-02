@@ -611,7 +611,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 	              fd_init, n0_idx_init, P₀, R; DLL_B=0.1, PLL_B=15, damping=1.4,
 				  fd_rate=0., G=0.2, h₀=1e-21, h₋₂=2e-20, qₐ=1.,
 				  state_num=3, dynamickf=true, cov_mult=1., q_mult=1.,
-				  channel="I")
+				  R_mult=1, channel="I")
     # Assign signal specific parameters
     sig_freq = replica.signal_type.sig_freq
 	if replica.signal_type.include_I
@@ -678,6 +678,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 	else
 		error("Number of states specified must be either 2 or 3.")
 	end
+    R = R_mult .* R
 	x⁻ᵢ = deepcopy(x⁺ᵢ)
 	P⁺ᵢ = cov_mult .* P⁺ᵢ
 	Kᵢ = zeros(size(x⁻ᵢ))

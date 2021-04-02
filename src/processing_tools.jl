@@ -70,7 +70,7 @@ Returns:
 """
 function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  channel="I"; σω=1000., fd_center=0., fd_range=5000.,
-                 cov_mult=1, q_a=1, q_mult=1, dynamickf=true, 
+                 cov_mult=1, q_a=1, q_mult=1, R_mult=1, dynamickf=true, 
                  dll_b=5, state_num=3, fd_rate=0.,  figsize=missing, 
                  saveto=missing, show_plot=true, fine_acq_method=:carrier,
                  return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
@@ -162,7 +162,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                             fd_est, n0_est, P, R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
                             cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult,
-                            h₀=h₀, h₋₂=h₋₂)
+                            h₀=h₀, h₋₂=h₋₂, R_mult=1)
     if show_plot
         plotresults(trackresults; saveto=saveto, figsize=figsize)
     end
