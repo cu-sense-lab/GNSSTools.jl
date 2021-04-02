@@ -379,7 +379,7 @@ calling this method.
 
 Required Arguments:
 
-- `ZP_array`: allocated memory for ZP values to use to get SNR of peak
+- `datafft`: allocated memory for the FFT result of the wiped off `data` vector
 - `data`: vector containin I/Q samples to process
 - `replica`: replica generated signal
 - `i`: current `iᵗʰ` integration time `T`
