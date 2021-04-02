@@ -685,7 +685,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     if ~dynamickf
 	    Kfixed = dkalman(A, C, Q, Diagonal(R))
     end
-    # p = Progress(M, 1, message)
     # Perform code, carrier phase, and Doppler frequency tracking
     for i in 1:M
 		if state_num == 3
@@ -721,7 +720,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         # Measure carrier phase and Doopler frequency errors
 		# NOTE: `dϕ_meas` is considered the measurement error, `δy`
         dϕ_meas = measurephase(zp)  # rad
-        dfd = dϕ_meas/T  # rad/s
 		# Estimate Kalman gain
 		if dynamickf
             Kᵢ = (P⁻ᵢ*C')/(C*P⁻ᵢ*C' + R)
