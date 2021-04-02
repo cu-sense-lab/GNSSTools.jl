@@ -66,14 +66,16 @@ Optional Arguments:
       `replica.t_length`
 - `start_idx::Int`: starting sample in data plus `replica.sample_num` that is
                     used for processing `(default = 1)`
+- `return_corrresult::Bool`: set to `true` to return the 2D correlation result
+                             `(default = true)`
 
 
 Returns:
 
-- `corr_result::Array{Float64,2}`: 2D array to store acquistion result
 - `fd_est::Float64`: Doppler frequency bin corresponding to peak in Hz
 - `n0_est::Int`: index in data where code starts
 - `SNR_est::Float64`: SNR of the correlation peak in dB
+- `corr_result::Array{Float64,2}`: (optional) 2D array to store acquistion result
 """
 function courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
                            prn; fd_center=0., fd_range=5000.,
@@ -85,7 +87,7 @@ function courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
     courseacquisition!(corr_result, data, replica, prn;
                        fd_center=fd_center, fd_range=fd_range,
                        fd_rate=fd_rate, Δfd=Δfd, start_idx=start_idx)
-    # n0_est, fd_est, SNR_est = course_acq_est(corr_result)
+    # Get the code offset in samples, course Doppler, and peak SNR in dB
     n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
                                              Δfd)
     if return_corrresult
