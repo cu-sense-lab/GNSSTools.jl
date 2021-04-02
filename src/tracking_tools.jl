@@ -630,7 +630,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     pfft = plan_fft!(replica.data)  # In-place FFT plan
     # pifft = plan_ifft!(replica.data)  # In-place IFFT plan
     # Compute the spacing between the ZE, ZP, and ZL correlators
-	# d = floor(Int, (data.f_s/chipping_rate - 1)/2)
 	d = floor(Int, data.f_s/chipping_rate/2)
     # Initialize common variables and initial conditions
     T = replica.t_length
@@ -769,7 +768,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         n0 += (n0_err_filtered + f_code_d*T + 0.5*f_code_dd*T^2)%code_length
 		# Propagate x⁺ᵢ to next time step
 		x⁻ᵢ = A*x⁺ᵢ
-        # next!(p)
     end
 	FFTW.set_num_threads(nthreads())
     # Return `TrackResults` struct
