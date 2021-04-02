@@ -129,6 +129,7 @@ Kalman Filter Parameters:
 - `P::Array{Float64,2}`: state uncertainties per time step
 - `x::Array{Float64,2}`: filted state estimates per time step
 - `K::Array{Float64,2}`: KF gain per time step
+- `R::Array{Float64,1}`: carrier phase measurement variance 
 """
 struct TrackResults{T1,T2}
     prn::Int64
@@ -174,6 +175,7 @@ struct TrackResults{T1,T2}
     P::Array{Float64,2}
     x::Array{Float64,2}
 	K::Array{Float64,2}
+    R::Array{Float64,1}
 end
 
 
@@ -914,7 +916,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, n0s, dphi_measured, phi,
                         delta_fd, fds, ZP, SNR, data_bits, code_length,
-                        Q, A, C, P, x, K)
+                        Q, A, C, P, x, K, R)
 end
 
 
