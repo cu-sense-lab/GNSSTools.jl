@@ -161,6 +161,7 @@ struct TrackResults{T1,T2}
     code_phase_filt::Array{Float64,1}
     n0::Array{Float64,1}
     dphi_meas::Array{Float64,1}
+    dphi_filt::Array{Float64,1}
     phi::Array{Float64,1}
     delta_fd::Array{Float64,1}
     fds::Array{Float64,1}
@@ -655,6 +656,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     code_phase_filt = Array{Float64}(undef, M)
     n0s = Array{Float64}(undef, M)
     dphi_measured = Array{Float64}(undef, M)
+    dphi_filtered = Array{Float64}(undef, M)
     phi = Array{Float64}(undef, M)
     delta_fd = Array{Float64}(undef, M)
     fds = Array{Float64}(undef, M)
@@ -743,7 +745,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         code_phase_meas[i] = (n0 + n0_err)%code_length
         code_phase_filt[i] = (n0 + n0_err_filtered)%code_length
         n0s[i] = n0
-        dphi_measured[i] = correction[1]
+        dphi_measured[i] = dϕ_meas
+        dphi_filtered[i] = correction[1]
         phi[i] = x⁺ᵢ[1]
         delta_fd[i] = correction[2]/2π
         fds[i] = x⁺ᵢ[2]/2π - f_if
@@ -795,8 +798,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                         f_if, data_start_time, site_loc_lla,
                         float(n0_idx_init), n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
-                        code_phase_filt, n0s, dphi_measured, phi,
-                        delta_fd, fds, ZP, SNR, data_bits, code_length,
+                        code_phase_filt, n0s, dphi_measured, dphi_filtered,
+                        phi, delta_fd, fds, ZP, SNR, data_bits, code_length,
                         Q, A, C, P, x, K, R)
 end
 
@@ -849,7 +852,8 @@ function plotresults(results::TrackResults; saveto=missing,
     legend()
     # Plot filtered and measured phase errors
     subplot2grid((3,2), (0,1), colspan=1, rowspan=1)
-    plot(results.t, results.dphi_meas.*180 ./π, "k.", label="Measured Δϕ")
+    plot(results.t, results.dphi_meas.*(180/π), "k.", label="Measured Δϕ")
+    plot(results.t, results.dphi_filt.*(180/π), "b-", label="Filtered Δϕ")
     xlabel("Time (s)")
     ylabel("ϕ (degrees)")
     title("PLL Tracking")
