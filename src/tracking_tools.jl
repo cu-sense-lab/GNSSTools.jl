@@ -706,7 +706,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         definesignal!(replica;
                       prn=prn, f_d=f_d,
                       fd_rate=fd_rate, phi=0., f_if=0.,
-                    #   code_start_idx=1,
                       code_start_idx=code_start_idx,
                       isreplica=true, noexp=true)
         # Generate prompt correlator
