@@ -168,7 +168,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
     # Number of bits representing `data`
     nADC = data.nADC
     # Number of Doppler bins
-    doppler_bin_num = Int(fd_range/Δfd*2+1)
+    doppler_bin_num = floor(Int, 2*fd_range/Δfd+1)
     @inbounds for i in 1:doppler_bin_num
         # Calculate Doppler frequency for `i` Doppler bin
         f_d = (fd_center-fd_range) + (i-1)*Δfd
