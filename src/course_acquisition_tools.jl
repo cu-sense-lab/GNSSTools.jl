@@ -23,12 +23,13 @@ Returns:
 - `Array{Float64,2}`: 2D array to store acquistion result
 """
 function gencorrresult(fd_range, Δfd, sample_num; iszeros=false)
+    doppler_bin_num = round(Int, 2*fd_range/Δfd+1)
     if iszeros
         # Initialize with zeros
-        return zeros(Float64, Int(2*fd_range/Δfd+1), sample_num)
+        return zeros(Float64, doppler_bin_num, sample_num)
     else
         # Allocate space, but don't initialize elements to a value
-       return Array{Float64}(undef, Int(2*fd_range/Δfd+1), sample_num)
+       return Array{Float64}(undef, doppler_bin_num, sample_num)
     end
 end
 
