@@ -75,7 +75,7 @@ function definesignal(signal_type::SignalType, f_s, t_length; prn=1,
                       receiver_h_parms=h_parms_tcxo[1])
     # Obtain sample number based off the sampling frequency and duration of
     # signal
-    sample_num = Int(f_s * t_length)
+    sample_num = floor(Int, f_s*t_length)
     # Generate time vector
     t = calctvector(sample_num, f_s)
     # Calculate code chipping rates with Doppler applied for all codes on
@@ -487,7 +487,7 @@ function definesignal(prn::Vector{Int}, signal_type, f_s, t_length;
     B_I = maximuma(xor.(1, ismissing.(B_Is)))
     B_Q = maximuma(xor.(1, ismissing.(B_Qs)))
     B = max(B_I, B_Q)
-    sample_num = Int(f_s * t_length)
+    sample_num = floor(Int, f_s*t_length)
     # Generate time vector
     t = calctvector(sample_num, f_s)
     data = Array{Complex{Float64}}(undef, sample_num)
