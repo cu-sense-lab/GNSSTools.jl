@@ -51,7 +51,7 @@ Optional Arguments:
 - `return_corrresult`: flag, if set to true, will return the course correlation
                        result `(default = false)`
 - `use_fine_acq`: flag to use a fine acquisition method `(default = true)`
-- `acquisiton_T`: integration time used for course acquisition in 
+- `acquisition_T`: integration time used for course acquisition in 
                   seconds `(default = 1e-3)`
 - `fine_acq_T`: integration time used for fine acquisition in
                 seconds `(default = 10e-3)`
@@ -74,7 +74,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  dll_b=5, state_num=3, fd_rate=0.,  figsize=missing, 
                  saveto=missing, show_plot=true, fine_acq_method=:carrier,
                  return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
-                 h₀=1e-21, h₋₂=2e-20, acquisiton_T=1e-3, fine_acq_T=10e-3, 
+                 h₀=1e-21, h₋₂=2e-20, acquisition_T=1e-3, fine_acq_T=10e-3, 
                  tracking_T=1e-3)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
@@ -90,7 +90,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     else
         error("Invalid channel `$(channel)`.")
     end
-    replica = definesignal(signal_type, f_s, acquisiton_T;
+    replica = definesignal(signal_type, f_s, acquisition_T;
                            skip_noise_generation=true,
                            allocate_noise_vectors=false)
     # Perform course acquisition
@@ -125,7 +125,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                                       n0_est, Val(fine_acq_method); σω=σω,
                                       fd_rate=fd_rate)
         elseif fine_acq_method == :carrier
-            M = floor(Int, fine_acq_T/acquisiton_T)
+            M = floor(Int, fine_acq_T/acquisition_T)
             if M < 3
                 error("Carrier based fine acquisition requires three iterations or more.")
             end
@@ -153,7 +153,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     end
     # Peform tracking on signal using the initial estimates and
     # uncertainties calculated above.
-    if tracking_T != acquisiton_T 
+    if tracking_T != acquisition_T 
         replica = definesignal(signal_type, f_s, tracking_T;
                                skip_noise_generation=true,
                                allocate_noise_vectors=false)
