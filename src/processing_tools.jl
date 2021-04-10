@@ -144,11 +144,12 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
         phi_init = results.phi_init
         fd_est = results.fd_est
     else
-        P = diagm([sqrt(R[1]), 1/replica_t_length, σω]).^2
+        P = diagm([sqrt(σᵩ²), 1/acquisition_T, σω]).^2
+        R = [σᵩ²]
         phi_init = 0.
         fd_est = fd_course
         results = FineAcquisitionResults(prn, "N/A", fd_course, fd_rate, n0_est,
-                                         replica_t_length, 0., fd_est, phi_init,
+                                         acquisition_T, 0., fd_est, phi_init,
                                          "N/A", P, R)
     end
     # Peform tracking on signal using the initial estimates and
