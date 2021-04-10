@@ -404,7 +404,7 @@ function define_l5_code_type(t_length=missing; channel="both",
 	    end
 		if channel == "I"
 			signal_type = definesignaltype(I_codes, sig_freq, "I"; name="L5")
-		else
+		else  # means that `channel` == "both"
 			Q_codes = definecodetype([copy_dictionary(l5q_codes, prns), nh20],
 									 [L5_chipping_rate, nh_chipping_rate])
 			signal_type = definesignaltype(I_codes, Q_codes, sig_freq; name="L5")
