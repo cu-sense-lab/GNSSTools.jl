@@ -236,11 +236,12 @@ function course_acq_est(corr_result, fd_center, fd_range, Δfd)
     n0_est = max_idx[2]
     pk_val = corr_result[max_idx]
     # Compute course acquisition SNR
-    noise_val = sum(corr_result[max_idx[1],:])
     PS = pk_val
     N, M = size(corr_result)
-    PN = (noise_val - pk_val)/(M - 1)
-    # PN = (noise_val - PS)/size(corr_result)[2]
+    # noise_val = sum(corr_result[max_idx[1],:])
+    # PN = (noise_val - pk_val)/(M - 1)
+    noise_val = sum(corr_result)
+    PN = (noise_val - pk_val)/(N*M - 1)
     SNR_est = 10*log10(sqrt(PS/PN))
     return (n0_est, fd_est, SNR_est)
 end
