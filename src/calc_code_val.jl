@@ -58,12 +58,12 @@ function calc_code_val(signal::ReplicaSignal, t)
     prn = signal.prn
     # I channel
     I_val = 0
-    # If I channel codes exist, XOR the value of each layer of code at a given
+    # If I channel codes exist, XNOR the value of each layer of code at a given
     # `t` with the value of `I_val`
     if signal.signal_type.include_I
         I_codes = signal.signal_type.I_codes
         # Determine whether databits are included in I channel and whether
-        # `include_databits_I` flag is true. If so, databits are XORed against
+        # `include_databits_I` flag is true. If so, databits are XNORed against
         # the value of `I_val`. If this flag is set to false or if
         # `signal.isreplica` is set to true, no databits are included.
         if I_codes.databits
@@ -75,13 +75,13 @@ function calc_code_val(signal::ReplicaSignal, t)
         else
             code_num = I_codes.code_num
         end
-        # Loop through I channel codes and XORed current value at time `t` to
+        # Loop through I channel codes and XNORed current value at time `t` to
         # value of `I_val`
         for i in 1:code_num
             code_idx = calccodeidx(signal.init_code_phases_I[i],
                                    signal.f_code_d_I[i], signal.f_code_dd_I[i],
                                    t, I_codes.code_lengths[i])
-            I_val = xor(I_val, I_codes.codes[i][prn][code_idx])
+            I_val = ~xor(I_val, I_codes.codes[i][prn][code_idx])
         end
         # Change from 0:1 state to -1:1 state. This prevensts divide over zero
         # error in `atan` function at the end of this function.
@@ -91,12 +91,12 @@ function calc_code_val(signal::ReplicaSignal, t)
     end
     # Q channel
     Q_val = 0
-    # If Q channel codes exist, XOR the value of each layer of code at a given
+    # If Q channel codes exist, XNOR the value of each layer of code at a given
     # `t` with the value of `Q_val`
     if signal.signal_type.include_Q
         Q_codes = signal.signal_type.Q_codes
         # Determine whether databits are included in Q channel and whether
-        # `include_databits_Q` flag is true. If so, databits are XORed against
+        # `include_databits_Q` flag is true. If so, databits are XNORed against
         # the value of `Q_val`. If this flag is set to false or if
         # `signal.isreplica` is set to true, no databits are included.
         if Q_codes.databits
@@ -108,13 +108,13 @@ function calc_code_val(signal::ReplicaSignal, t)
         else
             code_num = Q_codes.code_num
         end
-        # Loop through Q channel codes and XORed current value at time `t` to
+        # Loop through Q channel codes and XNORed current value at time `t` to
         # value of `Q_val`
         for i in 1:code_num
             code_idx = calccodeidx(signal.init_code_phases_Q[i],
                                    signal.f_code_d_Q[i], signal.f_code_dd_Q[i],
                                    t, Q_codes.code_lengths[i])
-            Q_val = xor(Q_val, Q_codes.codes[i][prn][code_idx])
+            Q_val = ~xor(Q_val, Q_codes.codes[i][prn][code_idx])
         end
         # Change from 0:1 state to -1:1 state. This prevensts divide over zero
         # error in `atan` function at the end of this function.
@@ -204,12 +204,12 @@ function calc_code_val(signal::ReplicaSignal, t, code_chips_I, code_chips_Q)
     prn = signal.prn
     # I channel
     I_val = 0
-    # If I channel codes exist, XOR the value of each layer of code at a given
+    # If I channel codes exist, XNOR the value of each layer of code at a given
     # `t` with the value of `I_val`
     if signal.signal_type.include_I
         I_codes = signal.signal_type.I_codes
         # Determine whether databits are included in I channel and whether
-        # `include_databits_I` flag is true. If so, databits are XORed against
+        # `include_databits_I` flag is true. If so, databits are XNORed against
         # the value of `I_val`. If this flag is set to false or if
         # `signal.isreplica` is set to true, no databits are included.
         if I_codes.databits
@@ -221,12 +221,12 @@ function calc_code_val(signal::ReplicaSignal, t, code_chips_I, code_chips_Q)
         else
             code_num = I_codes.code_num
         end
-        # Loop through I channel codes and XORed current value at time `t` to
+        # Loop through I channel codes and XNORed current value at time `t` to
         # value of `I_val`
         for i in 1:code_num
             code_chip = code_chips_I[i](t)
             code_idx = Int(floor(code_chip%signal.signal_type.I_codes.code_lengths[i])) + 1
-            I_val = xor(I_val, I_codes.codes[i][prn][code_idx])
+            I_val = ~xor(I_val, I_codes.codes[i][prn][code_idx])
         end
         # Change from 0:1 state to -1:1 state. This prevensts divide over zero
         # error in `atan` function at the end of this function.
@@ -236,12 +236,12 @@ function calc_code_val(signal::ReplicaSignal, t, code_chips_I, code_chips_Q)
     end
     # Q channel
     Q_val = 0
-    # If Q channel codes exist, XOR the value of each layer of code at a given
+    # If Q channel codes exist, XNOR the value of each layer of code at a given
     # `t` with the value of `Q_val`
     if signal.signal_type.include_Q
         Q_codes = signal.signal_type.Q_codes
         # Determine whether databits are included in Q channel and whether
-        # `include_databits_Q` flag is true. If so, databits are XORed against
+        # `include_databits_Q` flag is true. If so, databits are XNORed against
         # the value of `Q_val`. If this flag is set to false or if
         # `signal.isreplica` is set to true, no databits are included.
         if Q_codes.databits
@@ -253,12 +253,12 @@ function calc_code_val(signal::ReplicaSignal, t, code_chips_I, code_chips_Q)
         else
             code_num = Q_codes.code_num
         end
-        # Loop through Q channel codes and XORed current value at time `t` to
+        # Loop through Q channel codes and XNORed current value at time `t` to
         # value of `Q_val`
         for i in 1:code_num
             code_chip = code_chips_Q[i](t)
             code_idx = Int(floor(code_chip%signal.signal_type.Q_codes.code_lengths[i])) + 1
-            Q_val = xor(Q_val, Q_codes.codes[i][prn][code_idx])
+            Q_val = ~xor(Q_val, Q_codes.codes[i][prn][code_idx])
         end
         # Change from 0:1 state to -1:1 state. This prevensts divide over zero
         # error in `atan` function at the end of this function.
