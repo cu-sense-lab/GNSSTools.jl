@@ -107,7 +107,7 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
         B = signal.signal_type.B_Q
     elseif signal.signal_type.include_I && ~signal.signal_type.include_Q
         B = signal.signal_type.B_I
-    else  # assume both channels are included and determine highes bandwidth
+    else  # assume both channels are included and determine highest bandwidth
         B = max(signal.signal_type.B_I, signal.signal_type.B_Q)
     end
     nADC = signal.nADC
@@ -117,7 +117,7 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
     include_adc = signal.include_adc
     thermal_noise = signal.thermal_noise
     phase_noise = signal.phase_noise
-    adc_scale = 2^(nADC-1)-1
+    adc_scale = 2^(nADC-1)
     carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)
     noise_amp = sqrt(k*B*Tsys)
     N = floor(Int, t_length*f_s)
