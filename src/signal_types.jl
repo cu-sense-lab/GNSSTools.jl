@@ -287,9 +287,9 @@ Returns:
 function definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
                           name="custom")
     # Determine maximum bandwidth for I channel codes
-    B_I = maximum(I_codes.chipping_rates)
+    B_I = 2*maximum(I_codes.chipping_rates)
     # Determine maximum bandwidth for Q channel codes
-    B_Q = maximum(Q_codes.chipping_rates)
+    B_Q = 2*maximum(Q_codes.chipping_rates)
     return SignalType(name, I_codes, Q_codes, sig_freq, B_I, B_Q, true, true)
 end
 
@@ -320,7 +320,7 @@ Returns:
 """
 function definesignaltype(codes::CodeType, sig_freq, channel="I"; name="custom")
     # Determine maximum bandwidth for codes
-    B = maximum(codes.chipping_rates)
+    B = 2*maximum(codes.chipping_rates)
     if channel == "both"
         return SignalType(name, codes, codes, sig_freq, B, B, true, true)
     elseif channel == "I"
