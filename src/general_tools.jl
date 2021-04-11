@@ -807,3 +807,34 @@ function phase_noise_variance(CN0, T)
 	CN0_linear = 10^(CN0/10)
 	return (1 + 1/(2*T*CN0_linear)) / (2*T*CN0_linear)
 end
+
+"""
+	make3dplot(corr_result, fd_range, fd_center, Δfd)
+
+
+Make a 3D plot of a correlation result 2D array.
+
+
+Required Arguments: 
+
+- `corr_result`: the output of `courseacquisition` or `courseacquisition!`
+- `fd_range`: a value that describes the ± Doppler range of the `corr_result`
+              array (value is in Hz)
+- `fd_center`: the Doppler at the middle index of the `corr_result` row axis
+               (value is in Hz)
+- `Δf`: the Doppler bin width in Hz
+"""
+function make3dplot(corr_result, fd_range, fd_center, Δf)
+	fig = figure()
+	ax = Axes3D(fig)
+	fd_bins = Array(-fd_range+fd_center:Δf:fd_range+fd_center)
+	x, y = meshgrid(Array(1:size(corr_result)[2]), fd_bins./1000.)
+	surf(x, y, corr_result)
+	max_val_idx = argmax(collect(Iterators.flatten(corr_result)))
+	scatter3D(collect(Iterators.flatten(x))[max_val_idx],
+			  collect(Iterators.flatten(y))[max_val_idx],
+			  collect(Iterators.flatten(corr_result))[max_val_idx],
+			  c="r")
+	xlabel("Samples")
+    ylabel("Doppler (kHz)")
+end
