@@ -432,10 +432,10 @@ function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
     zp = replica.data[zp_idx]/N
     zl = replica.data[zl_idx]/N
     # Calculate SNR
-    # PS = abs2(replica.data[1])
     PS = abs2(replica.data[1])
     PN = (sum(abs2, replica.data) - PS) / (N - 1)
-    SNR = 10*log10(sqrt(PS/PN))
+    # SNR = 10*log10(sqrt(PS/PN))
+    SNR = 10*log10(PS/PN)
     return (ze, zp, zl, SNR)
 end
 
