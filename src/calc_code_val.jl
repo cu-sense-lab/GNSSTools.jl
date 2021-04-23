@@ -21,7 +21,7 @@ function binary2OneOrNegativeOne(val)
     elseif val == 0
         return -1
     else
-        error("Value must be either 0 or 1.")
+        error("Value $(val) must be either 0 or 1.")
     end
 end
 
