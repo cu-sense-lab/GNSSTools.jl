@@ -410,6 +410,8 @@ function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
 	                          fd_rate, ϕ, d, pfft)
     datasegment = view(data.data, (i-1)*N+1:i*N)
     ts = view(data.t, 1:N)
+    # Perform carrier wipeoff of intemediate and Doppler frequencies, Doppler
+    # frequency rate, and carrier phase
     @inbounds for j in 1:N
         datafft[j] = datasegment[j]*cis(-(2π*(f_if+f_d+0.5*fd_rate*ts[j])*ts[j]+ϕ))
     end
