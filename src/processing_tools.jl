@@ -1,10 +1,12 @@
 """
-    process(signal::GNSSSignal, signal_type::SignalType, prn, channel="I";
-            σω=1000., fd_center=0., fd_range=5000., RLM=10,
-            replica_t_length=1e-3, cov_mult=1, q_a=1, q_mult=1, dynamickf=true,
-            dll_b=5, state_num=3, fd_rate=0., figsize=missing, saveto=missing,
-            show_plot=true, fine_acq_method=:carrier, M=10,
-            return_corrresult=false,  fine_acq=true, σ_phi=π/2)
+    process(signal::GNSSSignal, signal_type::SignalType, prn,
+            channel="I"; σω=1000., fd_center=0., fd_range=5000.,
+            cov_mult=1, q_a=1, q_mult=1, R_mult=1, dynamickf=true, 
+            dll_b=5, state_num=3, fd_rate=0.,  figsize=missing, 
+            saveto=missing, show_plot=true, fine_acq_method=:carrier,
+            return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
+            h₀=1e-21, h₋₂=2e-20, acquisition_T=1e-3, fine_acq_T=10e-3, 
+            tracking_T=1e-3, M=1)
 
 
 Performs course acquisition and tracking on a `GNSSSignal` (either
@@ -57,6 +59,8 @@ Optional Arguments:
                 seconds `(default = 10e-3)`
 - `tracking_T`: integration time used for code phase and carrier tracking in
                 seconds `(default = 1e-3)`
+- `M`: the number of coherent inetegrations to add non-coherently during
+       course acquisition `(default = 1)`
 
 
 Returns:
@@ -75,7 +79,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  saveto=missing, show_plot=true, fine_acq_method=:carrier,
                  return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
                  h₀=1e-21, h₋₂=2e-20, acquisition_T=1e-3, fine_acq_T=10e-3, 
-                 tracking_T=1e-3)
+                 tracking_T=1e-3, M=1)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
@@ -101,7 +105,8 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                                     fd_center=fd_center, 
                                     fd_range=fd_range,
                                     fd_rate=fd_rate,
-                                    return_corrresult=true)
+                                    return_corrresult=true,
+                                    M=M)
     # Estimate the C/N₀ and determine the value of the R matrix
     # since the estimate from the FFT based fine acquisition method
     # is always too large to use. This will only be used if the FFT

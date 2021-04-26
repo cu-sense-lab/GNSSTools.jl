@@ -36,14 +36,14 @@ end
 
 """
     courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
-                      prn; fd_center=0., fd_range=5000.,
+                      prn; fd_center=0., fd_range=5000., M=1,
                       fd_rate=0., Δfd=1/replica.t_length,
                       threads=nthreads(), operation="replace",
                       start_idx=1)
 
 
-Initializes `corr_result` array and runs `courseacquisition!` method. Returns
-`corr_result` and the course acquired code phase, Doppler frequency and SNR.
+Performs course acquisition using an integration time specified by
+`replica.t_length`, and adds `M` coherent integrations non-coherently.
 
 
 Required Arguments:
@@ -60,6 +60,8 @@ Optional Arguments:
 - `fd_center::Float64`: center Doppler frequency bin value in Hz `(default = 0Hz)`
 - `fd_range::Float64`: the range of Doppler frequencies in Hz to search plus and
                        minus the center Doppler frequency bin `(default = 5000Hz)`
+- `M::Int`: the number of coherent integrations to add together. This is
+            non-coherent integration `(default = 1)`
 - `fd_rate::Float64`: the Doppler frequency rate in Hz/s `(default = 0Hz)`
 - `Δfd::Float64`: the Doppler bin width in Hz `(default = 1/replica.t_length)`
     * usually determined by the length of the integration time
@@ -79,15 +81,35 @@ Returns:
 - `corr_result::Array{Float64,2}`: (optional) 2D array to store acquistion result
 """
 function courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
-                           prn; fd_center=0., fd_range=5000.,
+                           prn; fd_center=0., fd_range=5000., M=1,
                            fd_rate=0., Δfd=1/replica.t_length,
                            start_idx=1, return_corrresult=false)
-    # Allocate space for correlation result
-    corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
-    # Perform course acquisition
-    courseacquisition!(corr_result, data, replica, prn;
-                       fd_center=fd_center, fd_range=fd_range,
-                       fd_rate=fd_rate, Δfd=Δfd, start_idx=start_idx)
+    # Perform coherent intefration where the integration time is decided based
+    # off the length of `replica.t_length`
+    if M == 1
+        # Allocate space for correlation result
+        corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
+        # Perform course acquisition
+        courseacquisition!(corr_result, data, replica, prn;
+                           fd_center=fd_center, fd_range=fd_range,
+                           fd_rate=fd_rate, Δfd=Δfd, start_idx=start_idx,
+                           operation="replace")
+    # Perform non-coherent integration where the integration time is based off
+    # `replica.t_length` and `M` coherent integrations are added together
+    else
+        @assert M > 1
+        # Allocate space for correlation result
+        corr_result = gencorrresult(fd_range, Δfd, replica.sample_num, 
+                                    iszeros=true)
+        # Perform course acquisition
+        for i in 1:M
+            idx = start_idx + (i-1)*replica.sample_num
+            courseacquisition!(corr_result, data, replica, prn;
+                               fd_center=fd_center, fd_range=fd_range,
+                               fd_rate=fd_rate, Δfd=Δfd, start_idx=idx,
+                               operation="add")
+        end
+    end
     # Get the code offset in samples, course Doppler, and peak SNR in dB
     n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
                                              Δfd)
