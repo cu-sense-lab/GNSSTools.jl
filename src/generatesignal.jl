@@ -381,6 +381,7 @@ function generatereplica!(signal::ReplicaSignal)
     fd_rate = signal.fd_rate
     ϕ = signal.phi
     noexp = signal.noexp
+    signal.isreplica = true
     @threads for i in 1:signal.sample_num
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
@@ -395,5 +396,6 @@ function generatereplica!(signal::ReplicaSignal)
             @inbounds signal.data[i] = cis(2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ + code_ϕ)
         end
     end
+    signal.isreplica = false
     return signal
 end
