@@ -246,8 +246,9 @@ Required Arguments:
 - `satellite_per_plane`: number of satellites per plane
 - `incl`: orbit inclination in degrees
 - `t_range`: vector of time in seconds
-- `obs_lla`: the receiver location in lat, long, height `(default = missing)`
+- `obs_llas`: the receiver location in lat, long, height `(default = missing)`
     * format `(latitude, longitude, height)` in (deg, deg, meters)
+    * or `(Array(latitudes), Array(longitudes), Array(heights))`
 - `sig_freq`: carrier frequency in Hz
 
 
@@ -289,7 +290,7 @@ Returns:
 - `doppler_rate_bounds`: bounds of the Doppler rate histgram for the given p-val
 """
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
-                              obs_lla, sig_freq; eop=get_eop(),
+                              obs_llas, sig_freq; eop=get_eop(),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
                               t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
                               bins=150, heatmap_bins=[bins, bins], a_lim=1.25,
@@ -302,79 +303,104 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         else
             fig = figure(figsize=figsize)
         end
-        fig, ax1 = make_subplot(fig, 2, 2, 1; projection3d=true)
-    else
-        ax1 = missing
     end
-    # incl = deg2rad(incl)
-    constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
-                                         t_range; eop=eop, show_plot=show_plot,
-                                         Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
-                                         obs_lla=obs_lla, ΔΩ=ΔΩ, ax=ax1, a_lim=a_lim,
-                                         print_steps=print_steps, aspect=aspect,
-                                         Δf_per_plane=Δf_per_plane)
-    obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
-                              obs_lla[3])
-    N = length(t_range)*plane_num*satellite_per_plane
-    ts = Array{Float64}(undef, N)
-    ids = Array{Int}(undef, N)
-    dopplers = Array{Float64}(undef, N)
-    elevations = Array{Float64}(undef, N)
-    k = 1
-    j = 1
-    for satellite in constellation.satellites
-        for i in 1:length(satellite.t)
-            r = view(satellite.r_ecef, i, :)
-            sat_range, azimuth, elevation = calcelevation(r, obs_lla)
-            if elevation >= min_elevation
-                v = view(satellite.v_ecef, i, :)
-                dopplers[k] = calcdoppler(r, v, obs_ecef, sig_freq)
-                elevations[k] = elevation
-                ts[k] = satellite.t[i]
-                ids[k] = satellite.id
+    M  = min(length(obs_llas[1]), length(obs_llas[2]), length(obs_llas[3]))
+    dopplers_ = []
+    doppler_means_ = []
+    doppler_rates_ = []
+    doppler_rate_ts_ = []
+    if print_steps && (M > 1)
+        progress = Progress(Int(plane_num*satellite_per_plane), 1,
+                     "Calculting Doppler Distribution...")
+    end
+    for i in 1:M
+        obs_lla = (obs_llas[1][i], obs_llas[2][i], obs_llas[3][i])
+        if print_steps && (M > 1)
+            constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
+                                                t_range; eop=eop, show_plot=false,
+                                                Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
+                                                obs_lla=obs_lla, ΔΩ=ΔΩ, a_lim=a_lim,
+                                                print_steps=false, aspect=aspect,
+                                                Δf_per_plane=Δf_per_plane)
+        else
+            constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
+                                                t_range; eop=eop, show_plot=false,
+                                                Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
+                                                obs_lla=obs_lla, ΔΩ=ΔΩ, a_lim=a_lim,
+                                                print_steps=print_steps, aspect=aspect,
+                                                Δf_per_plane=Δf_per_plane)
+        end
+        obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
+                                obs_lla[3])
+        N = length(t_range)*plane_num*satellite_per_plane
+        ts = Array{Float64}(undef, N)
+        ids = Array{Int}(undef, N)
+        dopplers = Array{Float64}(undef, N)
+        elevations = Array{Float64}(undef, N)
+        k = 1
+        j = 1
+        for satellite in constellation.satellites
+            for i in 1:length(satellite.t)
+                r = view(satellite.r_ecef, i, :)
+                sat_range, azimuth, elevation = calcelevation(r, obs_lla)
+                if elevation >= min_elevation
+                    v = view(satellite.v_ecef, i, :)
+                    dopplers[k] = calcdoppler(r, v, obs_ecef, sig_freq)
+                    elevations[k] = elevation
+                    ts[k] = satellite.t[i]
+                    ids[k] = satellite.id
+                    k += 1
+                end
+            end
+        end
+        dopplers = dopplers[1:k-1]
+        elevations = elevations[1:k-1]
+        doppler_means = Array{Float64}(undef, N)
+        doppler_rates = Array{Float64}(undef, N)
+        doppler_rate_ts = Array{Float64}(undef, N)
+        ts = ts[1:k-1]
+        ts_diff = diff(ts).*(60*60*24)
+        Δt = t_range[2] - t_range[1]
+        ids = ids[1:k-1]
+        ids_diff = diff(ids)
+        k = 1
+        for i in 1:length(ts_diff)
+            if (ts_diff[i] < (Δt + 0.001)) && (ids_diff[i] == 0)
+                doppler_means[k] = (dopplers[i+1] + dopplers[i])/2
+                doppler_rates[k] = (dopplers[i+1] - dopplers[i])/Δt
+                doppler_rate_ts[k] = (ts[i+1] + ts[i])/2
                 k += 1
             end
         end
-    end
-    dopplers = dopplers[1:k-1]
-    elevations = elevations[1:k-1]
-    doppler_means = Array{Float64}(undef, N)
-    doppler_rates = Array{Float64}(undef, N)
-    doppler_rate_ts = Array{Float64}(undef, N)
-    ts = ts[1:k-1]
-    ts_diff = diff(ts).*(60*60*24)
-    Δt = t_range[2] - t_range[1]
-    ids = ids[1:k-1]
-    ids_diff = diff(ids)
-    k = 1
-    for i in 1:length(ts_diff)
-        if (ts_diff[i] < (Δt + 0.001)) && (ids_diff[i] == 0)
-            doppler_means[k] = (dopplers[i+1] + dopplers[i])/2
-            doppler_rates[k] = (dopplers[i+1] - dopplers[i])/Δt
-            doppler_rate_ts[k] = (ts[i+1] + ts[i])/2
-            k += 1
+        if i == 1
+            dopplers_ = dopplers
+            doppler_means_ = deepcopy(doppler_means[1:k-1])
+            doppler_rates_ = deepcopy(doppler_rates[1:k-1])
+            doppler_rate_ts_ = deepcopy(doppler_rate_ts[1:k-1])
+        else
+            dopplers_ = [dopplers_; dopplers]
+            doppler_means_ = [doppler_means_; doppler_means[1:k-1]]
+            doppler_rates_ = [doppler_rates_; doppler_rates[1:k-1]]
+            doppler_rate_ts_ = [doppler_rate_ts_; doppler_rate_ts[1:k-1]]
+        end
+        if print_steps && (M > 1)
+            next!(progress)
         end
     end
-    doppler_means = doppler_means[1:k-1]
-    doppler_rates = doppler_rates[1:k-1]
-    doppler_rate_ts = doppler_rate_ts[1:k-1]
     # Get histograms
-    doppler_hist = normalize(fit(Histogram, dopplers, nbins=bins),
+    doppler_hist = normalize(fit(Histogram, dopplers_, nbins=bins),
                              mode=:probability)
-    # doppler_hist = fit(Histogram, dopplers, nbins=bins)
-    doppler_rate_hist = normalize(fit(Histogram, doppler_rates, nbins=bins),
+    doppler_rate_hist = normalize(fit(Histogram, doppler_rates_, nbins=bins),
                                   mode=:probability)
-    # doppler_rate_hist = fit(Histogram, doppler_rates, nbins=bins)
     doppler_bounds = get_distribution_bounds(doppler_hist, p, :center)
     doppler_rate_bounds = get_distribution_bounds(doppler_rate_hist, p, :right)
     if show_plot
-        fig, ax2 = make_subplot(fig, 2, 2, 2; aspect="auto")
-        hist2D(doppler_means./1000, doppler_rates, bins=heatmap_bins)
+        fig, ax2 = make_subplot(fig, 3, 1, 1; aspect="auto")
+        hist2D(doppler_means_./1000, doppler_rates_, bins=heatmap_bins)
         xlabel("Doppler (kHz)")
         ylabel("Doppler Rate (Hz/s)")
         colorbar()
-        fig, ax3 = make_subplot(fig, 2, 2, 3; aspect="auto")
-        # hist(doppler_means./1000, bins=bins, density=true)
+        fig, ax3 = make_subplot(fig, 3, 1, 2; aspect="auto")
         hist(Array(doppler_hist.edges[1])[2:end]./1000,
              Array(doppler_hist.edges[1])./1000,
              weights=doppler_hist.weights);
@@ -388,8 +414,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         end
         xlabel("Doppler (kHz)")
         ylabel("Prob")
-        fig, ax4 = make_subplot(fig, 2, 2, 4; aspect="auto")
-        # hist(doppler_rates, bins=bins, density=true)
+        fig, ax4 = make_subplot(fig, 3, 1, 3; aspect="auto")
         hist(Array(doppler_rate_hist.edges[1])[2:end],
              Array(doppler_rate_hist.edges[1]),
              weights=doppler_rate_hist.weights);
