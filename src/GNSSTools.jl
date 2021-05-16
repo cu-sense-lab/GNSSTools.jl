@@ -71,8 +71,7 @@ module GNSSTools
     export nh10
     export nh20
     export l5i_codes
-    export definesignal
-    export definesignal!
+    export definesignal, definesignal!, definereplica, definereplica!
     export generatesignal!, generatereplica!
     export fft_correlate
     export GNSSData
