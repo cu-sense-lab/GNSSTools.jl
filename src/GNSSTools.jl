@@ -94,7 +94,7 @@ module GNSSTools
     export meshgrid
     export data_info_from_name
     export initorbitinfo
-    export calcdoppler
+    export calcdoppler, calcdopplerrate
     export getGPSSatnums
     export getTLEs
     export GPSData
