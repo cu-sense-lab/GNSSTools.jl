@@ -124,7 +124,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # by default.
     if use_fine_acq
         if fine_acq_method == :fft
-            replicalong = definesignal(signal_type, f_s, fine_acq_T)
+            replicalong = definereplica(signal_type, f_s, fine_acq_T)
             # replicalong = definesignal(signal_type, f_s, fine_acq_T;
             #                            skip_noise_generation=true,
             #                            allocate_noise_vectors=false)
@@ -162,7 +162,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # Peform tracking on signal using the initial estimates and
     # uncertainties calculated above.
     if tracking_T != acquisition_T 
-        replica = definesignal(signal_type, f_s, tracking_T)
+        replica = definereplica(signal_type, f_s, tracking_T)
         # replica = definesignal(signal_type, f_s, tracking_T;
         #                        skip_noise_generation=true,
         #                        allocate_noise_vectors=false)
