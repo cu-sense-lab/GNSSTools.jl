@@ -418,6 +418,7 @@ function calcelevation(sat_ecef, obs_lla)
     az = atan(enu[1], enu[2])
     # Calculate satellite elevation
     el = asin(enu[3]/norm(enu))
+    # Convert from degrees to radians
     az = rad2deg(az)
     el = rad2deg(el)
     return (sat_range, az, el)
