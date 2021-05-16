@@ -411,9 +411,145 @@ function definesignal!(signal::ReplicaSignal;
 end
 
 
+"""
+    definereplica(signal_type::SignalType, f_s, t_length; prn=1,
+                  f_if=0., f_d=0., fd_rate=0., phi=0., 
+                  include_carrier=true, code_start_idx=1., 
+                  include_databits_I=true, include_databits_Q=true, 
+                  name="custom",)
+
+
+Define properties of locally generated generic replica signal
+based off its type, PRN, etc.
+
+
+Required Arguments:
+
+- `signal_type::SignalType`: user defined signal type
+    * see `definecodetype` and `definesignaltype`
+- `f_s`: signal sampling frequency in Hz
+- `t_length`: signal length in seconds
+
+
+Optional Arguments:
+
+- `prn`: satellite PRN number `(default = 1)`
+- `f_if`: IF frequency in Hz `(default = 0Hz)`
+- `f_d`: signal Doppler frequency in Hz `(default = 0Hz)`
+- `fd_rate`: signal Doppler rate in Hz/s `(default = 0Hz/s)`
+- `phi`: initial carrier phase in rad `(default = 0rad)`
+- `include_carrier`: flag for modulating codes onto carrier `(default = true)`
+- `code_start_idx`: starting index in `ReplicaSignal.data` where all codes
+                    start `(default = 1)`
+- `include_databits_I`: flag for including I channel databits in simulated signal
+                        `(default = true)`
+- `include_databits_Q`: flag for including Q channel databits in simulated signal
+                        `(default = true)`
+- `name`: name of signal `(default = custom)`
+
+
+Returns:
+
+- `ReplicaSignal` struct
+"""
+function definereplica(signal_type::SignalType, f_s, t_length; prn=1,
+                       f_if=0., f_d=0., fd_rate=0., phi=0., 
+                       include_carrier=true, code_start_idx=1., 
+                       include_databits_I=true, include_databits_Q=true, 
+                       name="custom",)
+    return definesignal(signal_type::SignalType, f_s, t_length; prn=prn,
+                        f_if=f_if, f_d=f_d, fd_rate=fd_rate, phi=phi, 
+                        include_carrier=include_carrier, include_adc=false, 
+                        include_thermal_noise=false, 
+                        code_start_idx=code_start_idx, 
+                        include_databits_I=include_databits_I,
+                        include_databits_Q=include_databits_Q, 
+                        include_phase_noise=false, name=name, 
+                        skip_noise_generation=true, 
+                        allocate_noise_vectors=false)
+end
+
+
+"""
+    definereplica!(signal::ReplicaSignal;
+                   prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
+                   fd_rate=signal.fd_rate, phi=signal.phi, 
+                   include_carrier=signal.include_carrier,
+                   code_start_idx=signal.code_start_idx,
+                   include_databits_I=signal.include_databits_I,
+                   include_databits_Q=signal.include_databits_Q,
+                   name=signal.name)
+
+
+Redefine properties of locally generated generic replica signal
+based off its type, PRN, etc.
+
+
+Required Arguments:
+
+- `signal::ReplicaSignal`: the signal already defined by the user using
+                            `definesignal`
+
+
+Optional Arguments with Defaults Equal to `signal` Field Values:
+
+- `prn`: satellite PRN number
+- `f_if`: IF frequency in Hz
+- `f_d`: signal Doppler frequency in Hz
+- `fd_rate`: signal Doppler rate in Hz/s
+- `phi`: initial carrier phase in rad
+- `include_carrier`: flag for modulating codes onto carrier
+- `code_start_idx`: starting index in `ReplicaSignal.data` where all codes
+                    start
+- `include_databits_I`: flag for including I channel databits in simulated signal
+- `include_databits_Q`: flag for including Q channel databits in simulated signal
+- `name`: name of signal
+
+
+Modifies and Returns:
+
+- `signal::ReplicaSignal`
+"""
+function definereplica!(signal::ReplicaSignal;
+                        prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
+                        fd_rate=signal.fd_rate, phi=signal.phi, 
+                        include_carrier=signal.include_carrier,
+                        code_start_idx=signal.code_start_idx,
+                        include_databits_I=signal.include_databits_I,
+                        include_databits_Q=signal.include_databits_Q,
+                        name=signal.name)
+return definesignal!(signal::ReplicaSignal;
+                     prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
+                     fd_rate=signal.fd_rate, phi=signal.phi,
+                     include_carrier=signal.include_carrier,
+                     include_adc=false, include_thermal_noise=false,
+                     code_start_idx=signal.code_start_idx,
+                     include_databits_I=signal.include_databits_I,
+                     include_databits_Q=signal.include_databits_Q,
+                     include_phase_noise=false, name=signal.name,
+                     new_thermal_noise=false, new_phase_noise=false,
+                     new_databits=false)
+end
+
 
 """
     check_length(a, N)
+
+
+Check that an array, `a`, has length `N` or 1.
+If it has length 1, return `a`, if its length
+is `N`, return `fill(a, N)`.
+
+
+Required Arguments:
+
+- `a`: array whose length to check
+- `N`: the length to compare with `length(a)`
+
+
+Returns:
+
+- array that is either the same as `a` or `fill(a, N)`
 """
 function check_length(a, N)
     @assert (length(a) == N) || (length(a) == 1)
