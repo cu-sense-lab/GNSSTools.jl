@@ -129,7 +129,7 @@ function calcdoppler(orb::OrbitPropagator, julian_date, eop,
     r = orb_ecef.r
     v = orb_ecef.v
     # Direct signal case
-    v_obs = transpose((r-obs_ecef)/norm(r-obs_ecef))*v
+    v_obs = transpose(v)*(r-obs_ecef) / norm(r-obs_ecef)
     # Calculate observed Doppler frequency by observer
     fd_obs = -sig_freq*v_obs/c  # Hz
     return fd_obs
@@ -146,7 +146,7 @@ Calculates the Doppler frequency for the direct signal case.
 Required Arguments:
 
 - `r`: object ECEF position vector in meters with format `(x, y, z)`
-- `v`: object ECEF velocity vector in meters with format `(v_x, v_y, v_z)`
+- `v`: object ECEF velocity vector in m/s with format `(v_x, v_y, v_z)`
 - `obs_ecef`: receiver ECEF position in meters with format `(x, y, z)`
 - `sig_freq`: signal carrier frequency in Hz
 
@@ -157,8 +157,39 @@ Returns:
 """
 function calcdoppler(r, v, obs_ecef, sig_freq)
     # Direct signal case
-    v_obs = transpose((r-obs_ecef)/norm(r-obs_ecef))*v
+    v_obs = transpose(v)*(r-obs_ecef) / norm(r-obs_ecef)
     # Calculate observed Doppler frequency by observer
     fd_obs = -sig_freq*v_obs/c  # Hz
     return fd_obs
+end
+
+
+"""
+    calcdopplerrate(r::Vector, v::Vector, a::Vector, obs_ecef, sig_freq)
+
+
+Calculates the Doppler frequency for the direct signal case.
+
+
+Required Arguments:
+
+- `r`: object ECEF position vector in meters with format `(x, y, z)`
+- `v`: object ECEF velocity vector in m/s with format `(v_x, v_y, v_z)`
+- `a`: object ECEF velocity vector in m/s² with format `(a_x, a_y, a_z)`
+- `obs_ecef`: receiver ECEF position in meters with format `(x, y, z)`
+- `sig_freq`: signal carrier frequency in Hz
+
+
+Returns:
+
+- `fd_rate_obs::Float64`: receiver observed Doppler frequency in Hz
+"""
+function calcdopplerrate(r, v, a, obs_ecef, sig_freq)
+    # Direct signal case
+    a_obs = transpose(a)*(r-obs_ecef) / norm(r-obs_ecef)  + 
+            norm(v)^2 / norm(r-obs_ecef) -
+            (transpose(v)*(r-obs_ecef) / norm(r-obs_ecef))^2 / norm(r-obs_ecef)
+    # Calculate observed Doppler frequency rate by observer
+    fd_rate_obs = -sig_freq*a_obs/c  # Hz/s
+    return fd_rate_obs
 end
