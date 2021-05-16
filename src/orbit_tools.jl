@@ -292,7 +292,7 @@ Returns:
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_llas, sig_freq; eop=get_eop(),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
-                              t_start=0., ΔΩ=360/plane_num, min_elevation=0,
+                              t_start=0., ΔΩ=360/plane_num, min_elevation=5,
                               bins=150, heatmap_bins=[bins, bins], a_lim=1.25,
                               figsize=missing, print_steps=true, p=0.5,
                               plot_with_bounds=true, aspect=[1,1],
