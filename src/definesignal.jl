@@ -462,7 +462,7 @@ function definereplica(signal_type::SignalType, f_s, t_length; prn=1,
                        include_carrier=true, code_start_idx=1., 
                        include_databits_I=true, include_databits_Q=true, 
                        name="custom",)
-    return definesignal(signal_type::SignalType, f_s, t_length; prn=prn,
+    return definesignal(signal_type, f_s, t_length; prn=prn,
                         f_if=f_if, f_d=f_d, fd_rate=fd_rate, phi=phi, 
                         include_carrier=include_carrier, include_adc=false, 
                         include_thermal_noise=false, 
@@ -528,15 +528,15 @@ function definereplica!(signal::ReplicaSignal;
                         include_databits_I=signal.include_databits_I,
                         include_databits_Q=signal.include_databits_Q,
                         name=signal.name)
-return definesignal!(signal::ReplicaSignal;
-                     prn=signal.prn, f_if=signal.f_if, f_d=signal.f_d,
-                     fd_rate=signal.fd_rate, phi=signal.phi,
-                     include_carrier=signal.include_carrier,
+return definesignal!(signal;
+                     prn=prn, f_if=f_if, f_d=f_d,
+                     fd_rate=fd_rate, phi=phi,
+                     include_carrier=include_carrier,
                      include_adc=false, include_thermal_noise=false,
-                     code_start_idx=signal.code_start_idx,
-                     include_databits_I=signal.include_databits_I,
-                     include_databits_Q=signal.include_databits_Q,
-                     include_phase_noise=false, name=signal.name,
+                     code_start_idx=code_start_idx,
+                     include_databits_I=include_databits_I,
+                     include_databits_Q=include_databits_Q,
+                     include_phase_noise=false, name=name,
                      new_thermal_noise=false, new_phase_noise=false,
                      new_databits=false)
 end
