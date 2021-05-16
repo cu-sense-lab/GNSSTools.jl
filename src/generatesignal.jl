@@ -386,14 +386,14 @@ function generatereplica!(signal::ReplicaSignal)
         @inbounds t = signal.t[i]
         # Generate code value for given signal type
         code_val, code_ϕ = calc_code_val(signal, t)
-        # Produce the code only with no carrier modulation
-        # Code is still generated with Doppler effects
-        if noexp
-            @inbounds signal.data[i] = cis(code_ϕ)
-        # Doppler effected code is modulated onto carrier.
-        # Carrier has amplitude of 1. It is not rescaled.
-        else
+        if signal.include_carrier
+            # Doppler effected code is modulated onto carrier.
+            # Carrier has amplitude of 1. It is not rescaled.
             @inbounds signal.data[i] = cis(2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ + code_ϕ)
+        else
+            # Produce the code only with no carrier modulation
+            # Code is still generated with Doppler effects
+            @inbounds signal.data[i] = cis(code_ϕ)
         end
     end
     signal.isreplica = false

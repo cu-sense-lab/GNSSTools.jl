@@ -709,7 +709,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                       prn=prn, f_d=f_d,
                       fd_rate=fd_rate, phi=0., f_if=0.,
                       code_start_idx=code_start_idx,
-                      isreplica=true, noexp=true)
+                      isreplica=true, noexp=true,
+                      include_carrier=false)
         # Generate prompt correlator
         generatereplica!(replica)
         # Calculate early, prompt, and late correlator outputs

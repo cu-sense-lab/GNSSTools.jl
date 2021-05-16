@@ -90,7 +90,8 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
                   fd_rate=fd_rate, phi=0., f_if=0.,
                   code_start_idx=n₀_idx_course,
                   isreplica=true,
-                  noexp=true)
+                  noexp=true,
+                  include_carrier=false)
     # Generate signal
     generatereplica!(replica)
     # Wipeoff IF and course Doppler from data and multiply by replica
@@ -229,7 +230,8 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
                       fd_rate=fd_rate, phi=0, f_if=0.,
                       code_start_idx=n₀_idx_course,
                       noexp=true,
-                      isreplica=true)
+                      isreplica=true,
+                      include_carrier=false)
         # Generate signal
         generatereplica!(replica)
         # Get a `view` of the current data segment and its corresponding time array
