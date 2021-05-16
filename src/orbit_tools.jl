@@ -280,6 +280,7 @@ Optional Arguments:
                  `(default = true)`
 - `p`: `(default = 0.7)`
 - `plot_with_bounds`: `(default = true)`
+- `return_constellation`: flag to return Constellation struct `(default = false)`
 
 
 Returns:
@@ -296,7 +297,8 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               bins=150, heatmap_bins=[bins, bins], a_lim=1.25,
                               figsize=missing, print_steps=true, p=0.5,
                               plot_with_bounds=true, aspect=[1,1],
-                              Δf_per_plane=360/satellite_per_plane/2)
+                              Δf_per_plane=360/satellite_per_plane/2,
+                              return_constellation=false)
     if show_plot
         if ismissing(figsize)
             fig = figure()
@@ -313,25 +315,16 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         progress = Progress(Int(plane_num*satellite_per_plane), 1,
                      "Calculting Doppler Distribution...")
     end
+    constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
+                                         t_range; eop=eop, show_plot=false,
+                                         Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
+                                         ΔΩ=ΔΩ, a_lim=a_lim,
+                                         print_steps=print_steps, aspect=aspect,
+                                         Δf_per_plane=Δf_per_plane)
     for i in 1:M
         obs_lla = (obs_llas[1][i], obs_llas[2][i], obs_llas[3][i])
-        if print_steps && (M > 1)
-            constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
-                                                t_range; eop=eop, show_plot=false,
-                                                Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
-                                                obs_lla=obs_lla, ΔΩ=ΔΩ, a_lim=a_lim,
-                                                print_steps=false, aspect=aspect,
-                                                Δf_per_plane=Δf_per_plane)
-        else
-            constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
-                                                t_range; eop=eop, show_plot=false,
-                                                Ω₀=Ω₀, f₀=f₀, ω=ω, e=e, t_start=t_start,
-                                                obs_lla=obs_lla, ΔΩ=ΔΩ, a_lim=a_lim,
-                                                print_steps=print_steps, aspect=aspect,
-                                                Δf_per_plane=Δf_per_plane)
-        end
         obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
-                                obs_lla[3])
+                                  obs_lla[3])
         N = length(t_range)*plane_num*satellite_per_plane
         ts = Array{Float64}(undef, N)
         ids = Array{Int}(undef, N)
@@ -430,7 +423,13 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         ylabel("Prob")
         suptitle("Incination: $(round(incl, digits=0))ᵒ; a: $(Int(round(a/1000, digits=0)))km; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)\nSignal Freq: $(sig_freq)Hz")
     end
-    return (doppler_hist, doppler_rate_hist, doppler_bounds, doppler_rate_bounds)
+    if return_constellation
+        return (doppler_hist, doppler_rate_hist, doppler_bounds, 
+                doppler_rate_bounds, constellation)
+    else
+        return (doppler_hist, doppler_rate_hist, doppler_bounds, 
+                doppler_rate_bounds)
+    end
  end
 
 
