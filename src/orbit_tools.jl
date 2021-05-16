@@ -292,7 +292,7 @@ Returns:
 function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               obs_llas, sig_freq; eop=get_eop(),
                               Ω₀=0., f₀=0., show_plot=true, ω=0., e=0.,
-                              t_start=0., ΔΩ=360/plane_num, min_elevation=5.,
+                              t_start=0., ΔΩ=360/plane_num, min_elevation=0,
                               bins=150, heatmap_bins=[bins, bins], a_lim=1.25,
                               figsize=missing, print_steps=true, p=0.5,
                               plot_with_bounds=true, aspect=[1,1],
@@ -428,7 +428,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         end
         xlabel("Doppler (Hz/sec)")
         ylabel("Prob")
-        suptitle("Incination: $(round(incl, digits=0))ᵒ; a: $(Int(round(a/1000, digits=0)))km; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)\nUser loc: ($(round(obs_lla[1], digits=3))ᵒ, $(round(obs_lla[2], digits=3))ᵒ, $(round(obs_lla[3], digits=3))m)\nSignal Freq: $(sig_freq)Hz")
+        suptitle("Incination: $(round(incl, digits=0))ᵒ; a: $(Int(round(a/1000, digits=0)))km; Plane #: $(plane_num); Sat #: $(plane_num*satellite_per_plane)\nSignal Freq: $(sig_freq)Hz")
     end
     return (doppler_hist, doppler_rate_hist, doppler_bounds, doppler_rate_bounds)
  end
