@@ -422,6 +422,11 @@ end
 Define properties of locally generated generic replica signal
 based off its type, PRN, etc.
 
+This is used for processing `GNSSSignal` structs. It does not
+contain noise souces in it. Do not use for GNSS signal simulation.
+Use definesignal and definesignal! methods for simulating GNSS
+signals with noise.
+
 
 Required Arguments:
 
@@ -483,6 +488,11 @@ end
 
 Redefine properties of locally generated generic replica signal
 based off its type, PRN, etc.
+
+This is used for processing `GNSSSignal` structs. It does not
+contain noise souces in it. Do not use for GNSS signal simulation.
+Use definesignal and definesignal! methods for simulating GNSS
+signals with noise.
 
 
 Required Arguments:
