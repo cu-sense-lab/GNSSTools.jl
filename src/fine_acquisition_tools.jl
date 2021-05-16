@@ -85,13 +85,11 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
                          σω=1000., err_bin_num_ϕ=1, err_bin_num_f=0.5)
     # Generate replica
     # Set signal parameters
-    definesignal!(replica;
-                  prn=prn, f_d=fd_course,
-                  fd_rate=fd_rate, phi=0., f_if=0.,
-                  code_start_idx=n₀_idx_course,
-                  isreplica=true,
-                  noexp=true,
-                  include_carrier=false)
+    definereplica!(replica;
+                   prn=prn, f_d=fd_course,
+                   fd_rate=fd_rate, phi=0., f_if=0.,
+                   code_start_idx=n₀_idx_course,
+                   include_carrier=false)
     # Generate signal
     generatereplica!(replica)
     # Wipeoff IF and course Doppler from data and multiply by replica
@@ -160,7 +158,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     ϕ_low = atan(imag(pk_low)/real(pk_low))
     ϕ_high = atan(imag(pk_high)/real(pk_high))
     ϕ_init_err = mean([abs(ϕ_init-ϕ_low), abs(ϕ_init-ϕ_high)])
-    replica.isreplica = false
+    # replica.isreplica = false
     P = diagm([ϕ_init_err^2, (2π*err_bin_num_f*Δf)^2, (2π*σω)^2])
     R = [ϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
@@ -225,13 +223,11 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     for i in 1:M
         # Generate replica
         # Set signal parameters
-        definesignal!(replica;
-                      prn=prn, f_d=fd_course,
-                      fd_rate=fd_rate, phi=0, f_if=0.,
-                      code_start_idx=n₀_idx_course,
-                      noexp=true,
-                      isreplica=true,
-                      include_carrier=false)
+        definereplica!(replica;
+                       prn=prn, f_d=fd_course,
+                       fd_rate=fd_rate, phi=0, f_if=0.,
+                       code_start_idx=n₀_idx_course,
+                       include_carrier=false)
         # Generate signal
         generatereplica!(replica)
         # Get a `view` of the current data segment and its corresponding time array
@@ -285,7 +281,6 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     fd_est = fd_course + fd_fine
     dϕ_init_err = std(([dϕ[1:maxvaridx-1]; dϕ[maxvaridx+1:end]] .- dϕavg))
     fd_err = dϕ_init_err/(2π*replica.t_length)
-    definesignal!(replica; isreplica=false)
     # P = diagm([dϕ_init_err^2, 74.7*fd_err^2, σω^2])
     # P = diagm([dϕ_init_err^2, fd_err^2, σω^2])
     P = diagm([dϕ_init_err^2, (2π*replica.t_length)^2, (2π*σω)^2])
