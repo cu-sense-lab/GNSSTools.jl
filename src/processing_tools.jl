@@ -94,9 +94,10 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     else
         error("Invalid channel `$(channel)`.")
     end
-    replica = definesignal(signal_type, f_s, acquisition_T;
-                           skip_noise_generation=true,
-                           allocate_noise_vectors=false)
+    replica = definereplica(signal_type, f_s, acquisition_T)
+    # replica = definesignal(signal_type, f_s, acquisition_T;
+    #                        skip_noise_generation=true,
+    #                        allocate_noise_vectors=false)
     # Perform course acquisition
     fd_course, n0_est, SNR_est, 
     corr_result = courseacquisition(signal, 
@@ -123,9 +124,10 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # by default.
     if use_fine_acq
         if fine_acq_method == :fft
-            replicalong = definesignal(signal_type, f_s, fine_acq_T;
-                                       skip_noise_generation=true,
-                                       allocate_noise_vectors=false)
+            replicalong = definesignal(signal_type, f_s, fine_acq_T)
+            # replicalong = definesignal(signal_type, f_s, fine_acq_T;
+            #                            skip_noise_generation=true,
+            #                            allocate_noise_vectors=false)
             results = fineacquisition(signal, replicalong, prn, fd_course,
                                       n0_est, Val(fine_acq_method); σω=σω,
                                       fd_rate=fd_rate)
@@ -160,9 +162,10 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # Peform tracking on signal using the initial estimates and
     # uncertainties calculated above.
     if tracking_T != acquisition_T 
-        replica = definesignal(signal_type, f_s, tracking_T;
-                               skip_noise_generation=true,
-                               allocate_noise_vectors=false)
+        replica = definesignal(signal_type, f_s, tracking_T)
+        # replica = definesignal(signal_type, f_s, tracking_T;
+        #                        skip_noise_generation=true,
+        #                        allocate_noise_vectors=false)
     end
     trackresults = trackprn(signal, replica, prn, phi_init,
                             fd_est, n0_est, P, R; DLL_B=dll_b,
