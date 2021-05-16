@@ -104,11 +104,13 @@ function courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
         # Perform course acquisition
         for i in 1:M
             idx = start_idx + (i-1)*replica.sample_num
+            replica.t .+= (i > 1)*replica.t_length
             courseacquisition!(corr_result, data, replica, prn;
                                fd_center=fd_center, fd_range=fd_range,
                                fd_rate=fd_rate, Δfd=Δfd, start_idx=idx,
                                operation="add")
         end
+        replica.t .= calctvector(replica.sample_num, replica.f_s)
     end
     # Get the code offset in samples, course Doppler, and peak SNR in dB
     n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
@@ -186,7 +188,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
     pifft = plan_ifft!(replica.data) # In-place IFFT plan
     # Carrier wipe data signal, make copy, and take FFT
     datafft = fft(data.data[start_idx:start_idx+dsize-1] .*
-                  exp.(-2π.*data.f_if.*data.t[1:dsize].*1im))
+                  exp.(-2π.*data.f_if.*replica.t[1:dsize].*1im))
     # Number of bits representing `data`
     nADC = data.nADC
     # Number of Doppler bins
