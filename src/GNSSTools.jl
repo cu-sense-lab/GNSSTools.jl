@@ -25,6 +25,7 @@ module GNSSTools
     using QuadGK
     using HDF5
     using StatsBase
+    using SpecialFunctions
     using PyPlot
 
     pygui(true)
