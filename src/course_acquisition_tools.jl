@@ -267,3 +267,49 @@ function course_acq_est(corr_result, fd_center, fd_range, Δfd)
     SNR_est = 10*log10(PS/PN)
     return (n0_est, fd_est, SNR_est)
 end
+
+
+"""
+    v_t2p_fa(v_t, σ_n)
+
+
+Calculate the probability of false alarm based off the threshold and noise
+standard deviation.
+
+
+Required Arguments:
+
+- `v_t`: the threshold set for acquisition
+- `σ_n`: the standard deviation of the noise
+
+
+Returns:
+
+- `p_fa`: the probability of false alarm
+"""
+function v_t2p_fa(v_t, σ_n)
+    return exp(-v_t^2 / (2*σ_n^2))
+end
+
+
+"""
+    p_fa2v_t(p_fa, σ_n)
+
+
+Calculate the threshold value for acquisition based off the probability of 
+false alarm and the noise standard deviation.
+
+
+Required Arguments:
+
+- `p_fa`: the probability of false alarm
+- `σ_n`: the standard deviation of the noise
+
+
+Returns:
+
+- `v_t`: the threshold for acquisition
+"""
+function p_fa2v_t(p_fa, σ_n)
+    return sqrt(2*σ_n^2*log(1/p_fa))
+end
