@@ -26,6 +26,7 @@ module GNSSTools
     using HDF5
     using StatsBase
     using SpecialFunctions
+    using Optim
     using PyPlot
 
     pygui(true)
@@ -79,6 +80,7 @@ module GNSSTools
     export loaddata, reloaddata!
     export gencorrresult
     export courseacquisition, courseacquisition!
+    export v_t2p_fa, p_fa2v_t, false_alarm_pdf, detection_pdf, v_t2p_d, p_d2v_t
     export fineacquisition
     export gnsstypes
     export calcinitcodephase
