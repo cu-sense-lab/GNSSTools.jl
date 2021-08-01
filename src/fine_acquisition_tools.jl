@@ -195,7 +195,6 @@ Optional Arguments:
 
 - `fd_rate`: the Doppler frequency rate in Hz/s `(default = 0Hz)`
 - `t_length`: `[NOT USED]` `(default = replica.t_length)`
-- `freq_lim`: frequency search range plus/minus OHz `(default = 10000Hz)`
 - `M`: Number of integrations to perform `(default = 10)`
 - `σω`: expected uncertainty of Doppler rate in Hz/s `(default = 1000Hz/s)`
 
@@ -206,8 +205,7 @@ Returns:
 """
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:carrier}; fd_rate=0.,
-                         t_length=replica.t_length, freq_lim=50000., M=10,
-                         σω=1000.)
+                         t_length=replica.t_length, M=10, σω=1000.)
     # Check that there are at least M replica signals that can fit in time
     # into data.
     Mblocks = floor(Int, data.sample_num/replica.sample_num)
