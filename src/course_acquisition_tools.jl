@@ -302,7 +302,7 @@ false alarm and the noise standard deviation.
 
 Required Arguments:
 
-- `p_fa`: the probability of false alarm
+- `p_fa`: the probability of false alarm between 0 and 1
 - `σ_n`: the standard deviation of the noise
 
 
@@ -312,4 +312,129 @@ Returns:
 """
 function p_fa2v_t(p_fa, σ_n)
     return sqrt(2*σ_n^2*log(1/p_fa))
+end
+
+
+"""
+    false_alarm_pdf(v, σ_n)
+
+
+Calculate the value of the false alarm PDF at a given value, `v`, with
+noise standard deviation, `σ_n`.
+
+
+Required Arguments:
+
+- `v`: value to evaluate PDF at
+- `σ_n`: standard deviation of the noise
+
+
+Returns:
+
+- PDF value at `v`
+"""
+function false_alarm_pdf(v, σ_n)
+    return v*exp(-v^2/σ_n)/σ_n^2
+end
+
+
+"""
+    detection_pdf(v, σ_n, SNR)
+
+
+Calculate the value of the detection PDF at a given value, `v`, with
+noise standard deviation, `σ_n`, and `SNR`.
+
+
+Required Arguments:
+
+- `v`: value to evaluate PDF at
+- `σ_n`: standard deviation of the noise
+- `SNR`: desired signal-to-noise ratio in dB
+
+
+Returns:
+
+- PDF value at `v`
+"""
+function detection_pdf(v, σ_n; SNR=missing, v_i=missing)
+    if ismissing(SNR) && !ismissing(v_i)
+        I₀ = besseli(0, v*v_i/σ_n^2)
+        return (v/σ_n^2)*exp(-(v^2 + v_i^2)/(2*σ_n^2))*I₀
+    elseif !ismissing(SNR) && ismissing(v_i)
+        SNR_linear = 10^(SNR/10)
+        I₀ = besseli(0, (v/σ_n)*sqrt(2*SNR_linear))
+        return (v/σ_n^2)*exp(-(v^2/(2*σ_n^2) + SNR_linear))*I₀
+    else
+        error("Must provide either `SNR` or `v_i`, not both or none.")
+    end
+end
+
+
+"""
+    v_t2p_d(v_t, σ_n, SNR)
+
+
+Calculates the probability of detection based off a threshold value, `v_t`,
+noise standard deviation, `σ_n`, and desired `SNR`.
+
+
+Required Arguments:
+
+- `v_t`: threshold value used for acquisition
+- `σ_n`: standard deviation of the noise
+- `SNR`: desired signal-to-noise ratio in dB
+
+
+Optional Arguments:
+
+- `rtol`: tolerance for numerical integration `(default = 1e-3)`
+- `order`: order of the numerical integration `(default = 3)` 
+
+
+Returns:
+
+- probability of detection, `P_d`
+"""
+function v_t2p_d(v_t, σ_n, SNR; rtol=1e-3, order=3, std_scalar=20)
+    SNR_linear = 10^(SNR/10)
+    v_i = sqrt(2*SNR_linear*σ_n^2)
+    v_max = v_i + std_scalar*σ_n
+    p_d_pdf(v) = detection_pdf(v, σ_n; SNR=SNR_linear)
+    return quadgk(p_d_pdf, v_t, v_max, rtol=rtol, order=order)
+end
+
+
+"""
+    p_d2v_t(p_d, σ_n, SNR)
+
+
+Calculates the threshold value, `v_t`, based off the probability of detection,
+`p_d`, the noise standard deviation, `σ_n`, and the desired `SNR`.
+
+
+Required Arguments:
+
+- `p_d`: probability of detection between 0 and 1
+- `σ_n`: standard deviation of the noise
+- `SNR`: desired signal-to-noise ratio in dB
+
+
+Optional Arguments:
+
+- `rtol`: tolerance for numerical integration `(default = 1e-3)`
+- `order`: order of the numerical integration `(default = 3)` 
+
+
+Returns:
+
+- threshold value, `v_t`
+"""
+function p_d2v_t(p_d, σ_n, SNR; rtol=1e-3, order=3)
+    SNR_linear = 10^(SNR/10)
+    p_d_pdf(v) = detection_pdf(v, σ_n; SNR=SNR_linear)
+    Pd(v) = quadgk(p_d_pdf, v[1], Inf, rtol=rtol, order=order)[1]
+    δp_d(v) = abs(Pd(v) - p_d)
+    result = optimize(δp_d, [0.], [1000], [0.])
+    return result
 end
