@@ -6,7 +6,7 @@
             saveto=missing, show_plot=true, fine_acq_method=:carrier,
             return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
             h₀=1e-21, h₋₂=2e-20, acquisition_T=1e-3, fine_acq_T=10e-3, 
-            tracking_T=1e-3, M=1)
+            tracking_T=1e-3, M=1, σᵩ²=missing)
 
 
 Performs course acquisition and tracking on a `GNSSSignal` (either
@@ -61,6 +61,7 @@ Optional Arguments:
                 seconds `(default = 1e-3)`
 - `M`: the number of coherent inetegrations to add non-coherently during
        course acquisition `(default = 1)`
+- `σᵩ²`: the variance of the phase, also known as `R`
 
 
 Returns:
@@ -79,7 +80,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  saveto=missing, show_plot=true, fine_acq_method=:carrier,
                  return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
                  h₀=1e-21, h₋₂=2e-20, acquisition_T=1e-3, fine_acq_T=10e-3, 
-                 tracking_T=1e-3, M=1)
+                 tracking_T=1e-3, M=1, σᵩ²=missing)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
@@ -113,8 +114,10 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # is always too large to use. This will only be used if the FFT
     # based fine acquisition method is used, or if no fine acquisition
     # method is used (when `` = false)
-    CN0_est = snr2cn0(SNR_est, replica.t_length)
-    σᵩ² = phase_noise_variance(CN0_est, replica.t_length)
+    if ismissing(σᵩ²)
+        CN0_est = snr2cn0(SNR_est, replica.t_length)
+        σᵩ² = phase_noise_variance(CN0_est, replica.t_length)
+    end
     # Perform fine acquisition using FFT based method
     # Returns structure containing the fine acquisition results,
     # fine Doppler (`fd_est`) and inital phase estimate (`phi_est`).
