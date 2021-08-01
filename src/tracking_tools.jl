@@ -310,7 +310,8 @@ Returns:
 - unfiltered code phase error
 """
 function Z4(dll_parms::DLLParms, ZE, ZP, ZL)
-    return 0.5 * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))
+    # return 0.5 * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))
+    return (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))
 end
 
 
@@ -479,7 +480,7 @@ end
 
 """
 	calcC(T, state_num=2)
-
+    kf_pll_rong_part1
 
 Calculate the measurement matrix, `C`, using the integration time, `T`. Used in
 the carrier tracking loop. If `state_num` is set to `2`, then the KF will track
@@ -674,17 +675,16 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     datafft = Array{Complex{Float64}}(undef, N)
 	FFTW.set_num_threads(1)
 	if state_num == 3
-    	x⁺ᵢ = [ϕ_init; 2π*(f_if+fd_init); 0.]
-		P⁺ᵢ = deepcopy(P₀)
+    	x⁻ᵢ = [ϕ_init; 2π*(f_if+fd_init); 0.]
+		P⁻ᵢ = deepcopy(P₀)
 	elseif state_num == 2
-		x⁺ᵢ = [ϕ_init; 2π*(f_if+fd_init)]
-		P⁺ᵢ = deepcopy(P₀)[1:2,1:2]
+		x⁻ᵢ = [ϕ_init; 2π*(f_if+fd_init)]
+		P⁻ᵢ = deepcopy(P₀)[1:2,1:2]
 	else
 		error("Number of states specified must be either 2 or 3.")
 	end
     R = R_mult .* R
-	x⁻ᵢ = deepcopy(x⁺ᵢ)
-	P⁺ᵢ = cov_mult .* P⁺ᵢ
+	P⁻ᵢ = cov_mult .* P⁻ᵢ
 	Kᵢ = zeros(size(x⁻ᵢ))
     if ~dynamickf
 	    Kfixed = dkalman(A, C, Q, Diagonal(R))
@@ -718,8 +718,6 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                                                pfft)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)  # chips
-		# Propogate state uncertaninty
-		P⁻ᵢ = A*P⁺ᵢ*A' + Q
         # Measure carrier phase and Doopler frequency errors
 		# NOTE: `dϕ_meas` is considered the measurement error, `δy`
         dϕ_meas = measurephase(zp)  # rad
@@ -771,6 +769,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         n0 += (n0_err_filtered + f_code_d*T + 0.5*f_code_dd*T^2)%code_length
 		# Propagate x⁺ᵢ to next time step
 		x⁻ᵢ = A*x⁺ᵢ
+        # Propogate state uncertaninty
+		P⁻ᵢ = A*P⁺ᵢ*A' + Q
     end
 	FFTW.set_num_threads(nthreads())
     # Return `TrackResults` struct
