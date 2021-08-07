@@ -87,11 +87,10 @@ end
 
 
 """
-    acceleration_eci_to_ecef(sv)
+    calculate_accel_sv(r)
 """
-function acceleration_eci_to_ecef!(sv)
-    sv.a = -m0/(norm(sv.r)^3)*sv.r
-    return sv
+function calculate_accel_sv(r)
+    return -m0/(norm(r)^3)*r
 end
 
 
@@ -183,19 +182,21 @@ function define_constellation(a, plane_num, satellite_per_plane, incl, t_range;
             f = f₀ + (sat-1)*Δf + (plane-1)*Δf_per_plane
             init_orbit = init_orbit_propagator(Val(:twobody), 0., a, e, incl,
                                                Ω, ω, f)
-            orbit, r, v = propagate_to_epoch!(init_orbit, t_range)
-            r_ecef = Array{Float64,2}(undef, length(orbit), 3)
-            v_ecef = Array{Float64,2}(undef, length(orbit), 3)
-            a_ecef = Array{Float64,2}(undef, length(orbit), 3)
-            for i in 1:length(orbit)
-                orbit_teme = kepler_to_sv(orbit[i])
-                acceleration_eci_to_ecef!(orbit_teme)
-                orbit_ecef = svECItoECEF(orbit_teme, TEME(), ITRF(), t_range[i], eop)
+            r, v = propagate_to_epoch!(init_orbit, t_range)
+            r_ecef = Array{Float64,2}(undef, length(r), 3)
+            v_ecef = Array{Float64,2}(undef, length(r), 3)
+            a_ecef = Array{Float64,2}(undef, length(r), 3)
+            orbits = Array{OrbitStateVector,1}(undef, length(r))
+            for i in 1:length(r)
+                aᵢ = calculate_accel_sv(r[i])
+                orbit_teme = orbsv(t_range[i], r[i], v[i], aᵢ)
+                orbits[i] = orbit_teme
+                orbit_ecef = sv_eci_to_ecef(orbit_teme, TEME(), ITRF(), t_range[i], eop)
                 r_ecef[i,:] = [orbit_ecef.r[1], orbit_ecef.r[2], orbit_ecef.r[3]]
                 v_ecef[i,:] = [orbit_ecef.v[1], orbit_ecef.v[2], orbit_ecef.v[3]]
                 a_ecef[i,:] = [orbit_ecef.a[1], orbit_ecef.a[2], orbit_ecef.a[3]]
             end
-            satellites[k] = Satellite(id, init_orbit, t_range, orbit, r_ecef,
+            satellites[k] = Satellite(id, init_orbit, t_range, orbits, r_ecef,
                                       v_ecef, a_ecef)
             k += 1
             if show_plot
