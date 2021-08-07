@@ -339,6 +339,27 @@ end
 
 
 """
+    I₀(x)
+
+
+Evaluates the Modified Bessel function of the 1st kind order zero.
+
+
+Arguments:
+
+- `x`: where to evaluate I₀ at
+
+
+Returns:
+
+- I₀(x)
+"""
+function I₀(x)
+    return quadgk(θ -> exp(big(x)*cos(big(θ))), 0, π)[1]/π
+end
+
+
+"""
     detection_pdf(v, σ_n, SNR)
 
 
@@ -359,12 +380,14 @@ Returns:
 """
 function detection_pdf(v, σ_n; SNR=missing, v_i=missing)
     if ismissing(SNR) && !ismissing(v_i)
-        I₀ = besseli(0, v*v_i/σ_n^2)
-        return (v/σ_n^2)*exp(-(v^2 + v_i^2)/(2*σ_n^2))*I₀
+        x = v*v_i/σ_n^2
+        # I₀ = besseli(0, v*v_i/σ_n^2)
+        return (v/σ_n^2)*exp(-(v^2 + v_i^2)/(2*σ_n^2))*I₀(x)
     elseif !ismissing(SNR) && ismissing(v_i)
         SNR_linear = 10^(SNR/10)
-        I₀ = besseli(0, (v/σ_n)*sqrt(2*SNR_linear))
-        return (v/σ_n^2)*exp(-(v^2/(2*σ_n^2) + SNR_linear))*I₀
+        x = (v/σ_n)*sqrt(2*SNR_linear)
+        # I₀ = besseli(0, (v/σ_n)*sqrt(2*SNR_linear))
+        return (v/σ_n^2)*exp(-(v^2/(2*σ_n^2) + SNR_linear))*I₀(x)
     else
         error("Must provide either `SNR` or `v_i`, not both or none.")
     end
@@ -372,7 +395,8 @@ end
 
 
 """
-    v_t2p_d(v_t, σ_n, SNR)
+    v_t2p_d(v_t, σ_n, SNR; rtol=1e-3, order=3, std_scalar=20, 
+            steps=missing)
 
 
 Calculates the probability of detection based off a threshold value, `v_t`,
@@ -389,19 +413,35 @@ Required Arguments:
 Optional Arguments:
 
 - `rtol`: tolerance for numerical integration `(default = 1e-3)`
-- `order`: order of the numerical integration `(default = 3)` 
+- `order`: order of the numerical integration `(default = 3)`
+- `steps`: provide to disable quadgk integration and peform basic rectangular
+           integration with steps equal to `steps` 
 
 
 Returns:
 
 - probability of detection, `P_d`
 """
-function v_t2p_d(v_t, σ_n, SNR; rtol=1e-3, order=3, std_scalar=20)
+function v_t2p_d(v_t, σ_n, SNR; rtol=1e-3, order=3, std_scalar=20, 
+                 steps=missing)
+    v_t = big(v_t)
+    σ_n = big(σ_n)
+    SNR = big(SNR)
     SNR_linear = 10^(SNR/10)
     v_i = sqrt(2*SNR_linear*σ_n^2)
     v_max = v_i + std_scalar*σ_n
-    p_d_pdf(v) = detection_pdf(v, σ_n; SNR=SNR_linear)
-    return quadgk(p_d_pdf, v_t, v_max, rtol=rtol, order=order)
+    p_d_pdf(v) = detection_pdf(v, σ_n; SNR=SNR)
+    if ismissing(steps)
+        return quadgk(p_d_pdf, v_t, v_max, rtol=rtol, order=order)[1]
+    else
+        v = Array(range(v_t, v_max, length=steps))
+        P_d = 0.
+        Δv = v[2] - v[1]
+        for i in 1:length(v)
+            P_d += p_d_pdf(v[i])
+        end
+        return P_d*Δv
+    end
 end
 
 
