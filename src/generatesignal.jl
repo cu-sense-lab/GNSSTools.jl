@@ -118,9 +118,10 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
     thermal_noise = signal.thermal_noise
     phase_noise = signal.phase_noise
     adc_scale = 2^(nADC-1)
-    # carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)  # for sinusoid
-    carrier_amp = sqrt(k*Tsys)*10^(CN0/20)  # for complex exponential
-    noise_amp = sqrt(k*B*Tsys)
+    carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)  # for sinusoid
+    # carrier_amp = sqrt(k*Tsys)*10^(CN0/20)  # for complex exponential
+    # noise_amp = sqrt(k*B*Tsys)
+    noise_amp = sqrt(k*B*Tsys) * sqrt(2) / 2
     N = floor(Int, t_length*f_s)
     upsample_factor = denominator(signal.code_start_idx)
     Δt = signal.t[2] - signal.t[1]
