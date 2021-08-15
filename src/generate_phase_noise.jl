@@ -197,8 +197,6 @@ Generates phase noise using methods from
 
 Required Arguments:
 
-Required Arguments:
-
 - `phase_noise`: vector to store generated oscillator phase noise 
 - `t_length`: length of of the phase noise array to generate in seconds
 - `f_carrier`: receiver center frequency in Hz (i.e. L1 C/A carrier frequency)
