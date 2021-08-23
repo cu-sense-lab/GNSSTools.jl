@@ -360,7 +360,7 @@ end
 
 
 """
-    detection_pdf(v, σ_n, SNR)
+    detection_pdf(v, σ_n; SNR=missing, v_i=missing)
 
 
 Calculate the value of the detection PDF at a given value, `v`, with
@@ -371,7 +371,9 @@ Required Arguments:
 
 - `v`: value to evaluate PDF at
 - `σ_n`: standard deviation of the noise
-- `SNR`: desired signal-to-noise ratio in dB
+- `SNR`: desired signal-to-noise ratio in dB '(default = missing)` or
+- 'v_i': the amplitude of the signature in place of the `SNR` '(default = missing)`
+
 
 
 Returns:
@@ -381,12 +383,10 @@ Returns:
 function detection_pdf(v, σ_n; SNR=missing, v_i=missing)
     if ismissing(SNR) && !ismissing(v_i)
         x = v*v_i/σ_n^2
-        # I₀ = besseli(0, v*v_i/σ_n^2)
         return (v/σ_n^2)*exp(-(v^2 + v_i^2)/(2*σ_n^2))*I₀(x)
     elseif !ismissing(SNR) && ismissing(v_i)
         SNR_linear = 10^(SNR/10)
         x = (v/σ_n)*sqrt(2*SNR_linear)
-        # I₀ = besseli(0, (v/σ_n)*sqrt(2*SNR_linear))
         return (v/σ_n^2)*exp(-(v^2/(2*σ_n^2) + SNR_linear))*I₀(x)
     else
         error("Must provide either `SNR` or `v_i`, not both or none.")
@@ -407,41 +407,33 @@ Required Arguments:
 
 - `v_t`: threshold value used for acquisition
 - `σ_n`: standard deviation of the noise
-- `SNR`: desired signal-to-noise ratio in dB
+- `SNR`: desired signal-to-noise ratio in dB '(default = missing)` or
+- 'v_i': the amplitude of the signature in place of the `SNR` '(default = missing)`
 
 
 Optional Arguments:
 
 - `rtol`: tolerance for numerical integration `(default = 1e-3)`
 - `order`: order of the numerical integration `(default = 3)`
-- `steps`: provide to disable quadgk integration and peform basic rectangular
-           integration with steps equal to `steps` 
 
 
 Returns:
 
 - probability of detection, `P_d`
 """
-function v_t2p_d(v_t, σ_n, SNR; rtol=1e-3, order=3, std_scalar=20, 
-                 steps=missing)
+function v_t2p_d(v_t, σ_n; SNR=missing, v_i=missing, 
+                 rtol=1e-10, order=7)
     v_t = big(v_t)
     σ_n = big(σ_n)
-    SNR = big(SNR)
-    SNR_linear = 10^(SNR/10)
-    v_i = sqrt(2*SNR_linear*σ_n^2)
-    v_max = v_i + std_scalar*σ_n
-    p_d_pdf(v) = detection_pdf(v, σ_n; SNR=SNR)
-    if ismissing(steps)
-        return quadgk(p_d_pdf, v_t, v_max, rtol=rtol, order=order)[1]
+    if !ismissing(SNR) && ismissing(v_i)
+        SNR = big(SNR)
+    elseif ismissing(SNR) && !ismissing(v_i)
+        v_i = big(v_i)
     else
-        v = Array(range(v_t, v_max, length=steps))
-        P_d = 0.
-        Δv = v[2] - v[1]
-        for i in 1:length(v)
-            P_d += p_d_pdf(v[i])
-        end
-        return P_d*Δv
+        error("Must provide either SNR or v_i.")
     end
+    p_d_pdf(v) = detection_pdf(v, σ_n; SNR=SNR, v_i=v_i)
+    return quadgk(p_d_pdf, v_t, Inf, rtol=rtol, order=order)[1]
 end
 
 
@@ -470,7 +462,7 @@ Returns:
 
 - threshold value, `v_t`
 """
-function p_d2v_t(p_d, σ_n, SNR; rtol=1e-3, order=3)
+function p_d2v_t(p_d, σ_n, SNR; rtol=1e-10, order=7)
     SNR_linear = 10^(SNR/10)
     p_d_pdf(v) = detection_pdf(v, σ_n; SNR=SNR_linear)
     Pd(v) = quadgk(p_d_pdf, v[1], Inf, rtol=rtol, order=order)[1]
