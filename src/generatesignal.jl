@@ -121,7 +121,6 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
     carrier_amp = sqrt(2*k*Tsys)*10^(CN0/20)  # for sinusoid
     # carrier_amp = sqrt(k*Tsys)*10^(CN0/20)  # for complex exponential
     noise_amp = sqrt(k*B*Tsys)
-    # noise_amp = sqrt(k*B*Tsys) * sqrt(2) / 2
     N = floor(Int, t_length*f_s)
     upsample_factor = denominator(signal.code_start_idx)
     Δt = signal.t[2] - signal.t[1]
@@ -135,11 +134,14 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
                 code_val, code_ϕ = get_code_val(t+j*dΔt)
                 ϕ = get_ϕ(t+j*dΔt)
                 cis_sum += cis(ϕ+code_ϕ)
+                # cis_sum += real(code_val)*cos(ϕ) + imag(code_val)*sin(ϕ)*1im
+                # cis_sum += real(code_val)*cos(ϕ) + sin(ϕ)*1im
             end
         else
             for j in 0:(upsample_factor-1)
                 code_val, code_ϕ = get_code_val(t+j*dΔt)
                 cis_sum += cis(code_ϕ)
+                # cis_sum += real(code_val) + imag(code_val)*1im
             end
         end
         cis_sum = cis_sum/upsample_factor
@@ -320,7 +322,7 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
                                        noise_amp * thermal_noise[i]
         elseif include_carrier & include_thermal_noise & ~include_phase_noise
             # Calculate code value with carrier and noise
-            ϕ = get_ϕ(t)
+            # ϕ = get_ϕ(t)
             @inbounds signal.data[i] = carrier_amp * cis_sum +
                                        noise_amp * thermal_noise[i]
         elseif include_carrier & ~include_thermal_noise & include_phase_noise
@@ -390,11 +392,14 @@ function generatereplica!(signal::ReplicaSignal)
         if signal.include_carrier
             # Doppler effected code is modulated onto carrier.
             # Carrier has amplitude of 1. It is not rescaled.
-            @inbounds signal.data[i] = cis(2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ + code_ϕ)
+            ϕₜ = 2π*(f_if + f_d + 0.5*fd_rate*t)*t + ϕ
+            @inbounds signal.data[i] = cis(ϕₜ + code_ϕ)
+            # @inbounds signal.data[i] = real(code_val)*cos(ϕₜ) + imag(code_val)*sin(ϕₜ)*1im
         else
             # Produce the code only with no carrier modulation
             # Code is still generated with Doppler effects
             @inbounds signal.data[i] = cis(code_ϕ)
+            # @inbounds signal.data[i] = real(code_val) + imag(code_val)*1im
         end
     end
     signal.isreplica = false
