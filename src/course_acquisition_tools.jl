@@ -408,7 +408,7 @@ Required Arguments:
 - `v_t`: threshold value used for acquisition
 - `σ_n`: standard deviation of the noise
 - `SNR`: desired signal-to-noise ratio in dB '(default = missing)` or
-- 'v_i': the amplitude of the signature in place of the `SNR` '(default = missing)`
+- `v_i`: the amplitude of the signature in place of the `SNR` '(default = missing)`
 
 
 Optional Arguments:
