@@ -118,5 +118,7 @@ module GNSSTools
     export get_distribution_bounds
     export binary2OneOrNegativeOne
     export make3dplot
+    export v_t2p_fa, p_fa2v_t, v_t2p_d, p_d2v_t
+    export noncoherent_loss, processing_gain
 
 end # module
