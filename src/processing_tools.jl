@@ -76,11 +76,11 @@ Returns:
 function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  channel="I"; σω=1000., fd_center=0., fd_range=5000.,
                  cov_mult=1, q_a=1, q_mult=1, R_mult=1, dynamickf=true, 
-                 dll_b=5, state_num=3, fd_rate=0.,  figsize=missing, 
+                 dll_b=0.1, state_num=3, fd_rate=0.,  figsize=missing, 
                  saveto=missing, show_plot=true, fine_acq_method=:carrier,
                  return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
                  h₀=1e-21, h₋₂=2e-20, acquisition_T=1e-3, fine_acq_T=10e-3, 
-                 tracking_T=1e-3, M=1, σᵩ²=missing)
+                 tracking_T=1e-3, M=1, σᵩ²=missing, return_Pd=false)
     # Set up replica signals. `replica_t_length` is used for
     # course acquisition and tracking, while `RLM*replica_t_length`
     # is used for fine acquisition only. The signal must be at least
@@ -96,11 +96,8 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
         error("Invalid channel `$(channel)`.")
     end
     replica = definereplica(signal_type, f_s, acquisition_T)
-    # replica = definesignal(signal_type, f_s, acquisition_T;
-    #                        skip_noise_generation=true,
-    #                        allocate_noise_vectors=false)
     # Perform course acquisition
-    fd_course, n0_est, SNR_est, 
+    fd_course, n0_est, SNR_est, P_d, above_threshold,
     corr_result = courseacquisition(signal, 
                                     replica,
                                     prn; 
@@ -128,9 +125,6 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     if use_fine_acq
         if fine_acq_method == :fft
             replicalong = definereplica(signal_type, f_s, fine_acq_T)
-            # replicalong = definesignal(signal_type, f_s, fine_acq_T;
-            #                            skip_noise_generation=true,
-            #                            allocate_noise_vectors=false)
             results = fineacquisition(signal, replicalong, prn, fd_course,
                                       n0_est, Val(fine_acq_method); σω=σω,
                                       fd_rate=fd_rate)
@@ -166,9 +160,6 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # uncertainties calculated above.
     if tracking_T != acquisition_T 
         replica = definereplica(signal_type, f_s, tracking_T)
-        # replica = definesignal(signal_type, f_s, tracking_T;
-        #                        skip_noise_generation=true,
-        #                        allocate_noise_vectors=false)
     end
     trackresults = trackprn(signal, replica, prn, phi_init,
                             fd_est, n0_est, P, R; DLL_B=dll_b,
@@ -178,8 +169,13 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     if show_plot
         plotresults(trackresults; saveto=saveto, figsize=figsize)
     end
-    if return_corrresult
+    if return_corrresult && return_Pd
+        return (results, trackresults, corr_result, SNR_est, 
+                P_d, above_threshold)
+    elseif return_corrresult && !return_Pd
         return (results, trackresults, corr_result, SNR_est)
+    elseif !return_corrresult && return_Pd
+        return (results, trackresults, P_d, above_threshold)
     else
         return (results, trackresults)
     end
