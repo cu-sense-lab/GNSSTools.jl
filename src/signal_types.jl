@@ -395,6 +395,30 @@ end
 
 
 """
+    GNSSData(file_name, f_s, f_if, t_length, start_data_idx, t, 
+             data::Array{T3,1}, data_type, data_start_time::T1, 
+             site_loc_lla::T2, sample_num, total_data_length, 
+             nADC) where {T1, T2, T3}
+
+
+Outer constructor function for `GNSSData` struct initialization.
+
+
+Returns:
+
+- `GNSSData` struct
+"""
+function GNSSData(file_name, f_s, f_if, t_length, start_data_idx, t, 
+                  data::Array{T3,1}, data_type, data_start_time::T1, 
+                  site_loc_lla::T2, sample_num, total_data_length, 
+                  nADC) where {T1, T2, T3}
+    return GNSSData{T1,T2,T3}(file_name, f_s, f_if, t_length, start_data_idx, t, 
+                              data, data_type, data_start_time, site_loc_lla, 
+                              sample_num, total_data_length, nADC)
+end
+
+
+"""
     ReplicaSignal
 
 
