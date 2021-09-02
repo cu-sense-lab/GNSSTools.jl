@@ -82,8 +82,9 @@ Returns:
 """
 function courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
                            prn; fd_center=0., fd_range=5000., M=1,
-                           fd_rate=0., Δfd=1/replica.t_length,
-                           start_idx=1, return_corrresult=false)
+                           fd_rate=0., Δfd=1/(1*replica.t_length),
+                           start_idx=1, return_corrresult=false,
+                           p_fa=1e-7)
     # Perform coherent intefration where the integration time is decided based
     # off the length of `replica.t_length`
     if M == 1
@@ -113,12 +114,13 @@ function courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
         replica.t .= calctvector(replica.sample_num, replica.f_s)
     end
     # Get the code offset in samples, course Doppler, and peak SNR in dB
-    n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range,
-                                             Δfd)
+    n0_est, fd_est, SNR_est,
+    P_d, above_threshold = course_acq_est(corr_result, fd_center, fd_range,
+                                          Δfd; p_fa=p_fa, M=M)
     if return_corrresult
-        return (fd_est, n0_est, SNR_est, corr_result)
+        return (fd_est, n0_est, SNR_est, P_d, above_threshold, corr_result)
     else
-        return (fd_est, n0_est, SNR_est)
+        return (fd_est, n0_est, SNR_est, P_d, above_threshold)
     end
 end
 
@@ -224,6 +226,7 @@ function courseacquisition!(corr_result::Array{Float64,2},
             end
         end
     end
+    # corr_result[:,:] .= corr_result[:,:].^2
     # Set `isreplica` flag to false in `replica`
     definesignal!(replica, isreplica=false)
     return corr_result
@@ -250,7 +253,8 @@ Returns:
 - `fd_est::Float64`: Doppler frequency bin corresponding to peak in Hz
 - `SNR_est::Float64`: SNR of the peak in dB
 """
-function course_acq_est(corr_result, fd_center, fd_range, Δfd)
+function course_acq_est(corr_result, fd_center, fd_range, Δfd; 
+                        p_fa=1e-7, M=1)
     # Get peak maximum index location
     max_idx = argmax(corr_result)
     # Calculate course Doppler frequency
@@ -260,12 +264,25 @@ function course_acq_est(corr_result, fd_center, fd_range, Δfd)
     pk_val = corr_result[max_idx]
     # Compute course acquisition SNR
     PS = pk_val
-    N, M = size(corr_result)
-    noise_val = sum(corr_result[max_idx[1],:])
-    PN = (noise_val - pk_val)/(M - 1)
-    # SNR_est = 10*log10(sqrt(PS/PN))
-    SNR_est = 10*log10(PS/PN)
-    return (n0_est, fd_est, SNR_est)
+    rows, cols = size(corr_result)
+    noise_row_idx = (max_idx[1] + 2) % rows + 1
+    noise_val = std(corr_result[noise_row_idx,:])
+    # noise_val = sum(corr_result[noise_row_idx,:])
+    # noise_val = sum(corr_result)
+    # PN = (noise_val - pk_val)/(rows*cols - 1)
+    # PN = noise_val/(cols - 1)
+    PN = noise_val
+    SNR_est = 10log10(PS/PN)
+    v_i = sqrt(PS)
+    σ = sqrt(PN)
+    v_t = p_fa2v_t(p_fa, σ)
+    P_d = v_t2p_d(v_t, σ, v_i=v_i)
+    if v_i >= v_t
+        above_threshold = true
+    else
+        above_threshold = false
+    end
+    return (n0_est, fd_est, SNR_est, P_d, above_threshold)
 end
 
 
@@ -469,4 +486,60 @@ function p_d2v_t(p_d, σ_n, SNR; rtol=1e-10, order=7)
     δp_d(v) = abs(Pd(v) - p_d)
     result = optimize(δp_d, [0.], [1000], [0.])
     return result
+end
+
+
+"""
+    noncoherent_loss(M, p_fa, p_d)
+
+
+Calculates the noncoherent integration loss.
+
+
+Required Arguments:
+
+- `M`: the number of noncoherent integrations, each with length `T` seconds
+- `p_fa`: the probability of false alarm
+- `p_d`: the probability of detection
+
+
+Returns:
+
+- `L(M)`: the noncoherent integration loss in dB
+"""
+function noncoherent_loss(M, p_fa, p_d)
+    Dc = (erfinv(1 - 2*p_fa) - erfinv(1 - 2*p_d))^2
+    return 10log10((1 + sqrt(1 + 9.2*M/Dc)) / (1 + sqrt(1 + 9.2/Dc)))
+end
+
+
+"""
+    processing_gain(T, M=1; p_fa=1e-7, p_d=0.9)
+
+
+Calculates the expected processing gain for `M` noncoherent integrations of 
+length `T` seconds.
+
+
+Required Arguments:
+
+- `T`: the integration time in seconds
+
+
+Optional Arguments:
+
+- `M`: the number of noncoherent integrations, each with length `T` `(default=1)`
+- `p_fa`: the probability of false alarm `(default=1e-7)`
+- `p_d`: the probability of detection `(default=0.9)`
+
+
+Returns:
+
+- `G_coherent + G_noncoherent`: the coherent plus the noncoherent processing 
+  gains in dB
+"""
+function processing_gain(T, M=1; p_fa=1e-7, p_d=0.9)
+    G_coherent = 10log10(T)
+    G_noncoherent = 10log10(M) - noncoherent_loss(M, p_fa, p_d)
+    return G_coherent + G_noncoherent
 end
