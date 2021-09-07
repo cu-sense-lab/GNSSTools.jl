@@ -120,11 +120,15 @@ Returns:
 function calcdoppler(orb::OrbitPropagator, julian_date, eop,
                      obs_ecef, sig_freq)
     # Propagate orbits to "julian_date"
-    orbit, rg, vg = propagate_to_epoch!(orb, julian_date)
+    # orbit, rg, vg = propagate_to_epoch!(orb, julian_date)
+    r, v = propagate_to_epoch!(orb, julian_date)
+    aᵢ = calculate_accel_sv(r)
     # Convert orbits to state vectors
-    orb_teme = kepler_to_sv(orbit)
+    # orb_teme = kepler_to_sv(orbit)
+    orb_teme = orbsv(julian_date, r, v, aᵢ)
     # Transform TEME to ECEF frame
-    orb_ecef = svECItoECEF(orb_teme, TEME(), ITRF(), julian_date, eop)
+    # orb_ecef = svECItoECEF(orb_teme, TEME(), ITRF(), julian_date, eop)
+    orb_ecef = sv_eci_to_ecef(orb_teme, TEME(), ITRF(), julian_date, eop)
     # Get velocities and positions
     r = orb_ecef.r
     v = orb_ecef.v
