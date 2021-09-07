@@ -19,18 +19,17 @@ data.
 function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                include_databits=true, simulatedata=true,
                saveto=missing, T="short", showplot=true, f_d=800.,
-               fd_rate=0., prn=26, n0=1000., t_length=1e-3, M=4000,
+               fd_rate=0., prn=26, n0=1000., t_length=4, M=1,
                fd_range=5000., dll_b=5, state_num=3, dynamickf=true,
                cov_mult=1., q_a=1, figsize=missing, CN0=45., plot3d=true,
                show_acq_plot=false, doppler_curve=missing, doppler_t=missing,
                fd_center=0., sig_freq=missing, signal=missing, q_mult=1,
                print_steps=true, σω=1000, channel="I", file_name=missing,
                include_thermal_noise=true, include_phase_noise=true,
-               fine_acq_method=:fft, skip_to=0.1)
+               fine_acq_method=:fft, skip_to=0.1, tracking_T=missing)
     if print_steps
         println("Running GNSSTools Signal Simulation and Data Processing Demo")
     end
-
     # L5Q parameters
     if sigtype == "l5"
         f_s = 25e6  # Hz
@@ -38,43 +37,52 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         Tsys = 535.  # K
         phi = π/4  # rad
         nADC = 4  # bits
-        B = 2.046e7  # Hz
+        B = 2*L5_chipping_rate  # Hz
         if channel == "I"
-            RLM = 10
+            fine_acq_T = 10e-3
         elseif channel == "Q"
-            RLM = 20
+            fine_acq_T = 20e-3
         else
             error("Invalid channel specified")
         end
         if ismissing(file_name)
             file_name = "hi_e06_20190411_092347_004814_1176.45M_25.0M_USRP8_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L5
         end
+        f_center = 1176.45e6
+        if ismissing(sig_freq)
+            sig_freq = L5_freq
+        end
         if include_databits
-            signal_type = define_l5_code_type(M*t_length; prns=prn)
+            signal_type = define_l5_code_type(t_length; prns=prn,
+                                              sig_freq=sig_freq)
         else
-            signal_type = define_l5_code_type(;prns=prn)
+            signal_type = define_l5_code_type(;prns=prn, sig_freq=sig_freq)
         end
     elseif sigtype == "l1ca"
         f_s = 5e6  # Hz
-        # f_if = 1.25e6  # Hz
-        f_if = 0.  # Hz
+        f_if = 1.25e6  # Hz
+        # f_if = 0.  # Hz
         Tsys = 535.  # K
         phi = π/4  # rad
         nADC = 4  # bits
-        B = 2.046e6  # Hz
-        RLM = 10
+        B = 2*l1ca_chipping_rate  # Hz
+        fine_acq_T = 10e-3
+        if ismissing(sig_freq)
+            sig_freq = L1_freq
+        end
         if ismissing(file_name)
             file_name = "hi_e06_20190411_092347_004814_1575.42M_5.0M_USRP4_X300_LB-SJ-10100-SF_Dish-LinZ.sc4"  # L1
         end
+        f_center = 1575.42e6
         if include_databits
-            signal_type = define_l1ca_code_type(M*t_length; prns=prn)
+            signal_type = define_l1ca_code_type(t_length; prns=prn,
+                                                sig_freq=sig_freq)
         else
-            signal_type = define_l1ca_code_type(;prns=prn)
+            signal_type = define_l1ca_code_type(;prns=prn, sig_freq=sig_freq)
         end
     else
         error("Invalid signal type specified.")
     end
-
     if simulatedata
         # Simulate data
         if print_steps
@@ -87,7 +95,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                       (doppler_t[zero_idx+1]-doppler_t[zero_idx])
         end
         if ismissing(signal)
-            data = definesignal(signal_type, f_s, M*t_length; prn=prn,
+            data = definesignal(signal_type, f_s, t_length; prn=prn,
                                 f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                                 CN0=CN0, phi=phi, nADC=nADC,
                                 include_carrier=include_carrier,
@@ -109,10 +117,10 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         end
         file_dir = "/media/Srv3Pool2/by-location/hi/"
         file_path = string(file_dir, file_name)
-        data_type = Val(:sc4)
+        data_type = :sc4
         start_t = 1e-3
-        data = loaddata(data_type, file_path, f_s, f_if, M*t_length;
-                        skip_to=skip_to)
+        data = loaddata(data_type, file_path, f_s, f_center, sig_freq, 
+                        t_length; skip_to=skip_to)
         if print_steps
             println("Done")
         end
@@ -122,25 +130,38 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         # coherent integration for L5I signal
         if sigtype == "l5"
             if channel == "I"
-                replica_t_length = 10e-3
+                acquisition_T = 10e-3
+                if ismissing(tracking_T)
+                    tracking_T = 10e-3
+                end
             elseif channel == "Q"
-                replica_t_length = 20e-3
+                acquisition_T = 20e-3
+                if ismissing(tracking_T)
+                    tracking_T = 20e-3
+                end
             else
                 error("Invalid signal type specified.")
             end
         else
-            replica_t_length = 1e-3
+            acquisition_T = 1e-3
+            if ismissing(tracking_T)
+                tracking_T = 1e-3
+            end
         end
     else
-        replica_t_length = 1e-3
+        acquisition_T = 1e-3
+        if ismissing(tracking_T)
+            tracking_T = 1e-3
+        end
     end
     # Process signal
     if print_steps
         print("Processing signal...")
     end
     results = process(data, signal_type, prn, channel;
-                      σω=σω, fd_center=fd_center, fd_range=fd_range, M=RLM,
-                      replica_t_length=replica_t_length, cov_mult=cov_mult,
+                      σω=σω, fd_center=fd_center, fd_range=fd_range, M=M,
+                      acquisition_T=acquisition_T, fine_acq_T=fine_acq_T,
+                      tracking_T=tracking_T, cov_mult=cov_mult,
                       q_a=q_a, q_mult=q_mult, dynamickf=dynamickf, dll_b=dll_b,
                       state_num=state_num, fd_rate=fd_rate, show_plot=false,
                       fine_acq_method=fine_acq_method, return_corrresult=true)
@@ -209,15 +230,17 @@ off a user defined constellation.
                   defaults to (40.01, -105.2437, 1655), or Boulder, CO, USA
 """
 function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 1655);
-              sigtype="l1ca", include_carrier=true, include_adc=true, include_noise=true,
+              sigtype="l1ca", include_carrier=true, include_adc=true, 
+              include_noise=true,
               include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
-              t_length=1e-3, M=4000, fd_range=5000., dll_b=5., state_num=3,
+              t_length=4, M=1, fd_range=5000., dll_b=5., state_num=3,
               dynamickf=true, cov_mult=1., q_a=1., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
               sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
               print_steps=true, eop=get_eop(), σω=1000., channel="I",
               include_thermal_noise=true, include_phase_noise=true,
-              fine_acq_method=:fft)
+              fine_acq_method=:fft, tracking_T=missing, 
+              Δf_per_plane=360/satellite_per_plane/2)
     if print_steps
         println("Running GNSSTools Constellation Demo")
     end
@@ -234,14 +257,14 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         nADC = 4  # bits
         B = 2.046e7  # Hz
         if channel == "I"
-            RLM = 10
+            fine_acq_T = 10e-3
         elseif channel == "Q"
-            RLM = 20
+            fine_acq_T = 20e-3
         else
             error("Invalid channel specified")
         end
         if include_databits
-            signal_type = define_l5_code_type(M*t_length; prns=prn,
+            signal_type = define_l5_code_type(t_length; prns=prn,
                                               sig_freq=sig_freq)
         else
             signal_type = define_l5_code_type(;prns=prn, sig_freq=sig_freq)
@@ -250,17 +273,17 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         if ismissing(sig_freq)
             sig_freq = L1_freq
         end
-        f_s = 25e6  #
+        # f_s = 25e6  #
         f_s = 5e6  # Hz
-        # f_if = 1.25e6  # Hz
-        f_if = 0.  # Hz
+        f_if = 1.25e6  # Hz
+        # f_if = 0.  # Hz
         Tsys = 535.  # K
         phi = π/4  # rad
         nADC = 4  # bits
         B = 2.046e6  # Hz
-        RLM = 10
+        fine_acq_T = 10e-3
         if include_databits
-            signal_type = define_l1ca_code_type(M*t_length; prns=prn,
+            signal_type = define_l1ca_code_type(t_length; prns=prn,
                                                 sig_freq=sig_freq)
         else
             signal_type = define_l1ca_code_type(;prns=prn, sig_freq=sig_freq)
@@ -273,7 +296,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     if print_steps
         print("Setting signal parameters and generating constellation...")
     end
-    data = definesignal(signal_type, f_s, M*t_length; prn=prn,
+    data = definesignal(signal_type, f_s, t_length; prn=prn,
                         f_if=f_if, f_d=0., fd_rate=0., Tsys=Tsys,
                         CN0=CN0, phi=phi, nADC=nADC,
                         include_carrier=include_carrier,
@@ -282,11 +305,17 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
                         include_phase_noise=include_phase_noise,
                         code_start_idx=n0)
     constellation_t = Array(data.t[1]:1:data.t[end])
-    doppler_t = Array(data.t[1]:0.001:data.t[end]+0.001)
+    if t_length >= 1
+        t_step = 0.25
+    else
+        t_step = 0.001
+    end
+    doppler_t = Array(data.t[1]:t_step:data.t[end]+t_step)
     constellation = define_constellation(a, plane_num, satellite_per_plane,
                                          incl, constellation_t;
-                                         show_plot=true, obs_lla=user_lla,
-                                         eop=eop, t_start=t_start, ΔΩ=ΔΩ)
+                                         show_plot=false, obs_lla=user_lla,
+                                         eop=eop, t_start=t_start, ΔΩ=ΔΩ,
+                                         Δf_per_plane=Δf_per_plane)
     elevations = []
     max_elevations = []
     for satellite in constellation.satellites
@@ -321,27 +350,43 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         # coherent integration for L5I signal
         if sigtype == "l5"
             if channel == "I"
-                replica_t_length = 10e-3
+                acquisition_T = 10e-3
+                if ismissing(tracking_T)
+                    tracking_T = 10e-3
+                end
             elseif channel == "Q"
-                replica_t_length = 20e-3
+                acquisition_T = 20e-3
+                if ismissing(tracking_T)
+                    tracking_T = 20e-3
+                end
             else
                 error("Invalid signal type specified.")
             end
         else
-            replica_t_length = 1e-3
+            acquisition_T = 1e-3
+            if ismissing(tracking_T)
+                tracking_T = 1e-3
+            end
         end
     else
-        replica_t_length = 1e-3
+        acquisition_T = 1e-3
+        if ismissing(tracking_T)
+            tracking_T = 1e-3
+        end
     end
     # Process signal
     if print_steps
         print("Processing signal...")
     end
-    Δfd = 1/replica_t_length  # Hz
+    Δfd = 1/acquisition_T  # Hz
     fd_center = round(doppler_curve[1]/Δfd)*Δfd  # Hz
     results = process(data, signal_type, prn, channel;
-                      σω=σω, fd_center=fd_center, fd_range=fd_range, M=RLM,
-                      replica_t_length=replica_t_length, cov_mult=cov_mult,
+                      σω=σω, fd_center=fd_center, 
+                      fd_range=fd_range, M=M,
+                      acquisition_T=acquisition_T, 
+                      fine_acq_T=fine_acq_T,
+                      tracking_T=tracking_T,
+                      cov_mult=cov_mult,
                       q_a=q_a, q_mult=q_mult, dynamickf=dynamickf, dll_b=dll_b,
                       state_num=state_num, fd_rate=fd_rate, show_plot=false,
                       fine_acq_method=fine_acq_method, return_corrresult=true)
@@ -350,47 +395,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     n0_est = acqresults.n0_idx_course
     fd_est = acqresults.fd_course
     println("Done")
-    # # Define 1ms and RLM*1ms signals
-    # replica = definesignal(type, f_s, replica_t_length; sig_freq=sig_freq)
-    # replicalong = definesignal(type, f_s, RLM*t_length; sig_freq=sig_freq)
-    # # Calculate Doppler bin spacing for course acquisition
-    # Δfd = 1/replica.t_length  # Hz
-    # fd_center = round(doppler_curve[1]/Δfd)*Δfd  # Hz
-    # # fd_center = 0.  # Hz
-    # # Allocate space for correlation result
-    # corr_result = gencorrresult(fd_range, Δfd, replica.sample_num)
-    # # Perform course acquisition
-    # courseacquisition!(corr_result, data, replica, prn;
-    #                    fd_center=fd_center, fd_range=fd_range,
-    #                    fd_rate=fd_rate, Δfd=Δfd)
-    # n0_est, fd_est, SNR_est = course_acq_est(corr_result, fd_center, fd_range, Δfd)
-    # if print_steps
-    #     println("Done ($(SNR_est)dB)")
-    # end
-    # # Perform FFT based fine acquisition
-    # # Returns structure containing the fine, course,
-    # # and estimated Doppler frequency
-    # if print_steps
-    #     print("Performing FFT based fine acquisition...")
-    # end
-    # results = fineacquisition(data, replicalong, prn, fd_est,
-    #                           n0_est, Val(:fft); σω=σω)
-    # if print_steps
-    #     println("Done")
-    # end
-    # # Perform code/carrier phase, and Doppler frequency tracking on signal
-    # # using results from fine acquisition as the intial conditions
-    # if print_steps
-    #     print("Performing signal tracking...")
-    # end
-    # trackresults = trackprn(data, replica, prn, results.phi_init,
-    #                         results.fd_est, results.n0_idx_course,
-    #                         results.P, results.R; DLL_B=dll_b,
-    #                         state_num=state_num, dynamickf=dynamickf,
-    #                         cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult)
-    # if print_steps
-    #     println("Done")
-    # end
     # Plot results and save if `saveto` is a string
     if showplot
         if print_steps
@@ -422,8 +426,12 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
             suptitle("PRN $(prn)\nfd course: $(fd_est)Hz; n₀ course: $(n0_est)")
         end
         # Tracking results
+        A = sqrt(2*GNSSTools.k*Tsys)*10^(CN0/20)
+        σ = sqrt(GNSSTools.k*B*Tsys)
+        truth_SNR = 10log10(f_s * tracking_T * A^2 / σ^2)
         plotresults(trackresults; saveto=saveto, figsize=figsize,
-                    doppler_curve=doppler_curve, doppler_t=doppler_t, CN0=CN0)
+                    doppler_curve=doppler_curve, doppler_t=doppler_t,
+                    truth_SNR=truth_SNR)
         if print_steps
             println("Done")
         end
