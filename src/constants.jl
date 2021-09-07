@@ -353,7 +353,7 @@ function getCurrentGPSNORADIDS(file_url)
     # it from the url, `file_url`
     ids_file = string(directory, "/GPSData.txt")
     if ~isfile(ids_file)
-        run(`curl -o $(ids_file) $(file_url)`);
+        run(`curl -o $(ids_file) $(file_url)`)
     end
     # Parse GPSData file and return the `Dict` containing the history of
     # Sv usage of each PRN number
@@ -385,3 +385,18 @@ is `GPSData[prn][sv]["[parameter]"]`. See `getCurrentGPSNORADIDS` for more
 detail.
 """
 const GPSData = getCurrentGPSNORADIDS(GPS_data_file_url)
+
+
+
+"""
+    updateCurrentGPSNORADIDS()
+
+
+Redownload the historical GPS PRN data file. It will be reparsed when 
+`GNSSTools` is imported in a new Julia session.
+"""
+function updateCurrentGPSNORADIDS()
+    directory = string(homedir(), "/.GNSSTools")
+    ids_file = string(directory, "/GPSData.txt")
+    run(`curl -o $(ids_file) $(file_url)`)
+end
