@@ -80,11 +80,9 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  saveto=missing, show_plot=true, fine_acq_method=:carrier,
                  return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
                  h₀=1e-21, h₋₂=2e-20, acquisition_T=1e-3, fine_acq_T=10e-3, 
-                 tracking_T=1e-3, M=1, σᵩ²=missing, return_Pd=false)
-    # Set up replica signals. `replica_t_length` is used for
-    # course acquisition and tracking, while `RLM*replica_t_length`
-    # is used for fine acquisition only. The signal must be at least
-    # as long as `RLM*replica_t_length`
+                 tracking_T=1e-3, M=1, σᵩ²=missing, return_Pd=false,
+                 err_bin_num_f=0.25)
+    # Set up replica signals.
     f_s = signal.f_s
     if channel == "I"
         signal_type = definesignaltype(signal_type.I_codes,
@@ -110,7 +108,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # since the estimate from the FFT based fine acquisition method
     # is always too large to use. This will only be used if the FFT
     # based fine acquisition method is used, or if no fine acquisition
-    # method is used (when `` = false)
+    # method is used (when `use_fine_acq` = false)
     if ismissing(σᵩ²)
         CN0_est = snr2cn0(SNR_est, replica.t_length)
         σᵩ² = phase_noise_variance(CN0_est, replica.t_length)
@@ -127,7 +125,8 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
             replicalong = definereplica(signal_type, f_s, fine_acq_T)
             results = fineacquisition(signal, replicalong, prn, fd_course,
                                       n0_est, Val(fine_acq_method); σω=σω,
-                                      fd_rate=fd_rate)
+                                      fd_rate=fd_rate, 
+                                      err_bin_num_f=err_bin_num_f)
         elseif fine_acq_method == :carrier
             M = floor(Int, fine_acq_T/acquisition_T)
             if M < 3
@@ -148,7 +147,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
         phi_init = results.phi_init
         fd_est = results.fd_est
     else
-        P = diagm([sqrt(σᵩ²), 1/acquisition_T, σω]).^2
+        P = diagm([σᵩ², (2π*err_bin_num_f/acquisition_T)^2, (2π*σω)^2])
         R = [σᵩ²]
         phi_init = 0.
         fd_est = fd_course
