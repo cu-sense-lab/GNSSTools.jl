@@ -82,7 +82,7 @@ Returns:
 function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_course,
                          n₀_idx_course, type::Val{:fft}; fd_rate=0.,
                          t_length=replica.t_length, freq_lim=10000.,
-                         σω=1000., err_bin_num_ϕ=1, err_bin_num_f=0.5)
+                         σω=1000., err_bin_num_ϕ=1, err_bin_num_f=0.25)
     # Generate replica
     # Set signal parameters
     definereplica!(replica;
