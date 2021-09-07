@@ -408,8 +408,9 @@ Returns:
 - `SNR`: signal-to-noise ratio of frequency domain correlation peak in dB
 """
 function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
-	                          fd_rate, ϕ, d, pfft)
+	                          fd_rate, ϕ, d, pfft, n0_index_start)
     datasegment = view(data.data, (i-1)*N+1:i*N)
+    # datasegment = view(data.data, (i-1)*N+n0_index_start:i*N+n0_index_start-1)
     ts = view(data.t, 1:N)
     # Perform carrier wipeoff of intemediate and Doppler frequencies, Doppler
     # frequency rate, and carrier phase
@@ -646,8 +647,10 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     n0_init = calcinitcodephase(code_length,
                                 f_code_d, 0.,
                                 f_s, n0_idx_init)
+    # n0_init = 0.0
     n0 = n0_init
-    M = floor(Int, data.t_length/replica.t_length)
+    # M = floor(Int, data.t_length/replica.t_length)
+    M = floor(Int, (data.sample_num - (n0_idx_init - 1))/replica.sample_num)
     t = Array(0:T:M*T-T)
     # Define DLL and PLL parameter structs
     dll_parms = definedll(T, DLL_B, d)
@@ -715,7 +718,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         # Calculate early, prompt, and late correlator outputs
         ze, zp, zl, snr = getcorrelatoroutput!(datafft, data, replica, i, N,
 		                                       f_if, f_d, fd_rate, ϕ, d,
-                                               pfft)
+                                               pfft, n0_idx_init)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)  # chips
         # Measure carrier phase and Doopler frequency errors
@@ -829,14 +832,14 @@ Optional Arguments:
                    estimate `(default = missing)`
 - `doppler_t`: time vector that must be included with `doppler_curve`
                `(default = missing)`
-- `CN0`: expected carrier-to-noise ratio `C/N₀` value `(default = missing)`
+- `truth_SNR`: expected signal-to-noise `SNR` ratio `(default = missing)`
 
 
 Plots tracking results figure.
 """
 function plotresults(results::TrackResults; saveto=missing,
 	                 figsize=missing, doppler_curve=missing,
-					 doppler_t=missing, CN0=missing)
+					 doppler_t=missing, truth_SNR=missing)
 	if ismissing(figsize)
 		figure()
 	else
@@ -873,9 +876,9 @@ function plotresults(results::TrackResults; saveto=missing,
     title("Doppler Frequency Estimate")
 	# SNR estimate
 	subplot2grid((3,2), (1,1), colspan=2, rowspan=1)
-	if ~ismissing(CN0)
+	if ~ismissing(truth_SNR)
 		plot(results.t, results.SNR, "k.", label="Estimate")
-		axhline(y=CN0+10*log10(results.T), color="b",
+		axhline(y=truth_SNR, color="b",
 		        label="Truth")
 		legend()
 	else
