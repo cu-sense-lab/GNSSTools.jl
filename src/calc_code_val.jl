@@ -299,7 +299,7 @@ function calc_code_val(signal::ReplicaSignal, t, code_chips_I, code_chips_Q)
         # Change from 0:1 state to -1:1 state. This prevensts divide over zero
         # Q_val = binary2OneOrNegativeOne(Q_val)
     else
-        I_val = 0
+        Q_val = 0
     end
     # Calculate the phase of the carrier based off the values of `Q_val` and
     # `I_val`. This simulates a QPSK signal.
