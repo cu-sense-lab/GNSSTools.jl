@@ -357,7 +357,6 @@ Fields:
 - `f_if::Float64`: IF frequency of data in Hz
 - `t_length::Float64`: length of data loaded in seconds
 - `start_data_idx::Int`: starting index in the data file
-- `t::Array{Float64,1}`: time vector to accompany data
 - `data::Array{Complex{Float64},1}`: loaded data from data file
 - `data_type::String`: a `Symbol` type either `:sc4` or `:sc8` for 4 and 8 bit
                        comeplex data, respectively
@@ -376,6 +375,7 @@ Fields:
 - `nADC::Int`: bit depth of data
     * `sc4` is 4 bit
     * `sc8` is 8 bit
+- `start_t::Float64`: the start time of the signal in seconds
 """
 struct GNSSData{T1,T2,T3} <: GNSSSignal
     file_name::String
@@ -383,7 +383,6 @@ struct GNSSData{T1,T2,T3} <: GNSSSignal
     f_if::Float64
     t_length::Float64
     start_data_idx::Int
-    t::Array{Float64,1}
     data::Array{T3,1}
     data_type::String
     data_start_time::T1
@@ -391,6 +390,7 @@ struct GNSSData{T1,T2,T3} <: GNSSSignal
     sample_num::Int
     total_data_length::Float64
     nADC::Int
+    start_t::Float64
 end
 
 
@@ -398,7 +398,7 @@ end
     GNSSData(file_name, f_s, f_if, t_length, start_data_idx, t, 
              data::Array{T3,1}, data_type, data_start_time::T1, 
              site_loc_lla::T2, sample_num, total_data_length, 
-             nADC) where {T1, T2, T3}
+             nADC, start_t) where {T1, T2, T3}
 
 
 Outer constructor function for `GNSSData` struct initialization.
@@ -408,13 +408,13 @@ Returns:
 
 - `GNSSData` struct
 """
-function GNSSData(file_name, f_s, f_if, t_length, start_data_idx, t, 
+function GNSSData(file_name, f_s, f_if, t_length, start_data_idx,  
                   data::Array{T3,1}, data_type, data_start_time::T1, 
                   site_loc_lla::T2, sample_num, total_data_length, 
-                  nADC) where {T1, T2, T3}
-    return GNSSData{T1,T2,T3}(file_name, f_s, f_if, t_length, start_data_idx, t, 
+                  nADC, start_t) where {T1, T2, T3}
+    return GNSSData{T1,T2,T3}(file_name, f_s, f_if, t_length, start_data_idx,
                               data, data_type, data_start_time, site_loc_lla, 
-                              sample_num, total_data_length, nADC)
+                              sample_num, total_data_length, nADC, start_t)
 end
 
 
@@ -444,7 +444,6 @@ Fields:
     * vector length is set to 0 if there are no I channel codes
 - `init_code_phases_Q::T2`: array of initial code phases for all Q channel codes
     * vector length is set to 0 if there are no Q channel codes
-- `t::Array{Float64,1}`: time vector from 0 to `t_length` in seconds
 - `data::Array{Complex{Float64},1}`: where the signal raw I/Q samples are stored
 - `include_carrier::Bool`: flag for if signal will be modulated onto a carrier
 - `include_adc::Bool`: flag for if signal will undergo ADC quantization
@@ -486,6 +485,8 @@ Fields:
     * if `allocate_noise_vectors` is set to `false` in `definesignal` method,
       the size of this vector is 0, indicating that it will not be used
 - `signal_type::T7`: a `SignalType` struct that was used to define the signal
+- `receiver_h_parms::Array{Float64,1}`:
+- `start_t::Float64`: the start time of the signal in seconds
 
 """
 mutable struct ReplicaSignal{T} <: GNSSSignal
@@ -503,7 +504,6 @@ mutable struct ReplicaSignal{T} <: GNSSSignal
     code_start_idx::Rational{Int}
     init_code_phases_I::Array{Float64,1}
     init_code_phases_Q::Array{Float64,1}
-    t::Array{Float64,1}
     data::Array{Complex{Float64},1}
     include_carrier::Bool
     include_adc::Bool
@@ -522,6 +522,7 @@ mutable struct ReplicaSignal{T} <: GNSSSignal
     phase_noise::Array{Complex{Float64},1}
     signal_type::T
     receiver_h_parms::Array{Float64,1}
+    start_t::Float64
 end
 
 
@@ -533,7 +534,7 @@ end
                   include_databits_Q, include_phase_noise, f_code_d_I,
                   f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
                   isreplica, noexp, thermal_noise, phase_noise,
-                  signal_type::T) where {T}
+                  signal_type::T, receiver_h_parms, start_t) where {T}
 
 
 Outer constructor function for `ReplicaSignal` struct initialization.
@@ -545,20 +546,20 @@ Returns:
 """
 function ReplicaSignal(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
                        CN0, phi, nADC, code_start_idx, init_code_phases_I,
-                       init_code_phases_Q, t, data, include_carrier,
+                       init_code_phases_Q, data, include_carrier,
                        include_adc, include_thermal_noise, include_databits_I,
                        include_databits_Q, include_phase_noise, f_code_d_I,
                        f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
                        isreplica, noexp, thermal_noise, phase_noise,
-                       signal_type::T, receiver_h_parms) where {T}
+                       signal_type::T, receiver_h_parms, start_t) where {T}
     return ReplicaSignal{T}(name, prn, f_s, t_length, f_if, f_d, fd_rate, Tsys,
                             CN0, phi, nADC, code_start_idx, init_code_phases_I,
-                            init_code_phases_Q, t, data, include_carrier,
+                            init_code_phases_Q, data, include_carrier,
                             include_adc, include_thermal_noise, include_databits_I,
                             include_databits_Q, include_phase_noise, f_code_d_I,
                             f_code_dd_I, f_code_d_Q, f_code_dd_Q, sample_num,
                             isreplica, noexp, thermal_noise, phase_noise,
-                            signal_type, receiver_h_parms)
+                            signal_type, receiver_h_parms, start_t)
 end
 
 
@@ -576,19 +577,18 @@ Fields:
 - `replica_signals::Array{ReplicaSignal,1}`:
 - `data::Array{Complex{Float64},1}`:
 - `t::Array{Float64,1}`:
-- `t_length::Float64`:
 - `f_s::Float64`:
 - `f_if::Float64`:
 - `sample_num::Int`:
 - `nADC::Int`:
 - `thermal_noise::Array{Complex{Float64},1}`:
 - `phase_noise::Array{Float64,1}`:
+- `start_t::Float64`: the start time of the signal in seconds
 """
 mutable struct ReplicaSignals <: GNSSSignal
     name::String
     replica_signals::Array{ReplicaSignal,1}
     data::Array{Complex{Float64},1}
-    t::Array{Float64,1}
     t_length::Float64
     f_s::Float64
     f_if::Float64
@@ -603,4 +603,5 @@ mutable struct ReplicaSignals <: GNSSSignal
     thermal_noise::Array{Complex{Float64},1}
     phase_noise::Array{Complex{Float64},1}
     receiver_h_parms::Array{Float64,1}
+    start_t::Float64
 end
