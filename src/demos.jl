@@ -19,14 +19,15 @@ data.
 function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                include_databits=true, simulatedata=true,
                saveto=missing, T="short", showplot=true, f_d=800.,
-               fd_rate=0., prn=26, n0=1000., t_length=4, M=1,
+               fd_rate=0., prn=26, n0=1000., t_length=30, M=1,
                fd_range=5000., dll_b=5, state_num=3, dynamickf=true,
                cov_mult=1., q_a=1, figsize=missing, CN0=45., plot3d=true,
                show_acq_plot=false, doppler_curve=missing, doppler_t=missing,
                fd_center=0., sig_freq=missing, signal=missing, q_mult=1,
                print_steps=true, σω=1000, channel="I", file_name=missing,
                include_thermal_noise=true, include_phase_noise=true,
-               fine_acq_method=:fft, skip_to=0.1, tracking_T=missing)
+               fine_acq_method=:fft, skip_to=0.1, tracking_T=missing,
+               save_interval=1, file_location="", file_prefix="SimulatedSignal")
     if print_steps
         println("Running GNSSTools Signal Simulation and Data Processing Demo")
     end
@@ -36,7 +37,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         f_if = 0.  # Hz
         Tsys = 535.  # K
         phi = π/4  # rad
-        nADC = 4  # bits
+        nADC = 8  # bits
         B = 2*L5_chipping_rate  # Hz
         if channel == "I"
             fine_acq_T = 10e-3
@@ -64,7 +65,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
         # f_if = 0.  # Hz
         Tsys = 535.  # K
         phi = π/4  # rad
-        nADC = 4  # bits
+        nADC = 8  # bits
         B = 2*l1ca_chipping_rate  # Hz
         fine_acq_T = 10e-3
         if ismissing(sig_freq)
@@ -85,9 +86,6 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
     end
     if simulatedata
         # Simulate data
-        if print_steps
-            print("Generating PRN $(prn) $(sigtype) signal...")
-        end
         if ~ismissing(doppler_curve) && ~ismissing(doppler_t)
             zero_idx = findfirst(t -> t == 0, doppler_t)
             f_d = doppler_curve[zero_idx]
@@ -95,7 +93,7 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                       (doppler_t[zero_idx+1]-doppler_t[zero_idx])
         end
         if ismissing(signal)
-            data = definesignal(signal_type, f_s, t_length; prn=prn,
+            data = definesignal(signal_type, f_s, save_interval; prn=prn,
                                 f_if=f_if, f_d=f_d, fd_rate=fd_rate, Tsys=Tsys,
                                 CN0=CN0, phi=phi, nADC=nADC,
                                 include_carrier=include_carrier,
@@ -103,12 +101,42 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                                 include_thermal_noise=include_thermal_noise,
                                 include_phase_noise=include_phase_noise,
                                 code_start_idx=n0)
-            generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
+            if print_steps
+                p = Progress(floor(Int, t_length/save_interval), 1, "Generating PRN $(prn) $(sigtype) signal...")
+            end
+            file_name = ""
+            operation = "replace"
+            if include_thermal_noise
+                new_thermal_noise = true
+            else
+                new_thermal_noise = false
+            end
+            if include_phase_noise
+                new_phase_noise = true
+            else
+                new_phase_noise = false
+            end
+            for i in 1:floor(Int, t_length/save_interval)
+                generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
+                file_name = signal_to_sc_data_file(data, sig_freq, file_location, 
+                                                file_prefix;
+                                                operation=operation)
+                operation = "append"
+                phase_noise_init_phase = mean(real.(real(data.phase_noise[end-100:end])))
+                definesignal!(data; new_thermal_noise=new_thermal_noise, 
+                             new_phase_noise=new_phase_noise,
+                             phase_noise_init_phase=phase_noise_init_phase,
+                             start_t=i*save_interval)
+                if print_steps
+                    next!(p)
+                end
+            end
+            data = missing
+            GC.gc()
+            data = loaddata(:sc8, file_name, f_s, sig_freq-f_if, 
+                            sig_freq, t_length)
         else
             data = signal
-        end
-        if print_steps
-            println("Done")
         end
     else
         # Load data
@@ -233,14 +261,15 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               sigtype="l1ca", include_carrier=true, include_adc=true, 
               include_noise=true,
               include_databits=true, T="short", showplot=true, prn=26, n0=1000.,
-              t_length=4, M=1, fd_range=5000., dll_b=5., state_num=3,
+              t_length=60, M=1, fd_range=5000., dll_b=1., state_num=3,
               dynamickf=true, cov_mult=1., q_a=1., figsize=missing, CN0=45.,
               plot3d=true, show_acq_plot=false, saveto=missing, incl=56.,
               sig_freq=missing, t_start=3/60/24, ΔΩ=360/plane_num, q_mult=1,
               print_steps=true, eop=get_eop(), σω=1000., channel="I",
               include_thermal_noise=true, include_phase_noise=true,
               fine_acq_method=:fft, tracking_T=missing, 
-              Δf_per_plane=360/satellite_per_plane/2)
+              Δf_per_plane=360/satellite_per_plane/2, save_interval=1,
+              file_location="", file_prefix="SignalFromLEO")
     if print_steps
         println("Running GNSSTools Constellation Demo")
     end
@@ -254,7 +283,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         f_if = 0.  # Hz
         Tsys = 535.  # K
         phi = π/4  # rad
-        nADC = 4  # bits
+        nADC = 8  # bits
         B = 2.046e7  # Hz
         if channel == "I"
             fine_acq_T = 10e-3
@@ -279,7 +308,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         # f_if = 0.  # Hz
         Tsys = 535.  # K
         phi = π/4  # rad
-        nADC = 4  # bits
+        nADC = 8  # bits
         B = 2.046e6  # Hz
         fine_acq_T = 10e-3
         if include_databits
@@ -296,7 +325,7 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
     if print_steps
         print("Setting signal parameters and generating constellation...")
     end
-    data = definesignal(signal_type, f_s, t_length; prn=prn,
+    data = definesignal(signal_type, f_s, save_interval; prn=prn,
                         f_if=f_if, f_d=0., fd_rate=0., Tsys=Tsys,
                         CN0=CN0, phi=phi, nADC=nADC,
                         include_carrier=include_carrier,
@@ -304,13 +333,13 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
                         include_thermal_noise=include_thermal_noise,
                         include_phase_noise=include_phase_noise,
                         code_start_idx=n0)
-    constellation_t = Array(data.t[1]:1:data.t[end])
+    constellation_t = Array(data.start_t:1:t_length)
     if t_length >= 1
         t_step = 0.25
     else
         t_step = 0.001
     end
-    doppler_t = Array(data.t[1]:t_step:data.t[end]+t_step)
+    doppler_t = Array(data.start_t:t_step:t_length+t_step)
     constellation = define_constellation(a, plane_num, satellite_per_plane,
                                          incl, constellation_t;
                                          show_plot=false, obs_lla=user_lla,
@@ -339,12 +368,38 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         println("Done")
     end
     if print_steps
-        print("Generating PRN $(prn) $(sigtype) signal...")
+        p = Progress(floor(Int, t_length/save_interval), 1, "Generating PRN $(prn) $(sigtype) signal...")
     end
-    generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
-    if print_steps
-        println("Done")
+    file_name = ""
+    operation = "replace"
+    if include_thermal_noise
+        new_thermal_noise = true
+    else
+        new_thermal_noise = false
     end
+    if include_phase_noise
+        new_phase_noise = true
+    else
+        new_phase_noise = false
+    end
+    for i in 1:floor(Int, t_length/save_interval)
+        generatesignal!(data; doppler_curve=doppler_curve, doppler_t=doppler_t)
+        file_name = signal_to_sc_data_file(data, sig_freq, file_location, 
+                                           file_prefix;
+                                           operation=operation)
+        operation = "append"
+        phase_noise_init_phase = mean(real.(real(data.phase_noise[end-100:end])))
+        definesignal!(data; new_thermal_noise=new_thermal_noise, 
+                      new_phase_noise=new_phase_noise,
+                      phase_noise_init_phase=phase_noise_init_phase,
+                      start_t=i*save_interval)
+        if print_steps
+            next!(p)
+        end
+    end
+    data = missing
+    GC.gc()
+    data = loaddata(:sc8, file_name, f_s, sig_freq-f_if, sig_freq, t_length)
     if T == "long"
         # Use 20ms coherent integration for L5Q signal and 10ms
         # coherent integration for L5I signal
