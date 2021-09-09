@@ -32,8 +32,8 @@ module GNSSTools
     pygui(true)
 
     include("constants.jl")
-    include("general_tools.jl")
     include("signal_types.jl")
+    include("general_tools.jl")
     include("generate_phase_noise.jl")
     include("calc_code_val.jl")
     include("definesignal.jl")
@@ -77,7 +77,7 @@ module GNSSTools
     export generatesignal!, generatereplica!
     export fft_correlate
     export GNSSData
-    export loaddata, reloaddata!
+    export loaddata, reloaddata!, signal_to_sc_data_file
     export gencorrresult
     export courseacquisition, courseacquisition!
     export v_t2p_fa, p_fa2v_t, false_alarm_pdf, detection_pdf, v_t2p_d, p_d2v_t
@@ -85,7 +85,7 @@ module GNSSTools
     export gnsstypes
     export calcinitcodephase
     export calccodeidx
-    export calctvector
+    export calctvector, calc_t_at_i
     export calcsnr
     export loadrinex
     export trackprn
