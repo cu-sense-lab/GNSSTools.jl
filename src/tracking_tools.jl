@@ -410,12 +410,11 @@ Returns:
 function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
 	                          fd_rate, ϕ, d, pfft, n0_index_start)
     datasegment = view(data.data, (i-1)*N+1:i*N)
-    # datasegment = view(data.data, (i-1)*N+n0_index_start:i*N+n0_index_start-1)
-    ts = view(data.t, 1:N)
     # Perform carrier wipeoff of intemediate and Doppler frequencies, Doppler
     # frequency rate, and carrier phase
     @inbounds for j in 1:N
-        datafft[j] = datasegment[j]*cis(-(2π*(f_if+f_d+0.5*fd_rate*ts[j])*ts[j]+ϕ))
+        t = calc_t_at_i(j, data.start_t, data.f_s)
+        datafft[j] = datasegment[j]*cis(-(2π*(f_if+f_d+0.5*fd_rate*t)*t+ϕ))
     end
     # In-place FFT of `datafft`
     pfft * datafft
@@ -886,9 +885,9 @@ function plotresults(results::TrackResults; saveto=missing,
 	end
     xlabel("Time (s)")
     ylabel("SNR (dB)")
-    twinx()
-    plot(results.t, real(results.ZP), "k:")
-    ylabel("real(ZP)")
+    # twinx()
+    # plot(results.t, real(results.ZP), "k:")
+    # ylabel("real(ZP)")
     title("SNR Estimate")
     # Plot ZP real and imaginary parts
     subplot2grid((3,2), (2,0), colspan=2, rowspan=1)
