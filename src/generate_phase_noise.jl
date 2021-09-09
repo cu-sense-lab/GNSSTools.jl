@@ -209,7 +209,8 @@ Returns:
 - `phase_noise`: vector of generated oscillator phase noise in radians
 """
 function generate_phase_noise!(phase_noise::Vector, t_length::Number, 
-                               f_carrier::Number, h_parms::Vector)
+                               f_carrier::Number, h_parms::Vector;
+                               phi_init=0.)
     h₋₂, h₋₁, h₀, h₁, h₂ = h_parms
     N = length(phase_noise)
     if iseven(N)
@@ -243,7 +244,7 @@ function generate_phase_noise!(phase_noise::Vector, t_length::Number,
     end
     ifft!(phase_noise)
     for i in 1:N
-        phase_noise[i] = phase_noise[i] * N * Δf
+        phase_noise[i] = phase_noise[i] * N * Δf + phi_init
     end
     return phase_noise
 end
