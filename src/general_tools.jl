@@ -322,6 +322,51 @@ end
 
 
 """
+	calctvector(signal::GNSSSignal)
+
+
+Generates an `N` long time vector with time spacing `Δt` or `1/f_s`.
+
+
+Required Arguments:
+
+- `signal::GNSSSignal`: the signal structure
+
+
+Returns:
+
+- `t::Array{Float64,1}`: time vector of length `N` and spacing of `1/f_s`
+                         seconds
+"""
+function calctvector(signal::GNSSSignal)
+	return calctvector(signal.sample_num, signal.f_s)
+end
+
+
+"""
+	calc_t_at_i(i::Int, start_t::Number, f_s::Number)
+
+
+Calculates the time, `t`, at index `i`. 
+
+
+Required Arguments:
+
+- `i`: vector index integer spanning range 1:n
+- `start_t`: the value of `t` at `i=1` in seconds
+- `f_s`: the sampling rate of the data in Hz
+
+
+Returns:
+
+- `t`: time in seconds at `i`
+"""
+function calc_t_at_i(i::Int, start_t::Number, f_s::Number)
+	return start_t + (i-1)/f_s
+end
+
+
+"""
     meshgrid(x::Vector, y::Vector)
 
 
