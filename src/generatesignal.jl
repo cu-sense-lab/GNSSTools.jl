@@ -103,6 +103,7 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
     Tsys = signal.Tsys
     CN0 = signal.CN0
     f_s = signal.f_s
+    start_t = signal.start_t
     if ~signal.signal_type.include_I && signal.signal_type.include_Q
         B = signal.signal_type.B_Q
     elseif signal.signal_type.include_I && ~signal.signal_type.include_Q
@@ -124,10 +125,11 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
     noise_amp = sqrt(k*B*Tsys)
     N = floor(Int, t_length*f_s)
     upsample_factor = denominator(signal.code_start_idx)
-    Δt = signal.t[2] - signal.t[1]
+    Δt = 1/f_s
     dΔt = Δt/upsample_factor
     @threads for i in 1:N
-        @inbounds t = signal.t[i]
+        # @inbounds t = signal.t[i]
+        t = calc_t_at_i(i, start_t, f_s)
         # Generate code value for given signal type
         cis_sum = complex(0.)
         if include_carrier
@@ -173,6 +175,14 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
         sigmax = sqrt(maximum(abs2, signal.data))
         @threads for i in 1:signal.sample_num
             @inbounds signal.data[i] = round(signal.data[i]*adc_scale/sigmax)
+            # Check that the max positive value for I/Q channels is 
+            # (2^(nADC - 1) - 1)
+            if real(signal.data[i]) == adc_scale
+                signal.data[i] = signal.data[i] - 1 
+            end
+            if imag(signal.data[i]) == adc_scale
+                signal.data[i] = signal.data[i] - 1im
+            end
         end
     end
     return signal
@@ -284,6 +294,7 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     Tsys = signal.Tsys
     CN0 = signal.CN0
     f_s = signal.f_s
+    start_t = signal.start_t
     B = signal.B
     nADC = signal.nADC
     include_carrier = signal.include_carrier
@@ -297,10 +308,11 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     noise_amp = sqrt(k*B*Tsys)
     N = floor(Int, t_length*f_s)
     upsample_factor = denominator(signal.code_start_idx)
-    Δt = signal.t[2] - signal.t[1]
+    Δt = 1/f_s
     dΔt = Δt/upsample_factor
     @threads for i in 1:N
-        @inbounds t = signal.t[i]
+        # @inbounds t = signal.t[i]
+        t = calc_t_at_i(i, start_t, f_s)
         # Generate code value for given signal type
         cis_sum = complex(0.)
         if include_carrier
@@ -383,12 +395,15 @@ function generatereplica!(signal::ReplicaSignal)
     prn = signal.prn
     f_d = signal.f_d
     f_if = signal.f_if
+    f_s = signal.f_s
+    start_t = signal.start_t
     fd_rate = signal.fd_rate
     ϕ = signal.phi
     noexp = signal.noexp
     signal.isreplica = true
     @threads for i in 1:signal.sample_num
-        @inbounds t = signal.t[i]
+        # @inbounds t = signal.t[i]
+        t = calc_t_at_i(i, start_t, f_s)
         # Generate code value for given signal type
         code_val, code_ϕ = calc_code_val(signal, t)
         if signal.include_carrier
