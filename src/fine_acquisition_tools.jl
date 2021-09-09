@@ -93,15 +93,12 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     # Generate signal
     generatereplica!(replica)
     # Wipeoff IF and course Doppler from data and multiply by replica
-    # sig = data.data.*exp.(-2π.*(data.f_if+fd_course).*data.t.*1im).*replica.data
     @threads for i in 1:replica.sample_num
-        # @inbounds replica.data[i] = data.data[i]*exp(-2π*(data.f_if+fd_course)*data.t[i]*1im)*replica.data[i]
-        @inbounds replica.data[i] = data.data[i]*cis(-2π*(data.f_if+fd_course+0.5*fd_rate*data.t[i])*data.t[i])*replica.data[i]
-        # @inbounds replica.data[i] = data.data[i]*replica.data[i]
+        t = calc_t_at_i(i, data.start_t, data.f_s)
+        @inbounds replica.data[i] = data.data[i]*cis(-2π*(data.f_if+fd_course+0.5*fd_rate*t)*t)*replica.data[i]
     end
     # Perform in place FFT of `replica.data`
     fft!(replica.data)
-    # replica.data = fft(sig)
     # Find peak within ±[x]kHz, where `x` is defined by freq_lim
     # From index 1 to N/2: positive frequencies
     # From index N/2 to N: negative frequencies
@@ -230,10 +227,10 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
         generatereplica!(replica)
         # Get a `view` of the current data segment and its corresponding time array
         datasegment = view(data.data, (i-1)*N+1:i*N)
-        ts = view(data.t, (i-1)*N+1:i*N)
         # Wipeoff IF and course Doppler from data
         @threads for j in 1:replica.sample_num
-            @inbounds replica.data[j] = datasegment[j]*cis(-2π*(data.f_if+fd_course+0.5*fd_rate*ts[j])*ts[j])*replica.data[j]
+            t = calc_t_at_i((i-1)*N + j, data.start_t, data.f_s)
+            @inbounds replica.data[j] = datasegment[j]*cis(-2π*(data.f_if+fd_course+0.5*fd_rate*t)*t)*replica.data[j]
         end
         # Perform in place fft operation
         fft!(replica.data)
