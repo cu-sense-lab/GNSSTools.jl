@@ -29,7 +29,7 @@ Required Arguments:
 Optional Arguments:
 
 - `skip_to::Float64`: where the first data sample will be loaded in the data
-                      `(default = 0.1sec)`
+                      `(default = 0. sec)`
 	* units are in seconds
 - `site_lla`: receiver LLA location in the format `(lat, lon, height)`
 	* `lat`, latitude, is in degrees
@@ -39,6 +39,7 @@ Optional Arguments:
 - `data_start_time`: data UTC start time `(year, month, day, hour, minute, seconds)`
 	* `seconds` can be `Int` or `Float64`, all others are `Int`
 	* `(default = missing)`
+- `start_t`: the start time in seconds `(default = 0 seconds)`
 
 
 Returns:
@@ -46,8 +47,8 @@ Returns:
 - `GNSSData` struct
 """
 function loaddata(data_type, file_name, f_s, f_center, f_gnss, t_length;
-                  skip_to=0.1, site_loc_lla=missing,
-                  data_start_time=missing)
+                  skip_to=0., site_loc_lla=missing,
+                  data_start_time=missing, start_t=0)
 	# Compute number of samples to extract
 	sample_num = Int(f_s * t_length)
 	# Calculate f_if
@@ -83,10 +84,10 @@ function loaddata(data_type, file_name, f_s, f_center, f_gnss, t_length;
 	# Calculate total data length in seconds
 	total_data_length = (end_idx)/f_s
 	# Generate time vector
-	t = calctvector(sample_num, f_s)
+	# t = calctvector(sample_num, f_s)
 	return GNSSData(file_name, f_s, f_if, t_length, start_data_idx,
-	                t, data, String(dtype), data_start_time,
-	                site_loc_lla, sample_num, total_data_length, nADC)
+	                data, String(dtype), data_start_time,
+	                site_loc_lla, sample_num, total_data_length, nADC, start_t)
 end
 
 
@@ -350,4 +351,47 @@ function data_info_from_name(file_name)
 	timestamp, timestamp_JD = find_and_get_timestamp(file_name)
 	return FileInfo(f_s, f_if, f_center, sig_freq, sigtype, data_type,
 	                timestamp, timestamp_JD, file_name)
+end
+
+
+"""
+	signal_to_sc_data_file(signal::GNSSSignal, sig_freq, file_location, 
+                           file_prefix; operation="replace")
+"""
+function signal_to_sc_data_file(signal::GNSSSignal, sig_freq, file_location, 
+	                            file_prefix; operation="replace")
+    if sig_freq == L1_freq
+		freq_band = "GPSL1"
+	elseif sig_freq == L5_freq
+		freq_band = "GPSL5"
+	else
+		freq_band = "$(round(sig_freq*1e-9, digits=8))"
+	end
+	f_center = "$(round((sig_freq - signal.f_if)*1e-6, digits=8))"  # MHz
+	f_s = "$(round(signal.f_s*1e-6, digits=8))"  # MHz
+	if signal.nADC == 8
+		var_type = Complex{Int8}
+	elseif signal.nADC == 16
+		var_type = Complex{Int16}
+	elseif signal.nADC == 32
+		var_type = Complex{Int32}
+	elseif  signal.nADC == 64
+		var_type = Complex{Int64}
+	else
+		error("Support for 8-, 16-, 32-, and 64-bit signals only.")
+	end
+	file_extension = ".sc$(signal.nADC)"
+	file_name = string(file_location, file_prefix, "_", freq_band, "_", 
+	                   f_center, "_", f_s, file_extension)
+	if operation == "replace"
+		file = open(file_name, "w")
+	elseif operation == "append"
+		file = open(file_name, "r+")
+		seekend(file)
+	else
+		error("Unknown value for argument `operation`.")
+	end
+	write(file, var_type.(signal.data))
+	close(file)
+	return file_name
 end
