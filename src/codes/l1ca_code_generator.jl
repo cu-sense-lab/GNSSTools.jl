@@ -173,6 +173,8 @@ Optional Arguments:
 	* default is to define all PRN codes and assume that databits for each
 	  are different
 - `sig_freq`: carrier frequency in Hz `(default = L1_freq)`
+- `databits`: optional databits `(default = missing)`, where random bits are used
+- `B`: receiver bandwidth `(default = missing)`
 
 
 Returns:
@@ -182,7 +184,7 @@ Returns:
                              to generate the signal
 """
 function define_l1ca_code_type(t_length=missing; prns=collect(keys(l1ca_codes)),
-                               sig_freq=L1_freq, databits=missing)
+                               sig_freq=L1_freq, databits=missing, B=missing)
     if ~ismissing(t_length)
         # Generate random databits
         if ismissing(databits)
@@ -197,6 +199,6 @@ function define_l1ca_code_type(t_length=missing; prns=collect(keys(l1ca_codes)),
         I_codes = definecodetype(copy_dictionary(l1ca_codes, prns),
                                  l1ca_chipping_rate)
     end
-    signal_type = definesignaltype(I_codes, sig_freq, "I"; name="L1 C/A")
+    signal_type = definesignaltype(I_codes, sig_freq, "I"; name="L1 C/A", B=B)
     return signal_type
 end

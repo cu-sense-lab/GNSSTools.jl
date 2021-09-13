@@ -126,35 +126,6 @@ end
 
 
 """
-    calcsnr(x)
-
-
-Calculates the SNR of the correlation peak in `x`.
-
-
-Required Arguments:
-
-- `x::Array{T,1}`: 1 dimmenstional array of type `T`
-
-
-Returns:
-
-- `Float64`: the SNR of the peak in `x` in dB
-"""
-function calcsnr(x::Vector)
-    N = length(x)
-    amplitude = sqrt(maximum(abs2.(x)))
-    PS = 2*amplitude^2
-    PN = 0.
-    @threads for i in 1:N
-        @inbounds PN += abs2(x[i])
-    end
-    PN -= PS/(N-2)
-    return 10*log10(PS/PN)
-end
-
-
-"""
     fft_correlate(data, reference)
 
 
@@ -882,4 +853,25 @@ function make3dplot(corr_result, fd_range, fd_center, Δf)
 			  c="r")
 	xlabel("Samples")
     ylabel("Doppler (kHz)")
+end
+
+
+"""
+	calc_snr(A², σ²)
+
+
+Calculates the SNR using the amplitude squared and the variance
+
+
+Required Arguments:
+
+- `A²`: amplitude squared
+- `σ²`: noise variance
+
+
+Returns: 
+- `SNR`: signal-to-noise ratio of signal in dB `{SNR = 10log10(A²/(2⋅σ²))}` 
+"""
+function calc_snr(A², σ²)
+	return 10log10(A²/(2*σ²))
 end

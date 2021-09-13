@@ -86,7 +86,7 @@ module GNSSTools
     export calcinitcodephase
     export calccodeidx
     export calctvector, calc_t_at_i
-    export calcsnr
+    export calc_snr
     export loadrinex
     export trackprn
     export calcA, calcC, calcQ

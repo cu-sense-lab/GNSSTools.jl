@@ -112,7 +112,7 @@ function courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
                                fd_rate=fd_rate, Δfd=Δfd, start_idx=idx,
                                operation="add")
         end
-        replica.t .= calctvector(replica.sample_num, replica.f_s)
+        replica.start_t = 0
     end
     # Get the code offset in samples, course Doppler, and peak SNR in dB
     n0_est, fd_est, SNR_est,
@@ -280,7 +280,7 @@ function course_acq_est(corr_result, fd_center, fd_range, Δfd;
     # PN = (noise_val - pk_val)/(rows*cols - 1)
     # PN = noise_val/(cols - 1)
     PN = noise_val
-    SNR_est = 10log10(PS/PN)
+    SNR_est = calc_snr(PS, PN)
     v_i = sqrt(PS)
     σ = sqrt(PN)
     v_t = p_fa2v_t(p_fa, σ)

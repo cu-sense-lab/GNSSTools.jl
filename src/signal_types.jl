@@ -278,6 +278,7 @@ Required Arguments:
 Optional Arguments:
 
 - `name::String`: name of signal type `(default is "custom")`
+- `B`: receiver bandwidth `(default is based off max B in I_codes and Q_codes)`
 
 
 Returns:
@@ -285,11 +286,16 @@ Returns:
 - `SignalType` struct
 """
 function definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
-                          name="custom")
-    # Determine maximum bandwidth for I channel codes
-    B_I = 2*maximum(I_codes.chipping_rates)
-    # Determine maximum bandwidth for Q channel codes
-    B_Q = 2*maximum(Q_codes.chipping_rates)
+                          name="custom", B=missing)
+    if ismissimg(B)
+        # Determine maximum bandwidth for I channel codes
+        B_I = 2*maximum(I_codes.chipping_rates)
+        # Determine maximum bandwidth for Q channel codes
+        B_Q = 2*maximum(Q_codes.chipping_rates)
+    else
+        B_I = B
+        B_Q = B
+    end
     return SignalType(name, I_codes, Q_codes, sig_freq, B_I, B_Q, true, true)
 end
 
@@ -312,15 +318,19 @@ Optional Arguments:
 
 - `channel::String`: set to either `I`, `Q`, or `both` (default is `I`)
 - `name::String`: name of signal type (default is `custom`)
+- `B`: receiver bandwidth `(default = 2*maximum(codes.chipping_rates))`
 
 
 Returns:
 
 - `SignalType` struct
 """
-function definesignaltype(codes::CodeType, sig_freq, channel="I"; name="custom")
+function definesignaltype(codes::CodeType, sig_freq, channel="I"; name="custom",
+                          B=missing)
     # Determine maximum bandwidth for codes
-    B = 2*maximum(codes.chipping_rates)
+    if ismissing(B)
+        B = 2*maximum(codes.chipping_rates)
+    end
     if channel == "both"
         return SignalType(name, codes, codes, sig_freq, B, B, true, true)
     elseif channel == "I"

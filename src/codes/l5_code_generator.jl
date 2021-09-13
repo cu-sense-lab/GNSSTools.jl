@@ -375,6 +375,8 @@ Optional Arguments:
 	* default is to define all PRN codes and assume that databits for each
 	  are different
 - `sig_freq`: carrier frequency in Hz `(default = L5_freq)`
+- `databits`: optional databits `(default = missing)`, where random bits are used
+- `B`: receiver bandwidth `(default = missing)`
 
 
 Returns:
@@ -385,7 +387,7 @@ Returns:
 """
 function define_l5_code_type(t_length=missing; channel="both",
 	                         prns=collect(keys(l5i_codes)), sig_freq=L5_freq,
-							 databits=missing)
+							 databits=missing, B=missing)
 	if (channel == "I") || (channel == "both")
         if ~ismissing(t_length)
             # Generate random databits
@@ -403,16 +405,18 @@ function define_l5_code_type(t_length=missing; channel="both",
 			                         [L5_chipping_rate, nh_chipping_rate])
 	    end
 		if channel == "I"
-			signal_type = definesignaltype(I_codes, sig_freq, "I"; name="L5")
+			signal_type = definesignaltype(I_codes, sig_freq, "I"; name="L5",
+                                           B=B)
 		else  # means that `channel` == "both"
 			Q_codes = definecodetype([copy_dictionary(l5q_codes, prns), nh20],
 									 [L5_chipping_rate, nh_chipping_rate])
-			signal_type = definesignaltype(I_codes, Q_codes, sig_freq; name="L5")
+			signal_type = definesignaltype(I_codes, Q_codes, sig_freq; name="L5",
+                                           B=B)
 		end
 	elseif channel == "Q"
 		Q_codes = definecodetype([copy_dictionary(l5q_codes, prns), nh20],
 								 [L5_chipping_rate, nh_chipping_rate])
-		signal_type = definesignaltype(Q_codes, sig_freq, "Q"; name="L5")
+		signal_type = definesignaltype(Q_codes, sig_freq, "Q"; name="L5", B=B)
 	else
 		error("Invalid channel specifed.")
 	end
