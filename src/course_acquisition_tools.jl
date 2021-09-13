@@ -37,9 +37,9 @@ end
 """
     courseacquisition(data::GNSSSignal, replica::ReplicaSignal,
                       prn; fd_center=0., fd_range=5000., M=1,
-                      fd_rate=0., Δfd=1/replica.t_length,
-                      threads=nthreads(), operation="replace",
-                      start_idx=1)
+                      fd_rate=0., Δfd=1/(1*replica.t_length),
+                      start_idx=1, return_corrresult=false,
+                      p_fa=1e-7)
 
 
 Performs course acquisition using an integration time specified by
@@ -71,6 +71,7 @@ Optional Arguments:
                     used for processing `(default = 1)`
 - `return_corrresult::Bool`: set to `true` to return the 2D correlation result
                              `(default = true)`
+- `p_fa`: probability of false alarm `(default = 1e-7)`
 
 
 Returns:
