@@ -225,7 +225,8 @@ function courseacquisition!(corr_result::Array{Float64,2},
         # Take `abs2` in place and save result
         # Either replace, add to, or multiply by pre-existing value
         # in `corr_result`
-        @threads for j in 1:dsize
+        for j in 1:dsize
+        # @threads for j in 1:dsize
             if operation == "replace"
                 @inbounds corr_result[i,j] = abs2(replica.data[j])
             elseif operation == "add"

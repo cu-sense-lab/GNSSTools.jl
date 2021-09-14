@@ -15,7 +15,8 @@ module GNSSTools
     # Set the number of threads for FFTW to use. It is set to the number of
     # threads that Julia is set to use. User should launch Julia with the number
     # of threads they wish to use.
-    FFTW.set_num_threads(nthreads())
+    # FFTW.set_num_threads(nthreads())
+    FFTW.set_num_threads(1)
     using ProgressMeter
     using Statistics
     using LinearAlgebra
