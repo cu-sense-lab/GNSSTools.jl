@@ -127,7 +127,6 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
     upsample_factor = denominator(signal.code_start_idx)
     Δt = 1/f_s
     dΔt = Δt/upsample_factor
-    # for i in 1:N
     @threads for i in 1:N
         t = calc_t_at_i(i, start_t, f_s)
         # Generate code value for given signal type
@@ -173,7 +172,6 @@ function generatesignal!(signal::ReplicaSignal, t_length, get_code_val, get_ϕ)
     # Quantize signal
     if include_adc
         sigmax = sqrt(maximum(abs2, signal.data))
-        # for i in 1:signal.sample_num
         @threads for i in 1:signal.sample_num
             @inbounds signal.data[i] = round(signal.data[i]*adc_scale/sigmax)
             # Check that the max positive value for I/Q channels is 
@@ -311,7 +309,6 @@ function generatesignal!(signal::ReplicaSignals, t_length, get_code_val, get_ϕ)
     upsample_factor = denominator(signal.code_start_idx)
     Δt = 1/f_s
     dΔt = Δt/upsample_factor
-    # for i in 1:N
     @threads for i in 1:N
         t = calc_t_at_i(i, start_t, f_s)
         # Generate code value for given signal type
@@ -403,7 +400,6 @@ function generatereplica!(signal::ReplicaSignal)
     ϕ = signal.phi
     noexp = signal.noexp
     signal.isreplica = true
-    # for i in 1:signal.sample_num
     @threads for i in 1:signal.sample_num
         t = calc_t_at_i(i, start_t, f_s)
         # Generate code value for given signal type
