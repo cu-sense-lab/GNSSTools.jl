@@ -742,8 +742,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         # Save to allocated arrays
         code_err_meas[i] = n0_err
         code_err_filt[i] = n0_err_filtered
-        code_phase_meas[i] = (n0 + n0_err)%code_length
-        code_phase_filt[i] = (n0 + n0_err_filtered)%code_length
+        code_phase_meas[i] = (n0 + n0_err)
+        code_phase_filt[i] = (n0 + n0_err_filtered)
         n0s[i] = n0
         dphi_measured[i] = dϕ_meas
         dphi_filtered[i] = correction[1]
