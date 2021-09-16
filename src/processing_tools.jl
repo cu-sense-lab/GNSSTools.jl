@@ -110,8 +110,8 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # based fine acquisition method is used, or if no fine acquisition
     # method is used (when `use_fine_acq` = false)
     if ismissing(σᵩ²)
-        CN0_est = snr2cn0(SNR_est, replica.t_length)
-        σᵩ² = phase_noise_variance(CN0_est, replica.t_length)
+        CN0_est = snr2cn0(SNR_est, tracking_T)
+        σᵩ² = phase_noise_variance(CN0_est, tracking_T)
     end
     # Perform fine acquisition using FFT based method
     # Returns structure containing the fine acquisition results,
