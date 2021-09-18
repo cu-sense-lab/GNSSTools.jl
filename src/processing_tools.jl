@@ -81,7 +81,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
                  h₀=1e-21, h₋₂=2e-20, acquisition_T=1e-3, fine_acq_T=10e-3, 
                  tracking_T=1e-3, M=1, σᵩ²=missing, return_Pd=false,
-                 err_bin_num_f=0.25)
+                 err_bin_num_f=0.25, fine_acq_sub_T=1e-3)
     # Set up replica signals.
     f_s = signal.f_s
     if channel == "I"
@@ -124,24 +124,28 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
         if fine_acq_method == :fft
             replicalong = definereplica(signal_type, f_s, fine_acq_T)
             results = fineacquisition(signal, replicalong, prn, fd_course,
-                                      n0_est, Val(fine_acq_method); σω=σω,
+                                      n0_est%replicalong.sample_num, 
+                                      Val(fine_acq_method); σω=σω,
                                       fd_rate=fd_rate, 
                                       err_bin_num_f=err_bin_num_f)
         elseif fine_acq_method == :carrier
-            M = floor(Int, fine_acq_T/acquisition_T)
+            M = floor(Int, fine_acq_T/fine_acq_sub_T)
             if M < 3
                 error("Carrier based fine acquisition requires three iterations or more.")
             end
+            replica = definereplica(signal_type, f_s, fine_acq_sub_T)
             results = fineacquisition(signal, replica, prn, fd_course,
-                                      n0_est, Val(fine_acq_method); σω=σω,
-                                      fd_rate=fd_rate, M=M)
+                                      n0_est%replica.sample_num, 
+                                      Val(fine_acq_method); σω=σω,
+                                      fd_rate=fd_rate, M=M)              
         else
             error("Invalid value for argument `fine_acq_method`.")
         end
-        if fine_acq_method == :fft
-            results.P[1] = σᵩ²
-            results.R[1] = σᵩ²
-        end
+        # if fine_acq_method == :fft
+        results.P[1,1] = σᵩ²
+        # results.P[2,2] = (2π*err_bin_num_f/results.t_length)^2
+        results.R[1] = σᵩ²
+        # end
         R = results.R
         P = results.P
         phi_init = results.phi_init
@@ -161,7 +165,8 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
         replica = definereplica(signal_type, f_s, tracking_T)
     end
     trackresults = trackprn(signal, replica, prn, phi_init,
-                            fd_est, n0_est, P, R; DLL_B=dll_b,
+                            fd_est, n0_est%replica.sample_num, 
+                            P, R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
                             cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult,
                             h₀=h₀, h₋₂=h₋₂, R_mult=1)
