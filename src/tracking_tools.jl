@@ -410,6 +410,7 @@ Returns:
 function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
 	                          fd_rate, ϕ, d, pfft, n0_index_start)
     datasegment = view(data.data, (i-1)*N+1:i*N)
+    # datasegment = view(data.data, (i-1)*N+n0_index_start:i*N+n0_index_start-1)
     # Perform carrier wipeoff of intemediate and Doppler frequencies, Doppler
     # frequency rate, and carrier phase
     @inbounds for j in 1:N
@@ -619,13 +620,21 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     sig_freq = replica.signal_type.sig_freq
 	if replica.signal_type.include_I
 		chipping_rate = replica.signal_type.I_codes.chipping_rates[1]
-    	code_length = replica.signal_type.I_codes.code_lengths[1]
+    	ranging_code_length = replica.signal_type.I_codes.code_lengths[1]
 	elseif replica.signal_type.include_Q
 		chipping_rate = replica.signal_type.Q_codes.chipping_rates[1]
-    	code_length = replica.signal_type.Q_codes.code_lengths[1]
+    	ranging_code_length = replica.signal_type.Q_codes.code_lengths[1]
 	else
 		error("Cannot track since there are no codes defined in signal type.")
 	end
+    # For codes with overlay codes, ensure that the code phase is modded
+    # with the number of chips in a single unique sequence.
+    #
+    # Example: L5Q has 20ms overlay code. If T=20ms, ensure that the code phase
+    # of the ranging code wraps around 20×ranging_code_length and not every 1ms,
+    # since the Neuman-Hoffman sequence repeats every 20ms.
+    code_length_ratio = floor(Int, replica.t_length/(ranging_code_length/chipping_rate))
+    code_length = code_length_ratio*ranging_code_length
     # Place holder for fft of data wipeoff calculated at each T interval
     N = replica.sample_num
     datafft = Array{Complex{Float64}}(undef, N)
@@ -647,8 +656,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                                 f_s, n0_idx_init)
     # n0_init = 0.0
     n0 = n0_init
-    # M = floor(Int, data.t_length/replica.t_length)
-    M = floor(Int, (data.sample_num - (n0_idx_init - 1))/replica.sample_num)
+    M = floor(Int, data.sample_num/replica.sample_num)
+    # M = floor(Int, (data.sample_num - (n0_idx_init - 1))/replica.sample_num)
     t = Array(0:T:M*T-T)
     # Define DLL and PLL parameter structs
     dll_parms = definedll(T, DLL_B, d)
@@ -751,7 +760,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         delta_fd[i] = correction[2]/2π
         fds[i] = x⁺ᵢ[2]/2π - f_if
         ZP[i] = zp
-		SNR[i] = snr
+		SNR[i] = snr 
         K[:,i] = Kᵢ
         x[:,i] = x⁺ᵢ
         P[:,i] = diag(P⁺ᵢ)
@@ -801,7 +810,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                         float(n0_idx_init), n0_init, ϕ_init, fd_init, t,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, n0s, dphi_measured, dphi_filtered,
-                        phi, delta_fd, fds, ZP, SNR, data_bits, code_length,
+                        phi, delta_fd, fds, ZP, SNR, data_bits, ranging_code_length,
                         Q, A, C, P, x, K, R)
 end
 
