@@ -27,7 +27,8 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                print_steps=true, σω=1000, channel="I", file_name=missing,
                include_thermal_noise=true, include_phase_noise=true,
                fine_acq_method=:fft, skip_to=0.1, tracking_T=missing,
-               save_interval=1, file_location="", file_prefix="SimulatedSignal")
+               save_interval=1, file_location="", file_prefix="SimulatedSignal",
+               h_parms=h_parms_tcxo[1])
     if print_steps
         println("Running GNSSTools Signal Simulation and Data Processing Demo")
     end
@@ -100,7 +101,8 @@ function demo(;sigtype="l1ca", include_carrier=true, include_adc=true,
                                 include_adc=include_adc,
                                 include_thermal_noise=include_thermal_noise,
                                 include_phase_noise=include_phase_noise,
-                                code_start_idx=n0)
+                                code_start_idx=n0,
+                                receiver_h_parms=h_parms)
             if print_steps
                 p = Progress(floor(Int, t_length/save_interval), 1, "Generating PRN $(prn) $(sigtype) signal...")
             end
@@ -269,7 +271,8 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
               include_thermal_noise=true, include_phase_noise=true,
               fine_acq_method=:fft, tracking_T=missing, 
               Δf_per_plane=360/satellite_per_plane/2, save_interval=1,
-              file_location="", file_prefix="SignalFromLEO")
+              file_location="", file_prefix="SignalFromLEO",
+              h_parms=h_parms_tcxo[1])
     if print_steps
         println("Running GNSSTools Constellation Demo")
     end
@@ -332,7 +335,8 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
                         include_adc=include_adc,
                         include_thermal_noise=include_thermal_noise,
                         include_phase_noise=include_phase_noise,
-                        code_start_idx=n0)
+                        code_start_idx=n0,
+                        receiver_h_parms=h_parms)
     constellation_t = Array(data.start_t:1:t_length)
     if t_length >= 1
         t_step = 0.25
