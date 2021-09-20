@@ -365,7 +365,7 @@ function signal_to_sc_data_file(signal::GNSSSignal, sig_freq, file_location,
 	elseif sig_freq == L5_freq
 		freq_band = "GPSL5"
 	else
-		freq_band = "$(round(sig_freq*1e-9, digits=8))"
+		freq_band = "$(round(sig_freq*1e-6, digits=8))"
 	end
 	f_center = "$(round((sig_freq - signal.f_if)*1e-6, digits=8))"  # MHz
 	f_s = "$(round(signal.f_s*1e-6, digits=8))"  # MHz
