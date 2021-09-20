@@ -362,6 +362,9 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
         doppler_curve[i] = calcdoppler(constellation.satellites[max_idx].init_orbit,
                                        julian_date, eop, user_ecef, sig_freq)
     end
+    sat_rae = calcelevation(constellation.satellites[max_idx], user_lla)
+    sat_elevations = sat_rae.sat_elevation
+    sat_azimuth = sat_rae.sat_azimuth
     fd_rate = (doppler_curve[2]-doppler_curve[1])/0.001
     definesignal!(data; f_d=doppler_curve[1], fd_rate=fd_rate)
     if print_steps
@@ -491,5 +494,6 @@ function demo(a, plane_num, satellite_per_plane, user_lla=(40.01, -105.2437, 165
             println("Done")
         end
     end
-    return (trackresults, data)
+    return (trackresults, data, doppler_curve, doppler_t, sat_elevations, 
+            sat_azimuth)
 end
