@@ -287,7 +287,7 @@ Returns:
 """
 function definesignaltype(I_codes::CodeType, Q_codes::CodeType, sig_freq;
                           name="custom", B=missing)
-    if ismissimg(B)
+    if ismissing(B)
         # Determine maximum bandwidth for I channel codes
         B_I = 2*maximum(I_codes.chipping_rates)
         # Determine maximum bandwidth for Q channel codes
