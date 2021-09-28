@@ -62,6 +62,8 @@ Optional Arguments:
 - `M`: the number of coherent inetegrations to add non-coherently during
        course acquisition `(default = 1)`
 - `σᵩ²`: the variance of the phase, also known as `R`
+- `p_fa`: the probability of false alarm `(default = 1e-7)`
+- `p_d`: the probability of detection `(default = 0.9)`
 
 
 Returns:
@@ -81,7 +83,8 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                  return_corrresult=false, use_fine_acq=true, σ_phi=π/2,
                  h₀=1e-21, h₋₂=2e-20, acquisition_T=1e-3, fine_acq_T=10e-3, 
                  tracking_T=1e-3, M=1, σᵩ²=missing, return_Pd=false,
-                 err_bin_num_f=0.25, fine_acq_sub_T=1e-3)
+                 err_bin_num_f=0.25, fine_acq_sub_T=1e-3, p_fa=1e-7,
+                 p_d=0.9)
     # Set up replica signals.
     f_s = signal.f_s
     if channel == "I"
@@ -110,7 +113,9 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
     # based fine acquisition method is used, or if no fine acquisition
     # method is used (when `use_fine_acq` = false)
     if ismissing(σᵩ²)
-        CN0_est = snr2cn0(SNR_est, tracking_T)
+        processing_gain_est = processing_gain(acquisition_T, M; 
+                                              p_fa=p_fa, p_d=p_d)
+        CN0_est = SNR_est - processing_gain_est
         σᵩ² = phase_noise_variance(CN0_est, tracking_T)
     end
     # Perform fine acquisition using FFT based method
