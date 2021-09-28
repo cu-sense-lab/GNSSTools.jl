@@ -310,7 +310,6 @@ Returns:
 - unfiltered code phase error
 """
 function Z4(dll_parms::DLLParms, ZE, ZP, ZL)
-    # return 0.5 * (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))
     return (abs(ZE) - abs(ZL)) / (abs(ZE) + abs(ZL))
 end
 
@@ -469,9 +468,12 @@ Returns:
 """
 function calcA(T, state_num=2)
 	if state_num == 3
-		return [1 T T^2/2; 0 1 T; 0 0 1]
+		return [1   T   T^2/2; 
+                0   1   T; 
+                0   0   1]
 	elseif state_num == 2
-		return [1 T; 0 1]
+		return [1   T; 
+                0   1]
 	else
 		error("Number of states specified must be either 2 or 3.")
 	end
@@ -504,9 +506,9 @@ Returns:
 """
 function calcC(T, state_num=2)
 	if state_num == 3
-		return [1 T/2 T^2/6]
+		return [1   T/2   T^2/6]
 	elseif state_num == 2
-		return [1 T/2]
+		return [1   T/2]
 	else
 		error("Number of states specified must be either 2 or 3.")
 	end
@@ -547,11 +549,30 @@ function calcQ(T, h₀, h₋₂, qₐ, f_L, state_num=2)
 	qϕ = h₀/2  # oscillator phase PSD
 	qω = 2*π^2*h₋₂  # oscillator frequency PSD
 	if state_num == 3
-		return (2π*f_L)^2 .* [T*qϕ+T^3*qω/3+T^5*qₐ/(20*c^2) T^2*qω/2+T^4*qₐ/(8*c^2) T^3*qₐ/(6*c^2);
-		                     T^2*qω/2+T^4*qₐ/(8*c^2) T*qω+T^3*qₐ/(3*c^2) T^2*qₐ/(2*c^2);
-							 T^3*qₐ/(6*c^2) T^2*qₐ/(2*c^2) T*qₐ/c^2]
+        # First row
+        Q11 = T*qϕ + T^3*qω/3 + T^5*qₐ/(20*c^2)
+        Q12 = T^2*qω/2 + T^4*qₐ/(8*c^2)
+        Q13 = T^3*qₐ/(6*c^2)
+        # Second Row
+        Q21 = T^2*qω/2 + T^4*qₐ/(8*c^2)
+        Q22 = T*qω + T^3*qₐ/(3*c^2)
+        Q23 = T^2*qₐ/(2*c^2)
+        # Third row
+        Q31 = T^3*qₐ/(6*c^2)
+        Q32 = T^2*qₐ/(2*c^2)
+        Q33 = T*qₐ/c^2
+        return (2π*f_L)^2 .* [Q11 Q12 Q13;
+                              Q21 Q22 Q23;
+                              Q31 Q32 Q33]
 	elseif state_num == 2
-		return (2π*f_L)^2 .* [T*qϕ+T^3*qω/3 T^2*qω/2; T^2*qω/2 T*qω]
+        # First row
+        Q11 = T*qϕ + T^3*qω/3
+        Q12 = T^2*qω/2
+        # Second row
+        Q21 = T^2*qω/2
+        Q22 = T*qω
+        return (2π*f_L)^2 .* [Q11 Q12;
+                              Q21 Q22]
 	else
 		error("Number of states specified must be either 2 or 3.")
 	end
