@@ -174,7 +174,7 @@ function process(signal::GNSSSignal, signal_type::SignalType, prn,
                             P, R; DLL_B=dll_b,
                             state_num=state_num, dynamickf=dynamickf,
                             cov_mult=cov_mult, qₐ=q_a, q_mult=q_mult,
-                            h₀=h₀, h₋₂=h₋₂, R_mult=1)
+                            h₀=h₀, h₋₂=h₋₂, R_mult=R_mult, fd_rate=fd_rate)
     if show_plot
         plotresults(trackresults; saveto=saveto, figsize=figsize)
     end
