@@ -130,6 +130,7 @@ Kalman Filter Parameters:
 - `x::Array{Float64,2}`: filted state estimates per time step
 - `K::Array{Float64,2}`: KF gain per time step
 - `R::Array{Float64,1}`: carrier phase measurement variance 
+- `P_full::Array{Float64,3}`: The full 2x2 or 3x3 state covariance matrix
 """
 struct TrackResults{T1,T2}
     prn::Int64
@@ -177,6 +178,7 @@ struct TrackResults{T1,T2}
     x::Array{Float64,2}
 	K::Array{Float64,2}
     R::Array{Float64,1}
+    P_full::Array{Float64,3}
 end
 
 
@@ -700,17 +702,20 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     A = calcA(T, state_num)
     C = calcC(T, state_num)
     Q = calcQ(T, h₀, h₋₂, qₐ, sig_freq, state_num) .* q_mult
-    P = Array{Float64}(undef, size(A)[1], M)
-    x = Array{Float64}(undef, size(A)[1], M)
-	K = Array{Float64}(undef, size(A)[1], M)
+    P = Array{Float64}(undef, state_num, M)
+    x = Array{Float64}(undef, state_num, M)
+	K = Array{Float64}(undef, state_num, M)
+    P_full = Array{Float64}(undef, M, state_num, state_num)
     datafft = Array{Complex{Float64}}(undef, N)
 	FFTW.set_num_threads(1)
 	if state_num == 3
-    	x⁻ᵢ = [ϕ_init; 2π*(f_if+fd_init); 0.]
+    	x⁻ᵢ = [ϕ_init; 2π*(f_if+fd_init); 2π*fd_rate]
 		P⁻ᵢ = deepcopy(P₀)
+        δx⁺ₖ = [0.; 0.; 0.]
 	elseif state_num == 2
 		x⁻ᵢ = [ϕ_init; 2π*(f_if+fd_init)]
 		P⁻ᵢ = deepcopy(P₀)[1:2,1:2]
+        δx⁺ₖ = [0.; 0.]
 	else
 		error("Number of states specified must be either 2 or 3.")
 	end
@@ -754,7 +759,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         dϕ_meas = measurephase(zp)  # rad
 		# Estimate Kalman gain
 		if dynamickf
-            Kᵢ = (P⁻ᵢ*C')/(C*P⁻ᵢ*C' + R)
+            # Kᵢ = (P⁻ᵢ*C')/(C*P⁻ᵢ*C' + R)
+            Kᵢ = (P⁻ᵢ*C')*pinv(C*P⁻ᵢ*C' + R)
 		else
 			Kᵢ = Kfixed
 		end
@@ -762,6 +768,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 		P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
         # Correct current state estimate
         correction = Kᵢ.*dϕ_meas
+        # correction = Kᵢ.*(dϕ_meas - (C*A*δx⁺ₖ)[1])
+        # δx⁺ₖ[:] = correction
 		x⁺ᵢ = x⁻ᵢ + correction
         if i > 1
             # Filter raw code phase error measurement
@@ -785,6 +793,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         K[:,i] = Kᵢ
         x[:,i] = x⁺ᵢ
         P[:,i] = diag(P⁺ᵢ)
+        P_full[i,:,:] = P⁺ᵢ
         if real(zp) > 0
             data_bits[i] = 1
         else
@@ -832,7 +841,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, n0s, dphi_measured, dphi_filtered,
                         phi, delta_fd, fds, ZP, SNR, data_bits, ranging_code_length,
-                        Q, A, C, P, x, K, R)
+                        Q, A, C, P, x, K, R, P_full)
 end
 
 
