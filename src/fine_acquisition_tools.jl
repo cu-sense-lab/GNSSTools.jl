@@ -17,12 +17,12 @@ Fields:
 - `fd_fine::Float64`: fine Doppler frequency in Hz
 - `fd_est::Float64`: (fine + course) Doppler frequency in Hz
 - `phi_init::Float64`: initial phase estimate in rads
-- `M::T1`: number of integrations performed (carrier method only)
+- `M::Int64`: number of integrations performed (carrier method only)
 - `P::Array{Float64,2}`: 3x3 diagonal matrix containin initial uncertainties
                          of the phase, Doppler, and Doppler rate estimates
 - `R::Array{Float64,1}`: measurement uncertainty in rads
 """
-struct FineAcquisitionResults{T1}
+struct FineAcquisitionResults
     prn::Int64
     type::String
     fd_course::Float64
@@ -32,7 +32,7 @@ struct FineAcquisitionResults{T1}
     fd_fine::Float64
     fd_est::Float64
     phi_init::Float64
-    M::T1
+    M::Int64
     P::Array{Float64,2}
     R::Array{Float64,1}
 end
@@ -199,7 +199,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     R = [ϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:fft), fd_course, fd_rate, n₀_idx_course,
-                                  t_length, fd_fine, fd_est, ϕ_init, "N/A", P, R)
+                                  t_length, fd_fine, fd_est, ϕ_init, M, P, R)
 end
 
 
@@ -322,7 +322,7 @@ function fineacquisition(data::GNSSSignal, replica::ReplicaSignal, prn, fd_cours
     R = [dϕ_init_err^2]
     # Return `FineAcquisitionResults` struct
     return FineAcquisitionResults(prn, String(:carrier), fd_course, fd_rate, n₀_idx_course,
-                                  t_length, fd_fine, fd_est, ϕ_init, "N/A", P, R)
+                                  t_length, fd_fine, fd_est, ϕ_init, M, P, R)
 end
 
 
