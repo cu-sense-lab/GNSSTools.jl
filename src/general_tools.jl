@@ -806,7 +806,7 @@ end
 	phase_noise_variance(CN0, T)
 
 
-Calculate the expected carrier phase measurement variance, `σᵩ²`. 
+Calculate the expected unfiltered carrier phase measurement variance, `σᵩ²`. 
 
 
 Required Arguments:
@@ -817,12 +817,42 @@ Required Arguments:
 
 Returns:
 
-- `σᵩ²`: the expected carrier phase measurement variance in rad²
+- `σᵩ²`: the expected unfiltered carrier phase measurement variance in rad²
 """
 function phase_noise_variance(CN0, T)
 	CN0_linear = 10^(CN0/10)
 	return (1 + 1/(2*T*CN0_linear)) / (2*T*CN0_linear)
 end
+
+
+"""
+	phase_noise_variance(B, CN0, T, h₀=0, h₋₁=0, h₋₂=0)
+
+
+Calculate the expected filtered carrier phase measurement variance, `σᵩ²`. 
+
+
+Required Arguments:
+
+- `B`: the bandwidth of the filter in Hz
+- `CN0`: the carrier-to-noise ratio of the signal in dB⋅Hz
+- `T`: the integration time in seconds
+- `h₀`: oscillator h-parameter `(default = 0)`
+- `h₋₁`: oscillator h-parameter `(default = 0)`
+- `h₋₂`: oscillator h-parameter `(default = 0)`
+
+Returns:
+
+- `σᵩ²`: the expected filtered carrier phase measurement variance in rad²
+"""
+function phase_noise_variance(B, CN0, T, h₀=0, h₋₁=0, h₋₂=0)
+    CN0_linear = 10^(CN0/10)
+    σ²ₒ = B*(1 + 1/(2*T*CN0_linear))/(CN0_linear*(1-2*B*T))
+    σ²ᵪ = 0.9048*(2π)^3*h₋₂/B^3 + 0.8706*(2π)^2*h₋₁/B^2 + 1.2566*2π*h₀/B
+    σ²ᵩ = σ²ₒ + σ²ᵪ
+    return σ²ᵩ
+end
+
 
 """
 	make3dplot(corr_result, fd_range, fd_center, Δfd)
