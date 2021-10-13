@@ -484,7 +484,7 @@ end
 
 """
 	calcC(T, state_num=2)
-    
+
 
 Calculate the measurement matrix, `C`, using the integration time, `T`. Used in
 the carrier tracking loop. If `state_num` is set to `2`, then the KF will track
@@ -549,7 +549,7 @@ Returns:
 """
 function calcQ(T, h₀, h₋₂, qₐ, f_L, state_num=2)
 	qϕ = h₀/2  # oscillator phase PSD
-	qω = 2*π^2*h₋₂  # oscillator frequency PSD
+	qω = 2π^2*h₋₂  # oscillator frequency PSD
 	if state_num == 3
         # First row
         Q11 = T*qϕ + T^3*qω/3 + T^5*qₐ/(20*c^2)
