@@ -484,7 +484,7 @@ end
 
 """
 	calcC(T, state_num=2)
-    kf_pll_rong_part1
+    
 
 Calculate the measurement matrix, `C`, using the integration time, `T`. Used in
 the carrier tracking loop. If `state_num` is set to `2`, then the KF will track
