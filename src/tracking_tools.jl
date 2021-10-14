@@ -176,6 +176,7 @@ struct TrackResults{T1,T2}
     C::Array{Float64,2}
     P::Array{Float64,2}
     x::Array{Float64,2}
+    dx::Array{Float64,2}
 	K::Array{Float64,2}
     R::Array{Float64,1}
     P_full::Array{Float64,3}
@@ -704,6 +705,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
     Q = calcQ(T, h₀, h₋₂, qₐ, sig_freq, state_num) .* q_mult
     P = Array{Float64}(undef, state_num, M)
     x = Array{Float64}(undef, state_num, M)
+    dx = Array{Float64}(undef, state_num, M)
 	K = Array{Float64}(undef, state_num, M)
     P_full = Array{Float64}(undef, M, state_num, state_num)
     datafft = Array{Complex{Float64}}(undef, N)
@@ -792,6 +794,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 		SNR[i] = snr 
         K[:,i] = Kᵢ
         x[:,i] = x⁺ᵢ
+        dx[:,i] = correction
         P[:,i] = diag(P⁺ᵢ)
         P_full[i,:,:] = P⁺ᵢ
         if real(zp) > 0
@@ -841,7 +844,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                         code_err_meas, code_err_filt, code_phase_meas,
                         code_phase_filt, n0s, dphi_measured, dphi_filtered,
                         phi, delta_fd, fds, ZP, SNR, data_bits, ranging_code_length,
-                        Q, A, C, P, x, K, R, P_full)
+                        Q, A, C, P, x, dx, K, R, P_full)
 end
 
 
