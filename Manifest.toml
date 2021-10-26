@@ -683,6 +683,12 @@ version = "7.1.1"
 deps = ["Libdl"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
+[[LinearMaps]]
+deps = ["LinearAlgebra", "SparseArrays"]
+git-tree-sha1 = "ce708e2b5bbab5c47ffc24200566cbdfa04ff1c1"
+uuid = "7a12625a-238d-50fd-b39a-03d52299707e"
+version = "3.5.0"
+
 [[LogExpFunctions]]
 deps = ["DocStringExtensions", "LinearAlgebra"]
 git-tree-sha1 = "7bd5f6565d80b6bf753738d2bc40a5dfea072070"
@@ -736,6 +742,12 @@ version = "0.1.4"
 [[Markdown]]
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
+
+[[MatrixEquations]]
+deps = ["LinearAlgebra", "LinearMaps"]
+git-tree-sha1 = "49b86537cefbfbf4b86afa3cc17226f1781d4389"
+uuid = "99c1a7ee-ab34-5fd5-8076-27c950a045f4"
+version = "2.1.0"
 
 [[MbedTLS]]
 deps = ["Dates", "MbedTLS_jll", "Random", "Sockets"]
