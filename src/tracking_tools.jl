@@ -767,7 +767,8 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 			Kᵢ = Kfixed
 		end
         # Correct state uncertaninty
-		P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
+		# P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ
+        P⁺ᵢ = (I - Kᵢ*C)*P⁻ᵢ*(I - Kᵢ*C)' + Kᵢ*R*Kᵢ'
         # Correct current state estimate
         correction = Kᵢ.*dϕ_meas
         # correction = Kᵢ.*(dϕ_meas - (C*A*δx⁺ₖ)[1])
