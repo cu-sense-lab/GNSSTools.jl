@@ -300,6 +300,10 @@ Optional Arguments:
 - `show_joint_probability`: flag to show joint probability between Doppler and
                             Doppler rate `(default = false)`
 - `show_constellation_plot`: flag to show plot of constellation `(default = false)`
+- `return_raw_dopplers`: flag to return raw Doppler and Doppler rates 
+                         observed `(default = false)`
+- `return_elevations`: flag to return elevations associated with the raw Doppler
+                       and Doppler rates `(default = false)` 
 
 
 Returns:
@@ -320,12 +324,14 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               return_constellation=false,
                               show_joint_probability=false,
                               show_constellation_plot=false,
-                              return_raw_dopplers=false)
+                              return_raw_dopplers=false,
+                              return_elevations=false)
     M  = min(length(obs_llas[1]), length(obs_llas[2]), length(obs_llas[3]))
     dopplers_ = []
     doppler_means_ = []
     doppler_rates_ = []
     doppler_rate_ts_ = []
+    elevations_ = []
     constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
                                          t_range; eop=eop, 
                                          show_plot=show_constellation_plot,
@@ -369,7 +375,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
             end
         end
         dopplers = dopplers[1:k-1]
-        doppler_means = deepcopy(dopplers)
+        # doppler_means = deepcopy(dopplers)
         doppler_rates = doppler_rates[1:k-1]
         elevations = elevations[1:k-1]
         # doppler_means = Array{Float64}(undef, N)
@@ -391,15 +397,17 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         # end
         if i == 1
             dopplers_ = deepcopy(dopplers)
-            doppler_means_ = deepcopy(doppler_means)
+            # doppler_means_ = deepcopy(doppler_means)
             doppler_rates_ = deepcopy(doppler_rates)
+            elevations_ = deepcopy(elevations)
             # doppler_means_ = deepcopy(doppler_means[1:k-1])
             # doppler_rates_ = deepcopy(doppler_rates[1:k-1])
             # doppler_rate_ts_ = deepcopy(doppler_rate_ts[1:k-1])
         else
             dopplers_ = [dopplers_; dopplers]
-            doppler_means_ = [doppler_means_; doppler_means]
+            # doppler_means_ = [doppler_means_; doppler_means]
             doppler_rates_ = [doppler_rates_; doppler_rates]
+            elevations_ = [elevations_; elevations]
             # doppler_means_ = [doppler_means_; doppler_means[1:k-1]]
             # doppler_rates_ = [doppler_rates_; doppler_rates[1:k-1]]
             # doppler_rate_ts_ = [doppler_rate_ts_; doppler_rate_ts[1:k-1]]
@@ -450,7 +458,7 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         if show_joint_probability
             fig = figure()
             fig, ax1 = make_subplot(fig, 1, 1, 1; aspect="auto")
-            hist2D(doppler_means_./1000, doppler_rates_, bins=heatmap_bins)
+            hist2D(dopplers_./1000, doppler_rates_, bins=heatmap_bins)
             xlabel("Doppler (kHz)")
             ylabel("Doppler Rate (Hz/s)")
             colorbar()
@@ -458,13 +466,14 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
     end
     if return_constellation && return_raw_dopplers
         return (doppler_hist, doppler_rate_hist, doppler_bounds, 
-                doppler_rate_bounds, constellation, [dopplers_, doppler_rates_])
+                doppler_rate_bounds, constellation, 
+                [dopplers_, doppler_rates_, elevations_])
     elseif return_constellation && ~return_raw_dopplers
         return (doppler_hist, doppler_rate_hist, doppler_bounds, 
                 doppler_rate_bounds, constellation)
     elseif ~return_constellation && return_raw_dopplers
         return (doppler_hist, doppler_rate_hist, doppler_bounds, 
-                doppler_rate_bounds, [dopplers_, doppler_rates_])
+                doppler_rate_bounds, [dopplers_, doppler_rates_, elevations_])
     else
         return (doppler_hist, doppler_rate_hist, doppler_bounds, 
                 doppler_rate_bounds)
