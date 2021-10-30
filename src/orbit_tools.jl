@@ -302,8 +302,6 @@ Optional Arguments:
 - `show_constellation_plot`: flag to show plot of constellation `(default = false)`
 - `return_raw_dopplers`: flag to return raw Doppler and Doppler rates 
                          observed `(default = false)`
-- `return_elevations`: flag to return elevations associated with the raw Doppler
-                       and Doppler rates `(default = false)` 
 
 
 Returns:
@@ -324,14 +322,22 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
                               return_constellation=false,
                               show_joint_probability=false,
                               show_constellation_plot=false,
-                              return_raw_dopplers=false,
-                              return_elevations=false)
+                              return_raw_dopplers=false)
     M  = min(length(obs_llas[1]), length(obs_llas[2]), length(obs_llas[3]))
+    N = length(t_range)*plane_num*satellite_per_plane
+    δt = t_range[2] - t_range[1]
+    ts = Array{Float64}(undef, N)
+    ids = Array{Int}(undef, N)
+    dopplers = Array{Float64}(undef, N)
+    doppler_rates = Array{Float64}(undef, N)
+    elevations = Array{Float64}(undef, N)
+    max_elevations = Array{Float64}(undef, N)
     dopplers_ = []
-    doppler_means_ = []
+    # doppler_means_ = []
     doppler_rates_ = []
-    doppler_rate_ts_ = []
+    # doppler_rate_ts_ = []
     elevations_ = []
+    max_elevations_ = []
     constellation = define_constellation(a, plane_num, satellite_per_plane, incl,
                                          t_range; eop=eop, 
                                          show_plot=show_constellation_plot,
@@ -347,37 +353,41 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         obs_lla = (obs_llas[1][i], obs_llas[2][i], obs_llas[3][i])
         obs_ecef = GeodetictoECEF(deg2rad(obs_lla[1]), deg2rad(obs_lla[2]),
                                   obs_lla[3])
-        N = length(t_range)*plane_num*satellite_per_plane
-        ts = Array{Float64}(undef, N)
-        ids = Array{Int}(undef, N)
-        dopplers = Array{Float64}(undef, N)
-        doppler_rates = Array{Float64}(undef, N)
-        elevations = Array{Float64}(undef, N)
         k = 1
-        # j = 1
+        k_start = 1
         for satellite in constellation.satellites
-            for i in 1:length(satellite.t)
-                r = view(satellite.r_ecef, i, :)
+            for j in 1:length(satellite.t)
+                r = view(satellite.r_ecef, j, :)
                 sat_range, azimuth, elevation = calcelevation(r, obs_lla)
                 if elevation >= min_elevation
-                    v = view(satellite.v_ecef, i, :)
-                    accel = view(satellite.a_ecef, i, :)
+                    v = view(satellite.v_ecef, j, :)
+                    accel = view(satellite.a_ecef, j, :)
                     dopplers[k] = calcdoppler(r, v, obs_ecef, sig_freq)
                     doppler_rates[k] = calcdopplerrate(r, v, accel, obs_ecef, sig_freq)
                     elevations[k] = elevation
-                    ts[k] = satellite.t[i]
+                    ts[k] = satellite.t[j]
                     ids[k] = satellite.id
+                    if k > 1
+                        Δt = abs(ts[k] - ts[k-1])*(60*60*24)
+                        if Δt > 2*δt
+                            max_elevations[k_start:k-1] .= maximum(elevations[k_start:k-1])
+                            k_start = k
+                        end
+                    end
                     k += 1
                 end
+            end
+            if k_start < k
+                max_elevations[k_start:k-1] .= maximum(elevations[k_start:k-1])
             end
             if print_steps
                 next!(progress)
             end
         end
-        dopplers = dopplers[1:k-1]
+        # dopplers = dopplers[1:k-1]
         # doppler_means = deepcopy(dopplers)
-        doppler_rates = doppler_rates[1:k-1]
-        elevations = elevations[1:k-1]
+        # doppler_rates = doppler_rates[1:k-1]
+        # elevations = elevations[1:k-1]
         # doppler_means = Array{Float64}(undef, N)
         # doppler_rates = Array{Float64}(undef, N)
         # doppler_rate_ts = Array{Float64}(undef, N)
@@ -396,18 +406,20 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
         #     end
         # end
         if i == 1
-            dopplers_ = deepcopy(dopplers)
+            dopplers_ = deepcopy(dopplers[1:k-1])
             # doppler_means_ = deepcopy(doppler_means)
-            doppler_rates_ = deepcopy(doppler_rates)
-            elevations_ = deepcopy(elevations)
+            doppler_rates_ = deepcopy(doppler_rates[1:k-1])
+            elevations_ = deepcopy(elevations[1:k-1])
+            max_elevations_ = deepcopy(max_elevations[1:k-1])
             # doppler_means_ = deepcopy(doppler_means[1:k-1])
             # doppler_rates_ = deepcopy(doppler_rates[1:k-1])
             # doppler_rate_ts_ = deepcopy(doppler_rate_ts[1:k-1])
         else
-            dopplers_ = [dopplers_; dopplers]
+            dopplers_ = [dopplers_; dopplers[1:k-1]]
             # doppler_means_ = [doppler_means_; doppler_means]
-            doppler_rates_ = [doppler_rates_; doppler_rates]
-            elevations_ = [elevations_; elevations]
+            doppler_rates_ = [doppler_rates_; doppler_rates[1:k-1]]
+            elevations_ = [elevations_; elevations[1:k-1]]
+            max_elevations_ = [max_elevations_; max_elevations[1:k-1]]
             # doppler_means_ = [doppler_means_; doppler_means[1:k-1]]
             # doppler_rates_ = [doppler_rates_; doppler_rates[1:k-1]]
             # doppler_rate_ts_ = [doppler_rate_ts_; doppler_rate_ts[1:k-1]]
@@ -467,13 +479,14 @@ function doppler_distribution(a, plane_num, satellite_per_plane, incl, t_range,
     if return_constellation && return_raw_dopplers
         return (doppler_hist, doppler_rate_hist, doppler_bounds, 
                 doppler_rate_bounds, constellation, 
-                [dopplers_, doppler_rates_, elevations_])
+                [dopplers_, doppler_rates_, elevations_, max_elevations_])
     elseif return_constellation && ~return_raw_dopplers
         return (doppler_hist, doppler_rate_hist, doppler_bounds, 
                 doppler_rate_bounds, constellation)
     elseif ~return_constellation && return_raw_dopplers
         return (doppler_hist, doppler_rate_hist, doppler_bounds, 
-                doppler_rate_bounds, [dopplers_, doppler_rates_, elevations_])
+                doppler_rate_bounds, [dopplers_, doppler_rates_, 
+                                      elevations_, max_elevations_])
     else
         return (doppler_hist, doppler_rate_hist, doppler_bounds, 
                 doppler_rate_bounds)
