@@ -410,7 +410,8 @@ Returns:
 - `SNR`: signal-to-noise ratio of frequency domain correlation peak in dB
 """
 function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
-	                          fd_rate, ϕ, d, pfft, n0_index_start)
+	                          fd_rate, ϕ, d, pfft, n0_index_start, 
+                              code_start_idx)
     datasegment = view(data.data, (i-1)*N+1:i*N)
     # datasegment = view(data.data, (i-1)*N+n0_index_start:i*N+n0_index_start-1)
     # Perform carrier wipeoff of intemediate and Doppler frequencies, Doppler
@@ -433,12 +434,21 @@ function getcorrelatoroutput!(datafft, data, replica, i, N, f_if, f_d,
     ze_idx = N - (d - 1)
     zp_idx = 1
     zl_idx = 1 + d
+    # zp_idx = floor(Int, code_start_idx)
+    # ze_idx = zp_idx - d
+    # if ze_idx < 1
+    #     ze_idx = N + ze_idx
+    # end
+    # zl_idx = zp_idx + d
+    # if zl_idx > N
+    #     zl_idx = zl_idx%(N+1) + 1
+    # end
     # Correlator outputs are the sum. Need to divide by the sample number, `N`.
     ze = replica.data[ze_idx]/N
     zp = replica.data[zp_idx]/N
     zl = replica.data[zl_idx]/N
     # Calculate SNR
-    PS = abs2(replica.data[1])
+    PS = abs2(replica.data[zp_idx])
     PN = (sum(abs2, replica.data) - PS) / (N - 1)
     SNR = calc_snr(PS, PN)
     return (ze, zp, zl, SNR)
@@ -680,6 +690,7 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                                 f_s, n0_idx_init)
     # n0_init = 0.0
     n0 = n0_init
+    δn0 = 0.
     M = floor(Int, data.sample_num/replica.sample_num)
     # M = floor(Int, (data.sample_num - (n0_idx_init - 1))/replica.sample_num)
     t = Array(0:T:M*T-T)
@@ -748,12 +759,18 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
                        fd_rate=fd_rate, phi=0., f_if=0.,
                        code_start_idx=code_start_idx,
                        include_carrier=false)
+        # definereplica!(replica;
+        #                prn=prn, f_d=f_d,
+        #                fd_rate=fd_rate, phi=0., f_if=0.,
+        #                code_start_idx=1,
+        #                include_carrier=false)
         # Generate prompt correlator
         generatereplica!(replica)
         # Calculate early, prompt, and late correlator outputs
         ze, zp, zl, snr = getcorrelatoroutput!(datafft, data, replica, i, N,
 		                                       f_if, f_d, fd_rate, ϕ, d,
-                                               pfft, n0_idx_init)
+                                               pfft, n0_idx_init,
+                                               code_start_idx)
         # Estimate code phase error
         n0_err = Z4(dll_parms, ze, zp, zl)  # chips
         # Measure carrier phase and Doopler frequency errors
@@ -776,9 +793,16 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
 		x⁺ᵢ = x⁻ᵢ + correction
         if i > 1
             # Filter raw code phase error measurement
-            n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
+            # f_d_code = chipping_rate*(f_d - f_if)/sig_freq
+            # f_dd_code = chipping_rate*fd_rate/sig_freq
+            # n0_err_filtered = 4*T*DLL_B*(n0_err)
+            n0_err_filtered = 4*T*DLL_B*(n0_err-code_err_filt[i-1])
+            # n0_err_filtered = code_err_filt[i-1] +
+            #                   4*T*DLL_B*(n0_err-code_err_filt[i-1])
+            # n0_err_filtered = filtercodephase(dll_parms, n0_err, code_err_filt[i-1])
         else
-            n0_err_filtered = filtercodephase(dll_parms, n0_err, 0)
+            n0_err_filtered = 4*T*DLL_B*n0_err
+            # n0_err_filtered = filtercodephase(dll_parms, n0_err, 0)
         end
         # Save to allocated arrays
         code_err_meas[i] = n0_err
@@ -810,7 +834,10 @@ function trackprn(data::GNSSSignal, replica::ReplicaSignal, prn, ϕ_init,
         end
         # Update code phase with filtered code phase error and propagate to next `i`
 		# This essetially makes the DLL rate aided.
+        # δn0 = chipping_rate*(x⁺ᵢ[2]/2π - f_if)*T/sig_freq #+ 0.5*f_code_dd*T^2
+        # n0 = (n0 + n0_err_filtered + chipping_rate*T + δn0)%code_length
         n0 += (n0_err_filtered + f_code_d*T + 0.5*f_code_dd*T^2)%code_length
+        # n0 += (n0_err_filtered + f_code_d*T)%code_length
 		# Propagate x⁺ᵢ to next time step
 		x⁻ᵢ = A*x⁺ᵢ
         # Propogate state uncertaninty
