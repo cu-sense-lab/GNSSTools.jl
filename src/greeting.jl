@@ -20,5 +20,5 @@ greeting="""
                    v0.1.0
 
                    Contact
-         Sergei.Bilardi@colorado.edu
+         Samantha.Bilardi@colorado.edu
 """
