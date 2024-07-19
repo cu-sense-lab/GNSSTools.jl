@@ -1,6 +1,6 @@
 name = "GNSSTools"
 uuid = "85cd08ad-ad2a-4669-aed5-3a4b7a4c8afe"
-authors = ["Sergei Bilardi <sergei.bilardi@colorado.edu>"]
+authors = ["Samantha Bilardi <samantha.bilardi@colorado.edu>"]
 version = "0.1.0"
 
 [deps]
